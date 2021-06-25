@@ -1,7 +1,5 @@
 # iotics-identity-go
 
-https://img.shields.io/github/workflow/status/Iotic-Labs/iotics-identity-go/go
-
 [![GitHub Workflow](https://img.shields.io/github/workflow/status/Iotic-Labs/iotics-identity-go/go)](https://github.com/Iotic-Labs/iotics-identity-go/actions/workflows/go.yml)
 [![GitHub Issues](https://img.shields.io/github/issues/Iotic-Labs/iotics-identity-go)](https://github.com/Iotic-Labs/iotics-identity-go/issues)
 [![GitHub Release](https://img.shields.io/github/v/release/Iotic-Labs/iotics-identity-go)](https://github.com/Iotic-Labs/iotics-identity-go/releases)
