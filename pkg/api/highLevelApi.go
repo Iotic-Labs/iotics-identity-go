@@ -52,18 +52,20 @@ func CreateAgentAuthToken(agentID register.RegisteredIdentity, userDid string, d
 	return advancedapi.CreateAgentAuthToken(agentID, userDid, duration, audience, startOffset)
 }
 
-// CreateTwin Create and register a twin identity.
-func CreateTwin(resolverClient register.ResolverClient, opts *CreateTwinOpts) (register.RegisteredIdentity, error) {
-	path := crypto.PathForDIDType(opts.KeyName, identity.Twin)
-	keyPairSecrets, err := crypto.NewKeyPairSecrets(opts.KeySeed, path, crypto.DefaultSeedMethod, opts.Password)
+func CreateTwinWithControlDelegation(resolverClient register.ResolverClient, opts *CreateTwinOpts) (register.RegisteredIdentity, error) {
+	createOpts := &CreateIdentityOpts{
+		Seed:     opts.Seed,
+		KeyName:  opts.KeyName,
+		Password: opts.Password,
+		Name:     opts.Name,
+		Override: opts.OverideDoc,
+	}
+	twinId, err := CreateTwinIdentity(resolverClient, createOpts)
 	if err != nil {
 		return nil, err
 	}
-	keyPair, err := crypto.GetKeyPair(keyPairSecrets)
-	if err != nil {
-		return nil, err
-	}
-	return advancedapi.NewRegisteredIdentity(resolverClient, identity.Twin, keyPair, opts.TwinName, opts.OverrideDoc)
+	err = DelegateControl(resolverClient, twinId, opts.AgentId, opts.DelegationName)
+	return twinId, err
 }
 
 // DelegateControl registers a twin identity with twin delegating control to the agent

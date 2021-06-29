@@ -54,16 +54,11 @@ type RegisterDocument struct {
 	Metadata               Metadata                  `json:"metadata,omitempty"`
 }
 
-// PublicKeyByName get public key by name (note: excluding authentication keys)
-func (d RegisterDocument) PublicKeyByName(name string) *RegisterPublicKey {
+// PublicKeyByID get public key by ID (note: excluding authentication keys)
+func (d RegisterDocument) PublicKeyByID(id string) *RegisterPublicKey {
 	for _, v := range d.PublicKeys {
-		if v.Name() == name {
-			return &RegisterPublicKey{
-				ID:              v.ID,
-				Type:            v.Type,
-				PublicKeyBase58: v.PublicKeyBase58,
-				Revoked:         v.Revoked,
-			}
+		if v.ID == id {
+			return &v
 		}
 	}
 	return nil

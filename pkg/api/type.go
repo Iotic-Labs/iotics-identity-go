@@ -2,7 +2,10 @@
 
 package api
 
-import "github.com/Iotic-Labs/iotics-identity-go/pkg/crypto"
+import (
+	"github.com/Iotic-Labs/iotics-identity-go/pkg/crypto"
+	"github.com/Iotic-Labs/iotics-identity-go/pkg/register"
+)
 
 type CreateUserAndAgentWithAuthDelegationOpts struct {
 	UserSeed       []byte
@@ -17,14 +20,6 @@ type CreateUserAndAgentWithAuthDelegationOpts struct {
 	OverrideDocs   bool
 }
 
-type CreateTwinOpts struct {
-	KeySeed     []byte
-	KeyName     string
-	TwinName    string
-	Password    string
-	OverrideDoc bool
-}
-
 type CreateIdentityOpts struct {
 	Seed     []byte
 	KeyName  string
@@ -32,6 +27,16 @@ type CreateIdentityOpts struct {
 	Name     string
 	Method   crypto.SeedMethod
 	Override bool
+}
+
+type CreateTwinOpts struct {
+	Seed           []byte
+	KeyName        string
+	Name           string
+	Password       string
+	AgentId        register.RegisteredIdentity
+	DelegationName string
+	OverideDoc     bool
 }
 
 type GetIdentityOpts struct {
