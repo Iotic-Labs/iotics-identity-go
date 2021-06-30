@@ -44,7 +44,16 @@ func Test_can_build_challenge_token(t *testing.T) {
 }
 
 func Test_build_challenge_token_raises_validation_error_if_can_not_create_token(t *testing.T) {
+	/*	proof, err := crypto.NewProof(test.ValidSecret, test.ValidIssuer, test.ValidContent)
+		assert.NilError(t, err)
+		assert.Assert(t, proof != nil)
 
+		keypair := &crypto.KeyPair{
+			PrivateKey: test.ValidPrivateKey,
+		}
+		token, err := crypto.CreateChallengeToken(proof, keypair)
+		assert.ErrorContains(t, err, "intest.Valid private key")
+		assert.Assert(t, len(token) == 0)*/
 }
 
 func Test_can_build_proof_from_challenge_token(t *testing.T) {
@@ -63,13 +72,16 @@ func Test_can_build_proof_from_challenge_token(t *testing.T) {
 }
 
 func Test_build_proof_from_challenge_token_raises_validation_error_if_invalid_token(t *testing.T) {
-
+	// TODO:
+	t.Skip()
 }
 
 func Test_build_proof_from_challenge_token_raises_validation_error_if_invalid_token_data(t *testing.T) {
-
+	// TODO:
+	t.Skip()
 }
 
 func Test_build_proof_from_challenge_token_raises_issuer_error_if_issuer_not_in_doc(t *testing.T) {
-
+	// TODO:
+	t.Skip()
 }

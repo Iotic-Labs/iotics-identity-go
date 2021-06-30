@@ -22,10 +22,10 @@ import (
 type SeedMethod int
 
 const (
-	// SeedMethodNone (0) is a naive method using hmac_sha256
-	SeedMethodNone SeedMethod = iota
-	// SeedMethodBip39 (1) uses pbkdf2 2048 iterations
-	SeedMethodBip39
+	// SeedMethodBip39 (0) uses pbkdf2 2048 iterations
+	SeedMethodBip39 SeedMethod = iota
+	// SeedMethodNone (1) is a naive method using hmac_sha256
+	SeedMethodNone
 )
 
 const (

@@ -75,9 +75,23 @@ func Test_create_auth_token_raises_validation_error_if_can_not_create_token(t *t
 
 }
 
+/*with pytest.raises(IdentityValidationError):
+JwtTokenHelper.create_auth_token(iss=str(valid_issuer),
+sub='did:iotics:iotHjrmKpPGWyEC4FFo4d6oyzVVk6MXLmEEE',
+aud='http://somehting',
+duration=12,
+private_key='no a private key')*/
+
 func Test_create_auth_token_raises_validation_error_if_negative_duration(t *testing.T) {
 
 }
+
+/*with pytest.raises(IdentityValidationError):
+JwtTokenHelper.create_auth_token(iss=str(valid_issuer),
+sub='did:iotics:iotHjrmKpPGWyEC4FFo4d6oyzVVk6MXLmEEE',
+aud='http://somehting',
+duration=-12,
+private_key=valid_private_key)*/
 
 func Test_can_decode_auth_token(t *testing.T) {
 	duration, _ := time.ParseDuration("123s")
@@ -118,6 +132,16 @@ func Test_decode_and_verify_token_raises_validation_error_if_invalid_token(t *te
 func Test_decode_and_verify_token_raises_validation_error_if_invalid_issuer_key(t *testing.T) {
 
 }
+
+/*audience = 'http://something'
+token = JwtTokenHelper.create_doc_token(issuer=valid_issuer_key.issuer,
+audience=audience,
+doc=register_doc,
+private_key=valid_private_key)
+
+with pytest.raises(IdentityValidationError):
+_, public_base58 = KeysHelper.get_public_keys_from_private_ECDSA(other_private_key)
+JwtTokenHelper.decode_and_verify_token(token, public_base58, audience)*/
 
 func Test_create_challenge_token(t *testing.T) {
 	resolver := test.NewInMemoryResolverEmpty()

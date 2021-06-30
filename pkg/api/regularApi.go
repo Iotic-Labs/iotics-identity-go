@@ -10,9 +10,12 @@ import (
 )
 
 func createIdentity(resolverClient register.ResolverClient, purpose identity.DidType, opts *CreateIdentityOpts) (register.RegisteredIdentity, error) {
-	path := crypto.PathForDIDType(opts.KeyName, identity.User)
+	path := crypto.PathForDIDType(opts.KeyName, purpose)
 	secrets, err := crypto.NewKeyPairSecrets(opts.Seed, path, opts.Method, opts.Password)
-	keyPair, _ := crypto.GetKeyPair(secrets)
+	if err != nil {
+		return nil, err
+	}
+	keyPair, err := crypto.GetKeyPair(secrets)
 	if err != nil {
 		return nil, err
 	}

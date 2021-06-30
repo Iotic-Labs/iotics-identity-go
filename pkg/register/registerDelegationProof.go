@@ -54,6 +54,7 @@ func ValidateDelegation(resolverClient ResolverClient, registeredID string, regi
 	for _, v := range controllerDoc.PublicKeys {
 		if v.ID == controllerIssuer.Name {
 			controllerPublicKey = &v
+			break
 		}
 	}
 	if controllerPublicKey == nil {

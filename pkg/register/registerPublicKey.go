@@ -33,11 +33,6 @@ func NewRegisterPublicKeyFromMap(data map[string]interface{}) (*RegisterPublicKe
 	return NewRegisterPublicKey(name, keyType, publicKeyBase58, revoked)
 }
 
-// Name get key name
-func (r RegisterPublicKey) Name() string {
-	return r.ID
-}
-
 // Base58 get public key base58
 func (r RegisterPublicKey) Base58() string {
 	return r.PublicKeyBase58

@@ -3,7 +3,6 @@
 package advancedapi
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
@@ -13,8 +12,6 @@ import (
 	"github.com/Iotic-Labs/iotics-identity-go/pkg/register"
 	"github.com/Iotic-Labs/iotics-identity-go/pkg/validation"
 	"github.com/jbenet/go-base58"
-
-	"github.com/tyler-smith/go-bip39"
 )
 
 // RegisterUpdatedDocument Register a new version of a register document against the resolver.
@@ -414,7 +411,7 @@ func GetKeyPairFromPrivateExponentHex(privateHex string) (*crypto.KeyPair, error
 func GetIssuerByPublicKey(document *register.RegisterDocument, publicBase58 string) (*register.Issuer, error) {
 	for _, v := range document.PublicKeys {
 		if v.PublicKeyBase58 == publicBase58 {
-			issuer, err := register.NewIssuer(document.ID, v.Name())
+			issuer, err := register.NewIssuer(document.ID, v.ID)
 			if err != nil {
 				return nil, err
 			}
@@ -443,7 +440,7 @@ func CreateProof(keyPair *crypto.KeyPair, issuer *register.Issuer, content []byt
 func CreateDelegationProof(delegatingIssuer *register.Issuer, subjectDoc *register.RegisterDocument, subjectKeyPair *crypto.KeyPair) (*register.Issuer, *proof.Proof, error) {
 	for _, v := range subjectDoc.PublicKeys {
 		if v.PublicKeyBase58 == subjectKeyPair.PublicKeyBase58 {
-			issuer, err := register.NewIssuer(subjectDoc.ID, v.Name())
+			issuer, err := register.NewIssuer(subjectDoc.ID, v.ID)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -483,12 +480,5 @@ func ValidateDocumentProof(document *register.RegisterDocument) error {
 
 // CreateSeed Create a new seed (secrets).
 func CreateSeed(length int) ([]byte, error) {
-	if length != 128 && length != 256 {
-		return nil, errors.New("length must be 128 or 256")
-	}
-	entropy, err := bip39.NewEntropy(length)
-	if err != nil {
-		return nil, err
-	}
-	return entropy, nil
+	return crypto.CreateSeed(length)
 }
