@@ -4,6 +4,7 @@ package register_test
 
 import (
 	"fmt"
+	"net/http"
 	"net/url"
 	"strings"
 	"testing"
@@ -50,7 +51,10 @@ func Test_Resolver_Successful_Get(t *testing.T) {
 	addr, _ := url.Parse("http://localhost:9034")
 
 	// Setup a resolver client
-	rslv := register.NewDefaultRestResolverClient(addr)
+	// Note: Passing in http.DefaultClient since by default, e.g. via NewDefaultRestResolverClient, a new http.Client
+	// instance is used. httpmock however expects to work against the default client, unless using
+	// httpmock.ActivateNonDefault().
+	rslv := register.NewRestResolverClientWithCustomClient(addr, http.DefaultClient)
 
 	// Setup a mock resolver
 	discoverReply := map[string]interface{}{
@@ -75,7 +79,7 @@ func Test_Resolver_Notfound_Error(t *testing.T) {
 	addr, _ := url.Parse("http://localhost:9044")
 
 	// Setup a resolver client
-	rslv := register.NewDefaultRestResolverClient(addr)
+	rslv := register.NewRestResolverClientWithCustomClient(addr, http.DefaultClient)
 
 	// Setup a mock resolver
 	discoverReply := map[string]interface{}{
@@ -106,7 +110,7 @@ func Test_Resolver_Successful_Register(t *testing.T) {
 	addr, _ := url.Parse("http://localhost:9031")
 
 	// Setup a resolver client
-	rslv := register.NewDefaultRestResolverClient(addr)
+	rslv := register.NewRestResolverClientWithCustomClient(addr, http.DefaultClient)
 
 	// Setup a mock resolver
 	registerReply := map[string]interface{}{

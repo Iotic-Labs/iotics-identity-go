@@ -21,8 +21,8 @@ var defaultResolverTimeout = time.Second * 60
 
 // RestResolverClient REST Resolver struct
 type RestResolverClient struct {
-	url     *url.URL
-	timeout time.Duration
+	url    *url.URL
+	client *http.Client
 }
 
 // NewDefaultRestResolverClient build a new REST Resolver Client with default HTTP timeout
@@ -32,9 +32,25 @@ func NewDefaultRestResolverClient(url *url.URL) ResolverClient {
 
 // NewRestResolverClient build a new REST Resolver Client
 func NewRestResolverClient(url *url.URL, timeout time.Duration) ResolverClient {
+	return NewRestResolverClientWithCustomClient(
+		url,
+		&http.Client{
+			Timeout: timeout,
+			Transport: &http.Transport{
+				// Since only using a single URL, use equal limits
+				MaxIdleConnsPerHost: 2,
+				MaxIdleConns:        2,
+				// Re-use should only apply when making many repeated calls in quick succession.
+				IdleConnTimeout: 5 * time.Second,
+			},
+		},
+	)
+}
+
+func NewRestResolverClientWithCustomClient(url *url.URL, client *http.Client) ResolverClient {
 	return &RestResolverClient{
-		url:     url,
-		timeout: timeout,
+		url:    url,
+		client: client,
 	}
 }
 
@@ -56,10 +72,7 @@ func (c *RestResolverClient) GetDocument(documentID string) (*RegisterDocument, 
 	}
 
 	discoverURL := fmt.Sprintf("%s/1.0/discover/%s", c.url.String(), url.QueryEscape(documentID)) // todo: join path?
-	client := http.Client{
-		Timeout: c.timeout,
-	}
-	response, err := client.Get(discoverURL)
+	response, err := c.client.Get(discoverURL)
 	if err != nil {
 		neterr, ok := err.(net.Error)
 		if ok && neterr.Timeout() {
@@ -88,13 +101,13 @@ func (c *RestResolverClient) GetDocument(documentID string) (*RegisterDocument, 
 		} else {
 			totalResolverErrors.WithLabelValues(MetricErrorTypeServer).Inc()
 		}
-		return nil, err
+		return nil, &ResolverError{err: err, errType: ConnectionError}
 	}
 
 	var resp map[string]interface{}
 	if err := json.Unmarshal(data, &resp); err != nil {
 		totalResolverErrors.WithLabelValues(MetricErrorTypeServer).Inc()
-		return nil, err
+		return nil, &ResolverError{err: err, errType: ServerError}
 	}
 
 	// Verify the document using ourselves
@@ -112,12 +125,9 @@ func (c *RestResolverClient) RegisterDocument(document *RegisterDocument, privat
 		return err
 	}
 
-	client := http.Client{
-		Timeout: c.timeout,
-	}
 	registerURL := fmt.Sprintf("%s/1.0/register", c.url.String())
 	rdr := strings.NewReader(string(token))
-	response, err := client.Post(registerURL, "text/plain", rdr) // FIXME content type
+	response, err := c.client.Post(registerURL, "text/plain", rdr) // FIXME content type
 	if err != nil {
 		neterr, ok := err.(net.Error)
 		if ok && neterr.Timeout() {
@@ -141,13 +151,13 @@ func (c *RestResolverClient) RegisterDocument(document *RegisterDocument, privat
 		} else {
 			totalResolverErrors.WithLabelValues(MetricErrorTypeServer).Inc()
 		}
-		return err
+		return &ResolverError{err: err, errType: ConnectionError}
 	}
 
 	var resp map[string]interface{}
 	if err := json.Unmarshal(data, &resp); err != nil {
 		totalResolverErrors.WithLabelValues(MetricErrorTypeServer).Inc()
-		return err
+		return &ResolverError{err: err, errType: ServerError}
 	}
 
 	return nil
