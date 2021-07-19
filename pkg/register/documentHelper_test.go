@@ -54,7 +54,7 @@ func Test_get_issuer_from_auth_keys_returns_none_if_in_auth_keys_but_auth_not_in
 }
 
 func Test_can_get_issuer_from_control_delegation(t *testing.T) {
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	userIdentity, _ := test.SetupIdentitiesForAuth(resolver, true, false)
 
 	userDoc, _ := resolver.GetDocument(userIdentity.Did())
@@ -65,7 +65,7 @@ func Test_can_get_issuer_from_control_delegation(t *testing.T) {
 }
 
 func Test_get_issuer_from_control_delegation_returns_none_if_not_found(t *testing.T) {
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	userIdentity, _ := test.SetupIdentitiesForAuth(resolver, false, false)
 
 	userDoc, _ := resolver.GetDocument(userIdentity.Did())
@@ -76,7 +76,7 @@ func Test_get_issuer_from_control_delegation_returns_none_if_not_found(t *testin
 }
 
 func Test_can_get_issuer_from_auth_delegation(t *testing.T) {
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	userIdentity, _ := test.SetupIdentitiesForAuth(resolver, false, true)
 
 	userDoc, _ := resolver.GetDocument(userIdentity.Did())
@@ -87,7 +87,7 @@ func Test_can_get_issuer_from_auth_delegation(t *testing.T) {
 }
 
 func Test_get_issuer_from_auth_delegation_returns_none_if_not_found(t *testing.T) {
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	userIdentity, _ := test.SetupIdentitiesForAuth(resolver, false, false)
 
 	userDoc, _ := resolver.GetDocument(userIdentity.Did())
@@ -98,7 +98,7 @@ func Test_get_issuer_from_auth_delegation_returns_none_if_not_found(t *testing.T
 }
 
 func Test_get_issuer_from_auth_delegation_returns_none_if_in_auth_keys_but_auth_not_included(t *testing.T) {
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	userIdentity, _ := test.SetupIdentitiesForAuth(resolver, false, true)
 
 	userDoc, _ := resolver.GetDocument(userIdentity.Did())
@@ -149,7 +149,7 @@ func Test_get_valid_issuer_for_auth_returns_none_if_not_found(t *testing.T) {
 }
 
 func Test_can_get_owner_public_key(t *testing.T) {
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	userIdentity, _ := test.SetupIdentitiesForAuth(resolver, false, true)
 
 	userDoc, _ := resolver.GetDocument(userIdentity.Did())
