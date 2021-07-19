@@ -7,24 +7,29 @@ import (
 )
 
 // IsAllowFor Check if the issuer is allowed for control (authentication if include_auth = True) on the subject register.
-func IsAllowFor(resolverClient ResolverClient, issuer *Issuer, issuerDoc *RegisterDocument, subjectDoc *RegisterDocument, includeAuth bool) bool {
+// Returns both whether control is allowed as well as the associated error. (This can be used to e.g. treat certain errors
+// differently such as ResolverError - or can instead be ignored).
+func IsAllowFor(resolverClient ResolverClient, issuer *Issuer, issuerDoc *RegisterDocument, subjectDoc *RegisterDocument, includeAuth bool) (bool, error) {
 	if issuerDoc.Revoked || subjectDoc.Revoked {
-		return false
+		return false, fmt.Errorf("issuer or subject document revoked")
 	}
 
 	if issuerDoc.ID == subjectDoc.ID { // Same document, if key exists and not revoked it is allowed
 		issuerKey, _ := GetIssuerRegisterKey(issuer.Name, subjectDoc, includeAuth)
 		if issuerKey != nil && !issuerKey.Revoked {
-			return true
+			return true, nil
 		}
 	}
 
-	delegationProof, _ := GetIssuerRegisterDelegationProofByController(issuer.String(), subjectDoc, includeAuth)
-	if delegationProof != nil && delegationProof.Revoked == false {
-		return nil == ValidateDelegation(resolverClient, subjectDoc.ID, delegationProof)
+	delegationProof, err := GetIssuerRegisterDelegationProofByController(issuer.String(), subjectDoc, includeAuth)
+	if err != nil {
+		return false, err
 	}
-
-	return false
+	if !delegationProof.Revoked {
+		err := ValidateDelegation(resolverClient, subjectDoc.ID, delegationProof)
+		return err == nil, err
+	}
+	return false, fmt.Errorf("delegation proof revoked")
 }
 
 func checkAllowOnDocOrController(resolverClient ResolverClient, issuer *Issuer, subjectID string, includeAuth bool) error {
@@ -38,8 +43,11 @@ func checkAllowOnDocOrController(resolverClient ResolverClient, issuer *Issuer, 
 		return err
 	}
 
-	if IsAllowFor(resolverClient, issuer, issuerDoc, subjectDoc, includeAuth) {
+	if allowed, err := IsAllowFor(resolverClient, issuer, issuerDoc, subjectDoc, includeAuth); allowed {
 		return nil
+	} else if IsResolverError(err) {
+		// Don't continue only if failed to talk to resolver.
+		return err
 	}
 
 	if subjectDoc.Controller != "" {
@@ -48,8 +56,10 @@ func checkAllowOnDocOrController(resolverClient ResolverClient, issuer *Issuer, 
 			return err
 		}
 
-		if IsAllowFor(resolverClient, issuer, issuerDoc, controllerDoc, includeAuth) {
+		if allowed, err := IsAllowFor(resolverClient, issuer, issuerDoc, controllerDoc, includeAuth); allowed {
 			return nil
+		} else if IsResolverError(err) {
+			return err
 		}
 	}
 
@@ -93,8 +103,8 @@ func VerifyAuthentication(resolverClient ResolverClient, token JwtToken) (*Authe
 		return nil, err
 	}
 
-	if !IsAllowFor(resolverClient, verifiedToken.Issuer, issuerDoc, subjectDoc, true) {
-		return nil, fmt.Errorf("not allowed")
+	if allowed, err := IsAllowFor(resolverClient, verifiedToken.Issuer, issuerDoc, subjectDoc, true); !allowed {
+		return nil, err
 	}
 
 	return verifiedToken, nil

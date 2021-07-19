@@ -212,5 +212,5 @@ func Test_verify_authentication_raises_auth_error_if_token_not_allowed(t *testin
 	assert.NilError(t, err)
 
 	_, err = register.VerifyAuthentication(resolver, token)
-	assert.ErrorContains(t, err, "not allowed")
+	assert.ErrorContains(t, err, "delegation not found")
 }
