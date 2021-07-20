@@ -55,3 +55,9 @@ func (r ResolverError) ErrorType() ResolverErrType {
 func (r ResolverError) Err() error {
 	return r.err
 }
+
+// IsResolverError returns true if the provided error is of type ResolverError
+func IsResolverError(err error) bool {
+	_, ok := err.(*ResolverError)
+	return ok
+}

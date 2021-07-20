@@ -49,7 +49,7 @@ func Test_cannot_get_delegation_proof(t *testing.T) {
 
 	subjectIdentity := register.NewRegisteredIdentity(test.ValidKeyPairPlop, subjectIssuer)
 
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	_ = advancedapi2.RegisterUpdatedDocument(resolver, subjectDoc, test.ValidKeyPairPlop, subjectIssuer)
 	_ = advancedapi2.RemovePublicKeyFromDocument(resolver, "#name", subjectIdentity)
 	subjectDoc, _ = resolver.GetDocument(subjectDoc.ID)
@@ -71,13 +71,13 @@ func Test_can_register_a_doc(t *testing.T) {
 	issuer, err := register.NewIssuer(subjectDoc.ID, "#name")
 	assert.NilError(t, err)
 
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	err = resolver.RegisterDocument(subjectDoc, test.ValidKeyPairPlop.PrivateKey, issuer)
 	assert.NilError(t, err)
 }
 
 func Test_can_create_new_registered_identity(t *testing.T) {
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	regId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.User, test.ValidKeyPairPlop, "#NewId", false)
 	assert.NilError(t, err)
 	assert.DeepEqual(t, regId.KeyPair(), test.ValidKeyPairPlop)
@@ -98,7 +98,7 @@ func Test_can_create_new_registered_identity_with_default_issuer_name(t *testing
 		{identity.Twin, "#twin-0"},
 	}
 	for _, c := range cases {
-		resolver := test.NewInMemoryResolverEmpty()
+		resolver := test.NewInMemoryResolver()
 		regId, err := advancedapi2.NewRegisteredIdentity(resolver, c.purpose, test.ValidKeyPairPlop, "", false)
 		assert.NilError(t, err)
 		assert.DeepEqual(t, regId.KeyPair(), test.ValidKeyPairPlop)
@@ -107,7 +107,7 @@ func Test_can_create_new_registered_identity_with_default_issuer_name(t *testing
 }
 
 func Test_can_create_new_registered_identity_will_not_override_doc_if_exists(t *testing.T) {
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	regId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.User, test.ValidKeyPairPlop, "#ExistingId", false)
 	assert.NilError(t, err)
 
@@ -126,7 +126,7 @@ func Test_can_create_new_registered_identity_will_not_override_doc_if_exists(t *
 }
 
 func Test_can_create_new_registered_identity_will_override_doc_if_exists_and_override_true(t *testing.T) {
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	regId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.User, test.ValidKeyPairPlop, "#ExistingId", false)
 	assert.NilError(t, err)
 
@@ -145,7 +145,7 @@ func Test_can_create_new_registered_identity_will_override_doc_if_exists_and_ove
 }
 
 func Test_can_delegate_authentication(t *testing.T) {
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	userId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.User, test.ValidKeyPairPlop, "#ExistingId", false)
 	assert.NilError(t, err)
 	agentId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.User, test.ValidKeyPairPlop2, "#ExistingId", false)
@@ -165,7 +165,7 @@ func Test_can_delegate_authentication(t *testing.T) {
 }
 
 func Test_can_delegate_control(t *testing.T) {
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	twinId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
 	assert.NilError(t, err)
 	agentId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.User, test.ValidKeyPairPlop2, "#ExistingId", false)
@@ -185,7 +185,7 @@ func Test_can_delegate_control(t *testing.T) {
 }
 
 func Test_can_add_public_key_to_a_document(t *testing.T) {
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	twinId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
 	assert.NilError(t, err)
 
@@ -208,7 +208,7 @@ func Test_can_add_public_key_to_a_document(t *testing.T) {
 }
 
 func Test_can_add_auth_key_to_a_document(t *testing.T) {
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	twinId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
 	assert.NilError(t, err)
 
@@ -225,7 +225,7 @@ func Test_can_add_auth_key_to_a_document(t *testing.T) {
 }
 
 func Test_can_add_auth_delegation_proof(t *testing.T) {
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	twinId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
 	assert.NilError(t, err)
 
@@ -242,7 +242,7 @@ func Test_can_add_auth_delegation_proof(t *testing.T) {
 }
 
 func Test_can_add_control_delegation_proof(t *testing.T) {
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	twinId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
 	assert.NilError(t, err)
 
@@ -259,7 +259,7 @@ func Test_can_add_control_delegation_proof(t *testing.T) {
 }
 
 func Test_can_remove_control_delegation(t *testing.T) {
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	twinId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
 	assert.NilError(t, err)
 
@@ -278,7 +278,7 @@ func Test_can_remove_control_delegation(t *testing.T) {
 }
 
 func Test_can_remove_auth_delegation(t *testing.T) {
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	twinId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
 	assert.NilError(t, err)
 
@@ -297,7 +297,7 @@ func Test_can_remove_auth_delegation(t *testing.T) {
 }
 
 func Test_can_revoke_control_delegation(t *testing.T) {
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	twinId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
 	assert.NilError(t, err)
 
@@ -317,7 +317,7 @@ func Test_can_revoke_control_delegation(t *testing.T) {
 }
 
 func Test_can_revoke_auth_delegation(t *testing.T) {
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	twinId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
 	assert.NilError(t, err)
 
@@ -337,7 +337,7 @@ func Test_can_revoke_auth_delegation(t *testing.T) {
 }
 
 func Test_can_validate_document(t *testing.T) {
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	twinId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
 	assert.NilError(t, err)
 
@@ -364,7 +364,7 @@ func Test_can_validate_document(t *testing.T) {
 }
 
 func Test_can_set_document_controller(t *testing.T) {
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	twinId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
 	assert.NilError(t, err)
 
@@ -377,7 +377,7 @@ func Test_can_set_document_controller(t *testing.T) {
 }
 
 func Test_can_set_document_creator(t *testing.T) {
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	twinId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
 	assert.NilError(t, err)
 
@@ -390,7 +390,7 @@ func Test_can_set_document_creator(t *testing.T) {
 }
 
 func Test_can_set_document_revoked(t *testing.T) {
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	twinId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
 	assert.NilError(t, err)
 
@@ -403,7 +403,7 @@ func Test_can_set_document_revoked(t *testing.T) {
 }
 
 func Test_can_remove_public_key(t *testing.T) {
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	twinId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
 	assert.NilError(t, err)
 
@@ -420,7 +420,7 @@ func Test_can_remove_public_key(t *testing.T) {
 }
 
 func Test_can_revoke_public_key(t *testing.T) {
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	twinId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
 	assert.NilError(t, err)
 
@@ -435,7 +435,7 @@ func Test_can_revoke_public_key(t *testing.T) {
 }
 
 func Test_can_remove_auth_key(t *testing.T) {
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	twinId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
 	assert.NilError(t, err)
 
@@ -452,7 +452,7 @@ func Test_can_remove_auth_key(t *testing.T) {
 }
 
 func Test_can_revoke_auth_key(t *testing.T) {
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	twinId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
 	assert.NilError(t, err)
 
@@ -470,7 +470,7 @@ func Test_can_revoke_auth_key(t *testing.T) {
 }
 
 func Test_can_create_agent_auth_token(t *testing.T) {
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	agentId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.Agent, test.ValidKeyPairPlop, "#agent", false)
 	assert.NilError(t, err)
 	userId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.User, test.ValidKeyPairPlop2, "#user", false)
@@ -490,7 +490,7 @@ func Test_can_create_agent_auth_token(t *testing.T) {
 }
 
 func Test_can_create_twin_auth_token(t *testing.T) {
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	twinId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop2, "#twin", false)
 	assert.NilError(t, err)
 
@@ -507,7 +507,7 @@ func Test_can_create_identifier(t *testing.T) {
 }
 
 func Test_can_validate_document_proof(t *testing.T) {
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	twinId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
 	assert.NilError(t, err)
 
@@ -519,7 +519,7 @@ func Test_can_validate_document_proof(t *testing.T) {
 }
 
 func Test_cannot_validate_document_proof(t *testing.T) {
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	twinId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
 	assert.NilError(t, err)
 

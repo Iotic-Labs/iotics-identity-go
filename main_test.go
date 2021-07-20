@@ -616,7 +616,8 @@ func theUserAndAgentDocumentsAreRegisteredWithAuthenticationDelegation(t gobdd.S
 
 	// TODO: this could be a separate step/assertion
 	// NOTE: because this is auth delegation, the issuer is agent, subject is user
-	isAllowedFor := register.IsAllowFor(resolver, agent.Issuer(), agentDoc, userDoc, true)
+	isAllowedFor, err := register.IsAllowFor(resolver, agent.Issuer(), agentDoc, userDoc, true)
+	assert.NilError(t, err)
 	assert.Assert(t, isAllowedFor == true)
 }
 
@@ -648,7 +649,8 @@ func theTwinDocumentHasControlDelegationFromTheAgentIdentity(t gobdd.StepTest, c
 
 	// TODO: this could be a separate step/assertion
 	// NOTE: because this is control delegation, the issuer is agent, subject is twin
-	isAllowedFor := register.IsAllowFor(resolver, agent.Issuer(), agentDoc, twinDoc, true)
+	isAllowedFor, err := register.IsAllowFor(resolver, agent.Issuer(), agentDoc, twinDoc, true)
+	assert.NilError(t, err)
 	assert.Assert(t, isAllowedFor == true)
 }
 
@@ -684,7 +686,8 @@ func theTwinDocumentIsUpdatedWithTheNewOwner(t gobdd.StepTest, ctx gobdd.Context
 	// TODO: this could be a separate step/assertion
 	// NOTE: because this is control delegation, the issuer is twin, subject is twin
 	// can the new owner key control the twin, which is in the twinDoc already
-	isAllowedFor := register.IsAllowFor(resolver, newOwnerIssuer, twinDoc, twinDoc, true)
+	isAllowedFor, err := register.IsAllowFor(resolver, newOwnerIssuer, twinDoc, twinDoc, true)
+	assert.NilError(t, err)
 	assert.Assert(t, isAllowedFor == true)
 }
 

@@ -14,7 +14,7 @@ import (
 )
 
 func Test_validate_allowed_for_control_raises_not_allowed_if_not_allowed_for_control(t *testing.T) {
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	userIdentity, agentIdentity := test.SetupIdentitiesForAuth(resolver, false, true)
 
 	err := register.ValidateAllowedForControl(resolver, agentIdentity.Issuer(), userIdentity.Did())
@@ -22,7 +22,7 @@ func Test_validate_allowed_for_control_raises_not_allowed_if_not_allowed_for_con
 }
 
 func Test_validate_allowed_for_control_raises_not_allowed_if_not_allowed_for_auth(t *testing.T) {
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	userIdentity, agentIdentity := test.SetupIdentitiesForAuth(resolver, false, false)
 
 	err := register.ValidateAllowedForAuth(resolver, agentIdentity.Issuer(), userIdentity.Did())
@@ -30,7 +30,7 @@ func Test_validate_allowed_for_control_raises_not_allowed_if_not_allowed_for_aut
 }
 
 func Test_can_validate_allowed_for_control_on_owned_doc(t *testing.T) {
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	userIdentity, _ := test.SetupIdentitiesForAuth(resolver, false, false)
 
 	err := register.ValidateAllowedForControl(resolver, userIdentity.Issuer(), userIdentity.Did())
@@ -38,7 +38,7 @@ func Test_can_validate_allowed_for_control_on_owned_doc(t *testing.T) {
 }
 
 func Test_can_validate_allowed_for_authentication_on_owned_doc(t *testing.T) {
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	userIdentity, _ := test.SetupIdentitiesForAuth(resolver, false, false)
 
 	err := register.ValidateAllowedForAuth(resolver, userIdentity.Issuer(), userIdentity.Did())
@@ -46,7 +46,7 @@ func Test_can_validate_allowed_for_authentication_on_owned_doc(t *testing.T) {
 }
 
 func Test_can_validate_allowed_for_control_with_allowed_by_control_delegation(t *testing.T) {
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	userIdentity, agentIdentity := test.SetupIdentitiesForAuth(resolver, true, false)
 
 	err := register.ValidateAllowedForControl(resolver, agentIdentity.Issuer(), userIdentity.Did())
@@ -54,7 +54,7 @@ func Test_can_validate_allowed_for_control_with_allowed_by_control_delegation(t 
 }
 
 func Test_can_validate_allowed_for_control_with_allowed_by_auth_delegation(t *testing.T) {
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	userIdentity, agentIdentity := test.SetupIdentitiesForAuth(resolver, false, true)
 
 	err := register.ValidateAllowedForAuth(resolver, agentIdentity.Issuer(), userIdentity.Did())
@@ -62,7 +62,7 @@ func Test_can_validate_allowed_for_control_with_allowed_by_auth_delegation(t *te
 }
 
 func Test_can_validate_allowed_for_control_with_controller_doc(t *testing.T) {
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	userIdentity, agentIdentity := test.SetupIdentitiesForAuth(resolver, false, false)
 
 	advancedapi.SetDocumentController(resolver, userIdentity, agentIdentity.Issuer())
@@ -72,7 +72,7 @@ func Test_can_validate_allowed_for_control_with_controller_doc(t *testing.T) {
 }
 
 func Test_can_validate_allowed_for_auth_with_controller_doc(t *testing.T) {
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	userIdentity, agentIdentity := test.SetupIdentitiesForAuth(resolver, false, false)
 
 	advancedapi.SetDocumentController(resolver, userIdentity, agentIdentity.Issuer())
@@ -82,7 +82,7 @@ func Test_can_validate_allowed_for_auth_with_controller_doc(t *testing.T) {
 }
 
 func Test_validate_allowed_for_control_raises_not_allowed_if_resolver_error(t *testing.T) {
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	_, agentIdentity := test.SetupIdentitiesForAuth(resolver, false, false)
 
 	err := register.ValidateAllowedForAuth(resolver, agentIdentity.Issuer(), test.ValidDid)
@@ -104,7 +104,7 @@ assert isinstance(err_wrapper.value.__cause__, IdentityResolverError)
 */
 
 func Test_can_verify_authentication(t *testing.T) {
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	userIdentity, agentIdentity := test.SetupIdentitiesForAuth(resolver, true, false)
 
 	duration, _ := time.ParseDuration("300s")
@@ -120,7 +120,7 @@ func Test_can_verify_authentication(t *testing.T) {
 }
 
 func Test_verify_authentication_raises_auth_error_if_invalid_token(t *testing.T) {
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	_, err := register.VerifyAuthentication(resolver, "invalid token")
 	assert.ErrorContains(t, err, "failed to parse token")
 }
@@ -204,7 +204,7 @@ assert isinstance(err_wrapper.value.__cause__, IdentityValidationError)
 */
 
 func Test_verify_authentication_raises_auth_error_if_token_not_allowed(t *testing.T) {
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	userIdentity, agentIdentity := test.SetupIdentitiesForAuth(resolver, false, false)
 
 	duration, _ := time.ParseDuration("300s")
@@ -212,5 +212,5 @@ func Test_verify_authentication_raises_auth_error_if_token_not_allowed(t *testin
 	assert.NilError(t, err)
 
 	_, err = register.VerifyAuthentication(resolver, token)
-	assert.ErrorContains(t, err, "not allowed")
+	assert.ErrorContains(t, err, "delegation not found")
 }

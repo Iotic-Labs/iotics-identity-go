@@ -144,7 +144,7 @@ _, public_base58 = KeysHelper.get_public_keys_from_private_ECDSA(other_private_k
 JwtTokenHelper.decode_and_verify_token(token, public_base58, audience)*/
 
 func Test_create_challenge_token(t *testing.T) {
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	userIdentity, agentIdentity := test.SetupIdentitiesForAuth(resolver, false, true)
 
 	proof, err := advancedapi.CreateProof(test.ValidKeyPair2, agentIdentity.Issuer(), []byte(userIdentity.Did()))
@@ -155,7 +155,7 @@ func Test_create_challenge_token(t *testing.T) {
 }
 
 func Test_decode_challenge_token_no_verify(t *testing.T) {
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	userIdentity, agentIdentity := test.SetupIdentitiesForAuth(resolver, false, true)
 
 	proof, err := advancedapi.CreateProof(test.ValidKeyPair2, agentIdentity.Issuer(), []byte(userIdentity.Did()))
@@ -170,7 +170,7 @@ func Test_decode_challenge_token_no_verify(t *testing.T) {
 }
 
 func Test_decode_challenge_token(t *testing.T) {
-	resolver := test.NewInMemoryResolverEmpty()
+	resolver := test.NewInMemoryResolver()
 	userIdentity, agentIdentity := test.SetupIdentitiesForAuth(resolver, false, true)
 
 	proof, err := advancedapi.CreateProof(test.ValidKeyPair2, agentIdentity.Issuer(), []byte(userIdentity.Did()))
