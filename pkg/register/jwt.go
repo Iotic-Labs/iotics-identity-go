@@ -51,6 +51,21 @@ type didDocumentClaims struct {
 // rejected when the client time is marginally ahead of the server (i.e. resolver or Iotics host)
 const DefaultAuthTokenStartOffset = 30
 
+func docValidate(doc *RegisterDocument) error {
+	errs := doc.Validate()
+	if len(errs) != 0 {
+		errStr := ""
+		for _, e := range errs {
+			if len(errStr) != 0 {
+				errStr = errStr + ", "
+			}
+			errStr = fmt.Sprintf("%s%s", errStr, e)
+		}
+		return fmt.Errorf("document not valid: %s", errStr)
+	}
+	return nil
+}
+
 // DecodeDocumentTokenNoVerify Decode a document token without verifying it
 func DecodeDocumentTokenNoVerify(token JwtToken) (*DidDocumentClaims, error) {
 	decoded, _, err := new(jwt.Parser).ParseUnverified(string(token), &didDocumentClaims{})
@@ -59,8 +74,13 @@ func DecodeDocumentTokenNoVerify(token JwtToken) (*DidDocumentClaims, error) {
 	}
 
 	claims, ok := decoded.Claims.(*didDocumentClaims)
-	if !ok {
+	if !ok || claims.Doc == nil {
 		return nil, errors.New("failed to parse token")
+	}
+
+	err = docValidate(claims.Doc)
+	if err != nil {
+		return nil, err
 	}
 
 	issuer, err := NewIssuerFromString(claims.Issuer)
@@ -95,10 +115,16 @@ func DecodeDocumentToken(token JwtToken, publicKeyBase58 string, audience string
 		return nil, errors.New("audience does not match")
 	}
 
+	err = docValidate(claims.Doc)
+	if err != nil {
+		return nil, err
+	}
+
 	issuer, err := NewIssuerFromString(claims.Issuer)
 	if err != nil {
 		return nil, err
 	}
+
 	result := &DidDocumentClaims{
 		Doc:      claims.Doc,
 		Issuer:   issuer,
@@ -172,8 +198,6 @@ func DecodeAuthToken(token JwtToken, publicKeyBase58 string, audience string) (*
 	if len(audience) != 0 && claims.Audience != audience {
 		return nil, errors.New("audience does not match")
 	}
-
-	// TODO: (check allowed) validate key was allowed to sign this token ??
 
 	issuer, err := NewIssuerFromString(claims.Issuer)
 	if err != nil {

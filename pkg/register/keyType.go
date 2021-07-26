@@ -2,7 +2,8 @@
 
 package register
 
-import "fmt"
+import "errors"
+
 
 // KeyType number
 type KeyType uint
@@ -15,30 +16,23 @@ const (
 	AuthenticationKeyType
 )
 
-const (
-	// key type string for public key section
-	publicKeyTypeString = "Secp256k1VerificationKey2018"
-	// key type string for authentication section
-	authenticationKeyTypeString = "Secp256k1SignatureAuthentication2018"
-)
-
 // NewKeyType get KeyType uint given string type
 func NewKeyType(value string) (KeyType, error) {
 	switch value {
-	case publicKeyTypeString:
+	case PublicKeyTypeString:
 		return PublicKeyType, nil
-	case authenticationKeyTypeString:
+	case AuthenticationKeyTypeString:
 		return AuthenticationKeyType, nil
 	default:
-		return 0, fmt.Errorf("invalid key type")
+		return 0, errors.New("invalid key type")
 	}
 }
 
 // String KeyType to string
 func (keyType KeyType) String() string {
 	keyTypes := [...]string{
-		publicKeyTypeString,
-		authenticationKeyTypeString,
+		PublicKeyTypeString,
+		AuthenticationKeyTypeString,
 	}
 
 	// prevent panicking in case of

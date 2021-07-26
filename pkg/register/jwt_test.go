@@ -183,3 +183,65 @@ func Test_decode_challenge_token(t *testing.T) {
 	assert.NilError(t, err)
 	assert.DeepEqual(t, claims.Issuer, agentIdentity.Issuer())
 }
+
+func Test_decode_invalid_token(t *testing.T) {
+	// note: bad token truncated middle segment + not issued by iotics did
+	badToken := register.JwtToken("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c")
+
+	_, err := register.DecodeAuthTokenNoVerify(badToken)
+	assert.ErrorContains(t, err, "failed to parse token")
+	_, err = register.DecodeAuthToken(badToken, test.ValidPublicBase58, "")
+	assert.ErrorContains(t, err, "unexpected EOF")
+
+	_, err = register.DecodeChallengeTokenNoVerify(badToken)
+	assert.ErrorContains(t, err, "failed to parse token")
+	_, err = register.DecodeChallengeToken(badToken, test.ValidPublicBase58, "")
+	assert.ErrorContains(t, err, "unexpected EOF")
+
+	_, err = register.DecodeDocumentTokenNoVerify(badToken)
+	assert.ErrorContains(t, err, "failed to parse token")
+	_, err = register.DecodeDocumentToken(badToken, test.ValidPublicBase58, "")
+	assert.ErrorContains(t, err, "unexpected EOF")
+}
+
+func Test_decode_invalid_token_no_issuer(t *testing.T) {
+	badToken := register.JwtToken("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c")
+
+	_, err := register.DecodeAuthTokenNoVerify(badToken)
+	assert.ErrorContains(t, err, "invalid issuer string '' should be of the form [did]#[name]")
+	_, err = register.DecodeAuthToken(badToken, test.ValidPublicBase58, "")
+	assert.ErrorContains(t, err, "key is of invalid type")
+
+	_, err = register.DecodeChallengeTokenNoVerify(badToken)
+	assert.ErrorContains(t, err, "invalid issuer string '' should be of the form [did]#[name]")
+	_, err = register.DecodeChallengeToken(badToken, test.ValidPublicBase58, "")
+	assert.ErrorContains(t, err, "key is of invalid type")
+
+	_, err = register.DecodeDocumentTokenNoVerify(badToken)
+	assert.ErrorContains(t, err, "failed to parse token")
+	_, err = register.DecodeDocumentToken(badToken, test.ValidPublicBase58, "")
+	assert.ErrorContains(t, err, "key is of invalid type")
+}
+
+func Test_decode_document_validation_one(t *testing.T) {
+	registerDocument, issuer, keypair := test.HelperGetRegisterDocument()
+	registerDocument.IoticsSpecVersion = "123"
+	docToken, _ := register.CreateDocumentToken(issuer, test.ValidAudience, registerDocument, keypair.PrivateKey)
+
+	_, err := register.DecodeDocumentTokenNoVerify(docToken)
+	assert.ErrorContains(t, err, "document not valid: document version should be: '0.0.1'")
+	_, err = register.DecodeDocumentToken(docToken, keypair.PublicKeyBase58, "")
+	assert.ErrorContains(t, err, "document not valid: document version should be: '0.0.1'")
+}
+
+func Test_decode_document_validation_multiple(t *testing.T) {
+	registerDocument, issuer, keypair := test.HelperGetRegisterDocument()
+	registerDocument.IoticsSpecVersion = "123"
+	registerDocument.IoticsDIDType = "bad type"
+	docToken, _ := register.CreateDocumentToken(issuer, test.ValidAudience, registerDocument, keypair.PrivateKey)
+
+	_, err := register.DecodeDocumentTokenNoVerify(docToken)
+	assert.ErrorContains(t, err, "document not valid: document version should be: '0.0.1', could not parse DidType: \"bad type\"")
+	_, err = register.DecodeDocumentToken(docToken, keypair.PublicKeyBase58, "")
+	assert.ErrorContains(t, err, "document not valid: document version should be: '0.0.1', could not parse DidType: \"bad type\"")
+}

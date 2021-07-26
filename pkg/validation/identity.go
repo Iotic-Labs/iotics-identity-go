@@ -43,7 +43,7 @@ func ValidateIdentifier(did string) error {
 	return nil
 }
 
-// ValidateIssuer validates issuer.
+// ValidateIssuer validates issuer
 func ValidateIssuer(issuer string) error {
 	if validIssuer.Match([]byte(issuer)) {
 		return nil
