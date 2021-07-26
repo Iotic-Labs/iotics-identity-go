@@ -7,7 +7,8 @@ import (
 	"testing"
 	"time"
 
-	advancedapi2 "github.com/Iotic-Labs/iotics-identity-go/pkg/advancedapi"
+	"github.com/Iotic-Labs/iotics-identity-go/pkg/advancedapi"
+	"github.com/Iotic-Labs/iotics-identity-go/pkg/crypto"
 	"github.com/Iotic-Labs/iotics-identity-go/pkg/identity"
 	"github.com/Iotic-Labs/iotics-identity-go/pkg/register"
 	"github.com/Iotic-Labs/iotics-identity-go/pkg/test"
@@ -17,19 +18,19 @@ import (
 func Test_get_key_pair_from_hex_private_key(t *testing.T) {
 	privateExponent := strings.Repeat("a", 64)
 	expectedBase58 := "PbNnn5VGAkos1X5gcduURAAj4J6e3Awe7Wy45TbKS1SNMTHTBsAG4pvJSfx7ui22zXKzdasQ3ym4idkD5b8YTwYh"
-	keypair, err := advancedapi2.GetKeyPairFromPrivateExponentHex(privateExponent)
+	keypair, err := advancedapi.GetKeyPairFromPrivateExponentHex(privateExponent)
 	assert.NilError(t, err)
 	assert.Equal(t, keypair.PublicKeyBase58, expectedBase58)
 }
 
 func Test_get_key_pair_from_hex_private_key_error(t *testing.T) {
-	_, err := advancedapi2.GetKeyPairFromPrivateExponentHex("")
+	_, err := advancedapi.GetKeyPairFromPrivateExponentHex("")
 	assert.ErrorContains(t, err, "invalid length, need 256 bits")
 }
 
 func Test_get_issuer_by_public_key_raises_not_found_error_if_not_found(t *testing.T) {
 	subjectDoc, _ := test.HelperGetRegisterDocumentFromSecret(test.ValidKeyPairPlop, "#name", identity.User)
-	_, err := advancedapi2.GetIssuerByPublicKey(subjectDoc, test.ValidKeyPairPlop2.PublicKeyBase58)
+	_, err := advancedapi.GetIssuerByPublicKey(subjectDoc, test.ValidKeyPairPlop2.PublicKeyBase58)
 	assert.ErrorContains(t, err, "issuer not found")
 }
 
@@ -37,7 +38,7 @@ func Test_can_get_delegation_proof(t *testing.T) {
 	subjectDoc, _ := test.HelperGetRegisterDocumentFromSecret(test.ValidKeyPairPlop, "#name", identity.User)
 	delegatingIssuer, _ := register.NewIssuer("did:iotics:iotXarXAbViugciWyuFmwRTbNoB6y8Wievfn", "#user-0")
 
-	issuer, proof, err := advancedapi2.CreateDelegationProof(delegatingIssuer, subjectDoc, test.ValidKeyPairPlop)
+	issuer, proof, err := advancedapi.CreateDelegationProof(delegatingIssuer, subjectDoc, test.ValidKeyPairPlop)
 	assert.NilError(t, err)
 	assert.Equal(t, issuer.Did, subjectDoc.ID)
 	assert.DeepEqual(t, proof.Content, []byte(delegatingIssuer.Did))
@@ -45,16 +46,30 @@ func Test_can_get_delegation_proof(t *testing.T) {
 
 func Test_cannot_get_delegation_proof(t *testing.T) {
 	subjectDoc, subjectIssuer := test.HelperGetRegisterDocumentFromSecret(test.ValidKeyPairPlop, "#name", identity.User)
-	delegatingIssuer, _ := register.NewIssuer("did:iotics:iotXarXAbViugciWyuFmwRTbNoB6y8Wievfn", "#user-0")
+	delegatingIssuer, err := register.NewIssuer("did:iotics:iotXarXAbViugciWyuFmwRTbNoB6y8Wievfn", "#user-0")
+	assert.NilError(t, err)
 
 	subjectIdentity := register.NewRegisteredIdentity(test.ValidKeyPairPlop, subjectIssuer)
 
 	resolver := test.NewInMemoryResolver()
-	_ = advancedapi2.RegisterUpdatedDocument(resolver, subjectDoc, test.ValidKeyPairPlop, subjectIssuer)
-	_ = advancedapi2.RemovePublicKeyFromDocument(resolver, "#name", subjectIdentity)
-	subjectDoc, _ = resolver.GetDocument(subjectDoc.ID)
+	err = advancedapi.RegisterUpdatedDocument(resolver, subjectDoc, test.ValidKeyPairPlop, subjectIssuer)
+	assert.NilError(t, err)
 
-	_, _, err := advancedapi2.CreateDelegationProof(delegatingIssuer, subjectDoc, test.ValidKeyPairPlop)
+	// Create and add second key to document so original key can be removed
+	secondKey, err := crypto.GetPrivateKeyFromExponent("baddbaddbaddbaddbaddbaddbaddbaddbaddbaddbaddbaddbaddbaddbaddbadd")
+	assert.NilError(t, err)
+	_, secondKeyPublicBase58, err := crypto.GetPublicKeysFromPrivateKey(secondKey)
+	assert.NilError(t, err)
+	err = advancedapi.AddPublicKeyToDocument(resolver, "#second", secondKeyPublicBase58, subjectIdentity)
+	assert.NilError(t, err)
+
+	err = advancedapi.RemovePublicKeyFromDocument(resolver, "#name", subjectIdentity)
+	assert.NilError(t, err)
+
+	subjectDoc, err = resolver.GetDocument(subjectDoc.ID)
+	assert.NilError(t, err)
+
+	_, _, err = advancedapi.CreateDelegationProof(delegatingIssuer, subjectDoc, test.ValidKeyPairPlop)
 	assert.ErrorContains(t, err, "unable to find public key in document matching key pair secrets")
 }
 
@@ -78,7 +93,7 @@ func Test_can_register_a_doc(t *testing.T) {
 
 func Test_can_create_new_registered_identity(t *testing.T) {
 	resolver := test.NewInMemoryResolver()
-	regId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.User, test.ValidKeyPairPlop, "#NewId", false)
+	regId, err := advancedapi.NewRegisteredIdentity(resolver, identity.User, test.ValidKeyPairPlop, "#NewId", false)
 	assert.NilError(t, err)
 	assert.DeepEqual(t, regId.KeyPair(), test.ValidKeyPairPlop)
 	assert.Equal(t, regId.Issuer().Name, "#NewId")
@@ -99,7 +114,7 @@ func Test_can_create_new_registered_identity_with_default_issuer_name(t *testing
 	}
 	for _, c := range cases {
 		resolver := test.NewInMemoryResolver()
-		regId, err := advancedapi2.NewRegisteredIdentity(resolver, c.purpose, test.ValidKeyPairPlop, "", false)
+		regId, err := advancedapi.NewRegisteredIdentity(resolver, c.purpose, test.ValidKeyPairPlop, "", false)
 		assert.NilError(t, err)
 		assert.DeepEqual(t, regId.KeyPair(), test.ValidKeyPairPlop)
 		assert.Equal(t, regId.Issuer().Name, c.name)
@@ -108,7 +123,7 @@ func Test_can_create_new_registered_identity_with_default_issuer_name(t *testing
 
 func Test_can_create_new_registered_identity_will_not_override_doc_if_exists(t *testing.T) {
 	resolver := test.NewInMemoryResolver()
-	regId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.User, test.ValidKeyPairPlop, "#ExistingId", false)
+	regId, err := advancedapi.NewRegisteredIdentity(resolver, identity.User, test.ValidKeyPairPlop, "#ExistingId", false)
 	assert.NilError(t, err)
 
 	doc, err := resolver.GetDocument(regId.Did())
@@ -116,7 +131,7 @@ func Test_can_create_new_registered_identity_will_not_override_doc_if_exists(t *
 	assert.Check(t, len(doc.PublicKeys) == 1)
 	assert.Check(t, doc.PublicKeys[0].ID == "#ExistingId")
 
-	regId, err = advancedapi2.NewRegisteredIdentity(resolver, identity.User, test.ValidKeyPairPlop, "#NewId", false)
+	regId, err = advancedapi.NewRegisteredIdentity(resolver, identity.User, test.ValidKeyPairPlop, "#NewId", false)
 	assert.NilError(t, err)
 
 	doc, err = resolver.GetDocument(regId.Did())
@@ -127,7 +142,7 @@ func Test_can_create_new_registered_identity_will_not_override_doc_if_exists(t *
 
 func Test_can_create_new_registered_identity_will_override_doc_if_exists_and_override_true(t *testing.T) {
 	resolver := test.NewInMemoryResolver()
-	regId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.User, test.ValidKeyPairPlop, "#ExistingId", false)
+	regId, err := advancedapi.NewRegisteredIdentity(resolver, identity.User, test.ValidKeyPairPlop, "#ExistingId", false)
 	assert.NilError(t, err)
 
 	doc, err := resolver.GetDocument(regId.Did())
@@ -135,7 +150,7 @@ func Test_can_create_new_registered_identity_will_override_doc_if_exists_and_ove
 	assert.Check(t, len(doc.PublicKeys) == 1)
 	assert.Check(t, doc.PublicKeys[0].ID == "#ExistingId")
 
-	regId, err = advancedapi2.NewRegisteredIdentity(resolver, identity.User, test.ValidKeyPairPlop, "#NewId", true)
+	regId, err = advancedapi.NewRegisteredIdentity(resolver, identity.User, test.ValidKeyPairPlop, "#NewId", true)
 	assert.NilError(t, err)
 
 	doc, err = resolver.GetDocument(regId.Did())
@@ -146,12 +161,12 @@ func Test_can_create_new_registered_identity_will_override_doc_if_exists_and_ove
 
 func Test_can_delegate_authentication(t *testing.T) {
 	resolver := test.NewInMemoryResolver()
-	userId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.User, test.ValidKeyPairPlop, "#ExistingId", false)
+	userId, err := advancedapi.NewRegisteredIdentity(resolver, identity.User, test.ValidKeyPairPlop, "#ExistingId", false)
 	assert.NilError(t, err)
-	agentId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.User, test.ValidKeyPairPlop2, "#ExistingId", false)
+	agentId, err := advancedapi.NewRegisteredIdentity(resolver, identity.User, test.ValidKeyPairPlop2, "#ExistingId", false)
 	assert.NilError(t, err)
 
-	err = advancedapi2.DelegateAuthentication(resolver, userId.KeyPair(), userId.Did(), agentId.KeyPair(), agentId.Did(), test.DelegationName)
+	err = advancedapi.DelegateAuthentication(resolver, userId.KeyPair(), userId.Did(), agentId.KeyPair(), agentId.Did(), test.DelegationName)
 	assert.NilError(t, err)
 
 	doc, err := resolver.GetDocument(userId.Did())
@@ -166,12 +181,12 @@ func Test_can_delegate_authentication(t *testing.T) {
 
 func Test_can_delegate_control(t *testing.T) {
 	resolver := test.NewInMemoryResolver()
-	twinId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
+	twinId, err := advancedapi.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
 	assert.NilError(t, err)
-	agentId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.User, test.ValidKeyPairPlop2, "#ExistingId", false)
+	agentId, err := advancedapi.NewRegisteredIdentity(resolver, identity.User, test.ValidKeyPairPlop2, "#ExistingId", false)
 	assert.NilError(t, err)
 
-	err = advancedapi2.DelegateControl(resolver, twinId.KeyPair(), twinId.Did(), agentId.KeyPair(), agentId.Did(), "#NewDelegCtrl")
+	err = advancedapi.DelegateControl(resolver, twinId.KeyPair(), twinId.Did(), agentId.KeyPair(), agentId.Did(), "#NewDelegCtrl")
 	assert.NilError(t, err)
 
 	doc, err := resolver.GetDocument(twinId.Did())
@@ -186,10 +201,10 @@ func Test_can_delegate_control(t *testing.T) {
 
 func Test_can_add_public_key_to_a_document(t *testing.T) {
 	resolver := test.NewInMemoryResolver()
-	twinId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
+	twinId, err := advancedapi.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
 	assert.NilError(t, err)
 
-	err = advancedapi2.AddPublicKeyToDocument(resolver, "#NewOwner", test.ValidKeyPairPlop2.PublicKeyBase58, twinId)
+	err = advancedapi.AddPublicKeyToDocument(resolver, "#NewOwner", test.ValidKeyPairPlop2.PublicKeyBase58, twinId)
 	assert.NilError(t, err)
 
 	doc, err := resolver.GetDocument(twinId.Did())
@@ -209,10 +224,10 @@ func Test_can_add_public_key_to_a_document(t *testing.T) {
 
 func Test_can_add_auth_key_to_a_document(t *testing.T) {
 	resolver := test.NewInMemoryResolver()
-	twinId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
+	twinId, err := advancedapi.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
 	assert.NilError(t, err)
 
-	err = advancedapi2.AddAuthenticationKeyToDocument(resolver, "#NewAuth", test.ValidKeyPairPlop2.PublicKeyBase58, twinId)
+	err = advancedapi.AddAuthenticationKeyToDocument(resolver, "#NewAuth", test.ValidKeyPairPlop2.PublicKeyBase58, twinId)
 	assert.NilError(t, err)
 
 	doc, err := resolver.GetDocument(twinId.Did())
@@ -226,10 +241,10 @@ func Test_can_add_auth_key_to_a_document(t *testing.T) {
 
 func Test_can_add_auth_delegation_proof(t *testing.T) {
 	resolver := test.NewInMemoryResolver()
-	twinId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
+	twinId, err := advancedapi.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
 	assert.NilError(t, err)
 
-	err = advancedapi2.AddAuthenticationDelegationToDocument(resolver, test.OtherDelegationName, test.OtherDocIssuer.String(), test.OtherProof, twinId)
+	err = advancedapi.AddAuthenticationDelegationToDocument(resolver, test.OtherDelegationName, test.OtherDocIssuer.String(), test.OtherProof, twinId)
 	assert.NilError(t, err)
 
 	doc, err := resolver.GetDocument(twinId.Did())
@@ -243,10 +258,10 @@ func Test_can_add_auth_delegation_proof(t *testing.T) {
 
 func Test_can_add_control_delegation_proof(t *testing.T) {
 	resolver := test.NewInMemoryResolver()
-	twinId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
+	twinId, err := advancedapi.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
 	assert.NilError(t, err)
 
-	err = advancedapi2.AddControlDelegationToDocument(resolver, "#newDeleg", test.OtherDocIssuer.String(), test.OtherProof, twinId)
+	err = advancedapi.AddControlDelegationToDocument(resolver, "#newDeleg", test.OtherDocIssuer.String(), test.OtherProof, twinId)
 	assert.NilError(t, err)
 
 	doc, err := resolver.GetDocument(twinId.Did())
@@ -260,17 +275,17 @@ func Test_can_add_control_delegation_proof(t *testing.T) {
 
 func Test_can_remove_control_delegation(t *testing.T) {
 	resolver := test.NewInMemoryResolver()
-	twinId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
+	twinId, err := advancedapi.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
 	assert.NilError(t, err)
 
-	err = advancedapi2.AddControlDelegationToDocument(resolver, "#newDeleg", test.OtherDocIssuer.String(), test.OtherProof, twinId)
+	err = advancedapi.AddControlDelegationToDocument(resolver, "#newDeleg", test.OtherDocIssuer.String(), test.OtherProof, twinId)
 	assert.NilError(t, err)
 
 	doc, err := resolver.GetDocument(twinId.Did())
 	assert.NilError(t, err)
 	assert.Check(t, len(doc.DelegateControl) == 1)
 
-	err = advancedapi2.RemoveControlDelegationFromDocument(resolver, "#newDeleg", twinId)
+	err = advancedapi.RemoveControlDelegationFromDocument(resolver, "#newDeleg", twinId)
 
 	doc, err = resolver.GetDocument(twinId.Did())
 	assert.NilError(t, err)
@@ -279,17 +294,17 @@ func Test_can_remove_control_delegation(t *testing.T) {
 
 func Test_can_remove_auth_delegation(t *testing.T) {
 	resolver := test.NewInMemoryResolver()
-	twinId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
+	twinId, err := advancedapi.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
 	assert.NilError(t, err)
 
-	err = advancedapi2.AddAuthenticationDelegationToDocument(resolver, "#newDeleg", test.OtherDocIssuer.String(), test.OtherProof, twinId)
+	err = advancedapi.AddAuthenticationDelegationToDocument(resolver, "#newDeleg", test.OtherDocIssuer.String(), test.OtherProof, twinId)
 	assert.NilError(t, err)
 
 	doc, err := resolver.GetDocument(twinId.Did())
 	assert.NilError(t, err)
 	assert.Check(t, len(doc.DelegateAuthentication) == 1)
 
-	err = advancedapi2.RemoveAuthenticationDelegationFromDocument(resolver, "#newDeleg", twinId)
+	err = advancedapi.RemoveAuthenticationDelegationFromDocument(resolver, "#newDeleg", twinId)
 
 	doc, err = resolver.GetDocument(twinId.Did())
 	assert.NilError(t, err)
@@ -298,17 +313,17 @@ func Test_can_remove_auth_delegation(t *testing.T) {
 
 func Test_can_revoke_control_delegation(t *testing.T) {
 	resolver := test.NewInMemoryResolver()
-	twinId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
+	twinId, err := advancedapi.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
 	assert.NilError(t, err)
 
-	err = advancedapi2.AddControlDelegationToDocument(resolver, "#newDeleg", test.OtherDocIssuer.String(), test.OtherProof, twinId)
+	err = advancedapi.AddControlDelegationToDocument(resolver, "#newDeleg", test.OtherDocIssuer.String(), test.OtherProof, twinId)
 	assert.NilError(t, err)
 
 	doc, err := resolver.GetDocument(twinId.Did())
 	assert.NilError(t, err)
 	assert.Check(t, doc.DelegateControl[0].Revoked == false)
 
-	err = advancedapi2.RevokeControlDelegationFromDocument(resolver, "#newDeleg", twinId)
+	err = advancedapi.RevokeControlDelegationFromDocument(resolver, "#newDeleg", twinId)
 
 	doc, err = resolver.GetDocument(twinId.Did())
 	assert.NilError(t, err)
@@ -318,17 +333,17 @@ func Test_can_revoke_control_delegation(t *testing.T) {
 
 func Test_can_revoke_auth_delegation(t *testing.T) {
 	resolver := test.NewInMemoryResolver()
-	twinId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
+	twinId, err := advancedapi.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
 	assert.NilError(t, err)
 
-	err = advancedapi2.AddAuthenticationDelegationToDocument(resolver, "#newDeleg", test.OtherDocIssuer.String(), test.OtherProof, twinId)
+	err = advancedapi.AddAuthenticationDelegationToDocument(resolver, "#newDeleg", test.OtherDocIssuer.String(), test.OtherProof, twinId)
 	assert.NilError(t, err)
 
 	doc, err := resolver.GetDocument(twinId.Did())
 	assert.NilError(t, err)
 	assert.Check(t, len(doc.DelegateAuthentication) == 1)
 
-	err = advancedapi2.RevokeAuthenticationDelegationFromDocument(resolver, "#newDeleg", twinId)
+	err = advancedapi.RevokeAuthenticationDelegationFromDocument(resolver, "#newDeleg", twinId)
 
 	doc, err = resolver.GetDocument(twinId.Did())
 	assert.NilError(t, err)
@@ -338,20 +353,20 @@ func Test_can_revoke_auth_delegation(t *testing.T) {
 
 func Test_can_validate_document(t *testing.T) {
 	resolver := test.NewInMemoryResolver()
-	twinId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
+	twinId, err := advancedapi.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
 	assert.NilError(t, err)
 
-	otherId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.Agent, test.ValidKeyPairPlop2, "#otherId", false)
+	otherId, err := advancedapi.NewRegisteredIdentity(resolver, identity.Agent, test.ValidKeyPairPlop2, "#otherId", false)
 	assert.NilError(t, err)
 
 	otherDoc, _ := resolver.GetDocument(otherId.Did())
-	_, proof, err := advancedapi2.CreateDelegationProof(twinId.Issuer(), otherDoc, test.ValidKeyPairPlop2)
+	_, proof, err := advancedapi.CreateDelegationProof(twinId.Issuer(), otherDoc, test.ValidKeyPairPlop2)
 	assert.NilError(t, err)
 
-	err = advancedapi2.AddControlDelegationToDocument(resolver, "#newDelegCtrl", otherId.Issuer().String(), proof.Signature, twinId)
+	err = advancedapi.AddControlDelegationToDocument(resolver, "#newDelegCtrl", otherId.Issuer().String(), proof.Signature, twinId)
 	assert.NilError(t, err)
 
-	err = advancedapi2.AddAuthenticationDelegationToDocument(resolver, "#newDeleg", otherId.Issuer().String(), proof.Signature, twinId)
+	err = advancedapi.AddAuthenticationDelegationToDocument(resolver, "#newDeleg", otherId.Issuer().String(), proof.Signature, twinId)
 	assert.NilError(t, err)
 
 	doc, err := resolver.GetDocument(twinId.Did())
@@ -359,29 +374,29 @@ func Test_can_validate_document(t *testing.T) {
 	assert.Check(t, len(doc.DelegateAuthentication) == 1)
 	assert.Check(t, len(doc.DelegateControl) == 1)
 
-	err = advancedapi2.ValidateRegisterDocument(resolver, doc)
+	err = advancedapi.ValidateRegisterDocument(resolver, doc)
 	assert.NilError(t, err)
 }
 
 func Test_can_set_document_controller(t *testing.T) {
 	resolver := test.NewInMemoryResolver()
-	twinId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
+	twinId, err := advancedapi.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
 	assert.NilError(t, err)
 
-	err = advancedapi2.SetDocumentController(resolver, twinId, test.OtherDocIssuer)
+	err = advancedapi.SetDocumentController(resolver, twinId, test.ValidIssuer)
 	assert.NilError(t, err)
 
 	doc, err := resolver.GetDocument(twinId.Did())
 	assert.NilError(t, err)
-	assert.Check(t, doc.Controller == test.OtherDocIssuer.Did)
+	assert.Check(t, doc.Controller == test.ValidIssuer.Did)
 }
 
 func Test_can_set_document_creator(t *testing.T) {
 	resolver := test.NewInMemoryResolver()
-	twinId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
+	twinId, err := advancedapi.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
 	assert.NilError(t, err)
 
-	err = advancedapi2.SetDocumentCreator(resolver, twinId, test.OtherDocIssuer)
+	err = advancedapi.SetDocumentCreator(resolver, twinId, test.OtherDocIssuer)
 	assert.NilError(t, err)
 
 	doc, err := resolver.GetDocument(twinId.Did())
@@ -391,10 +406,10 @@ func Test_can_set_document_creator(t *testing.T) {
 
 func Test_can_set_document_revoked(t *testing.T) {
 	resolver := test.NewInMemoryResolver()
-	twinId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
+	twinId, err := advancedapi.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
 	assert.NilError(t, err)
 
-	err = advancedapi2.SetDocumentRevoked(resolver, twinId, true)
+	err = advancedapi.SetDocumentRevoked(resolver, twinId, true)
 	assert.NilError(t, err)
 
 	doc, err := resolver.GetDocument(twinId.Did())
@@ -404,13 +419,13 @@ func Test_can_set_document_revoked(t *testing.T) {
 
 func Test_can_remove_public_key(t *testing.T) {
 	resolver := test.NewInMemoryResolver()
-	twinId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
+	twinId, err := advancedapi.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
 	assert.NilError(t, err)
 
-	err = advancedapi2.AddPublicKeyToDocument(resolver, "#NewPub", test.ValidKeyPairPlop2.PublicKeyBase58, twinId)
+	err = advancedapi.AddPublicKeyToDocument(resolver, "#NewPub", test.ValidKeyPairPlop2.PublicKeyBase58, twinId)
 	assert.NilError(t, err)
 
-	err = advancedapi2.RemovePublicKeyFromDocument(resolver, "#NewPub", twinId)
+	err = advancedapi.RemovePublicKeyFromDocument(resolver, "#NewPub", twinId)
 	assert.NilError(t, err)
 
 	doc, err := resolver.GetDocument(twinId.Did())
@@ -421,10 +436,10 @@ func Test_can_remove_public_key(t *testing.T) {
 
 func Test_can_revoke_public_key(t *testing.T) {
 	resolver := test.NewInMemoryResolver()
-	twinId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
+	twinId, err := advancedapi.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
 	assert.NilError(t, err)
 
-	err = advancedapi2.RevokePublicKeyFromDocument(resolver, twinId.Issuer().Name, twinId)
+	err = advancedapi.RevokePublicKeyFromDocument(resolver, twinId.Issuer().Name, twinId)
 	assert.NilError(t, err)
 
 	doc, err := resolver.GetDocument(twinId.Did())
@@ -436,13 +451,13 @@ func Test_can_revoke_public_key(t *testing.T) {
 
 func Test_can_remove_auth_key(t *testing.T) {
 	resolver := test.NewInMemoryResolver()
-	twinId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
+	twinId, err := advancedapi.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
 	assert.NilError(t, err)
 
-	err = advancedapi2.AddAuthenticationKeyToDocument(resolver, "#NewAuth", test.ValidKeyPairPlop2.PublicKeyBase58, twinId)
+	err = advancedapi.AddAuthenticationKeyToDocument(resolver, "#NewAuth", test.ValidKeyPairPlop2.PublicKeyBase58, twinId)
 	assert.NilError(t, err)
 
-	err = advancedapi2.RemoveAuthenticationKeyFromDocument(resolver, "#NewAuth", twinId)
+	err = advancedapi.RemoveAuthenticationKeyFromDocument(resolver, "#NewAuth", twinId)
 	assert.NilError(t, err)
 
 	doc, err := resolver.GetDocument(twinId.Did())
@@ -453,13 +468,13 @@ func Test_can_remove_auth_key(t *testing.T) {
 
 func Test_can_revoke_auth_key(t *testing.T) {
 	resolver := test.NewInMemoryResolver()
-	twinId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
+	twinId, err := advancedapi.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
 	assert.NilError(t, err)
 
-	err = advancedapi2.AddAuthenticationKeyToDocument(resolver, "#NewAuth", test.ValidKeyPairPlop2.PublicKeyBase58, twinId)
+	err = advancedapi.AddAuthenticationKeyToDocument(resolver, "#NewAuth", test.ValidKeyPairPlop2.PublicKeyBase58, twinId)
 	assert.NilError(t, err)
 
-	err = advancedapi2.RevokeAuthenticationKeyFromDocument(resolver, "#NewAuth", twinId)
+	err = advancedapi.RevokeAuthenticationKeyFromDocument(resolver, "#NewAuth", twinId)
 	assert.NilError(t, err)
 
 	doc, err := resolver.GetDocument(twinId.Did())
@@ -471,76 +486,85 @@ func Test_can_revoke_auth_key(t *testing.T) {
 
 func Test_can_create_agent_auth_token(t *testing.T) {
 	resolver := test.NewInMemoryResolver()
-	agentId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.Agent, test.ValidKeyPairPlop, "#agent", false)
+	agentId, err := advancedapi.NewRegisteredIdentity(resolver, identity.Agent, test.ValidKeyPairPlop, "#agent", false)
 	assert.NilError(t, err)
-	userId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.User, test.ValidKeyPairPlop2, "#user", false)
+	userId, err := advancedapi.NewRegisteredIdentity(resolver, identity.User, test.ValidKeyPairPlop2, "#user", false)
 	assert.NilError(t, err)
 
 	agentDoc, _ := resolver.GetDocument(agentId.Did())
-	_, proof, err := advancedapi2.CreateDelegationProof(userId.Issuer(), agentDoc, agentId.KeyPair())
+	_, proof, err := advancedapi.CreateDelegationProof(userId.Issuer(), agentDoc, agentId.KeyPair())
 	assert.NilError(t, err)
 
-	err = advancedapi2.AddAuthenticationDelegationToDocument(resolver, "#deleg", agentId.Issuer().String(), proof.Signature, userId)
+	err = advancedapi.AddAuthenticationDelegationToDocument(resolver, "#deleg", agentId.Issuer().String(), proof.Signature, userId)
 	assert.NilError(t, err)
 
 	duration, _ := time.ParseDuration("10s")
-	token, err := advancedapi2.CreateAgentAuthToken(agentId, userId.Did(), duration, "audience", 0)
+	token, err := advancedapi.CreateAgentAuthToken(agentId, userId.Did(), duration, "audience", 0)
 	assert.NilError(t, err)
 	assert.Check(t, len(string(token)) > 0)
 }
 
 func Test_can_create_twin_auth_token(t *testing.T) {
 	resolver := test.NewInMemoryResolver()
-	twinId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop2, "#twin", false)
+	twinId, err := advancedapi.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop2, "#twin", false)
 	assert.NilError(t, err)
 
 	duration, _ := time.ParseDuration("10s")
-	token, err := advancedapi2.CreateTwinAuthToken(twinId, duration, "audience", 01)
+	token, err := advancedapi.CreateTwinAuthToken(twinId, duration, "audience", 01)
 	assert.NilError(t, err)
 	assert.Check(t, len(string(token)) > 0)
 }
 
 func Test_can_create_identifier(t *testing.T) {
-	id, err := advancedapi2.CreateIdentifier(test.ValidKeyPairPlop.PublicKeyBytes)
+	id, err := advancedapi.CreateIdentifier(test.ValidKeyPairPlop.PublicKeyBytes)
 	assert.NilError(t, err)
 	assert.Check(t, id == "did:iotics:iotFqH94g4jG58XNMDK9k5YCmQgcpNPUhWFx")
 }
 
 func Test_can_validate_document_proof(t *testing.T) {
 	resolver := test.NewInMemoryResolver()
-	twinId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
+	twinId, err := advancedapi.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
 	assert.NilError(t, err)
 
 	doc, err := resolver.GetDocument(twinId.Did())
 	assert.NilError(t, err)
 
-	err = advancedapi2.ValidateDocumentProof(doc)
+	err = advancedapi.ValidateDocumentProof(doc)
 	assert.NilError(t, err)
 }
 
 func Test_cannot_validate_document_proof(t *testing.T) {
 	resolver := test.NewInMemoryResolver()
-	twinId, err := advancedapi2.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
+	twinId, err := advancedapi.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
 	assert.NilError(t, err)
 
-	_ = advancedapi2.RemovePublicKeyFromDocument(resolver, "#ExistingId", twinId)
+	// Create and add second key to document so original key can be removed
+	secondKey, err := crypto.GetPrivateKeyFromExponent("baddbaddbaddbaddbaddbaddbaddbaddbaddbaddbaddbaddbaddbaddbaddbadd")
+	assert.NilError(t, err)
+	_, secondKeyPublicBase58, err := crypto.GetPublicKeysFromPrivateKey(secondKey)
+	assert.NilError(t, err)
+	err = advancedapi.AddPublicKeyToDocument(resolver, "#second", secondKeyPublicBase58, twinId)
+	assert.NilError(t, err)
+
+	err = advancedapi.RemovePublicKeyFromDocument(resolver, "#ExistingId", twinId)
+	assert.NilError(t, err)
 
 	doc, err := resolver.GetDocument(twinId.Did())
 	assert.NilError(t, err)
 
-	err = advancedapi2.ValidateDocumentProof(doc)
+	err = advancedapi.ValidateDocumentProof(doc)
 	assert.ErrorContains(t, err, "unable to find public key matching document ID")
 }
 
 func Test_can_create_seed(t *testing.T) {
-	seed, err := advancedapi2.CreateSeed(128)
+	seed, err := advancedapi.CreateSeed(128)
 	assert.NilError(t, err)
 	assert.Check(t, len(seed) == 16)
 
-	seed, err = advancedapi2.CreateSeed(256)
+	seed, err = advancedapi.CreateSeed(256)
 	assert.NilError(t, err)
 	assert.Check(t, len(seed) == 32)
 
-	_, err = advancedapi2.CreateSeed(384)
+	_, err = advancedapi.CreateSeed(384)
 	assert.ErrorContains(t, err, "length must be 128 or 256")
 }

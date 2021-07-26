@@ -62,10 +62,17 @@ func NewRegisterDocument(opts []RegisterDocumentOpts) (*RegisterDocument, []erro
 	if len(errs) != 0 {
 		return nil, errs
 	}
+
 	doc, err := builder.build()
 	if err != nil {
-		return nil, []error{err}
+		errs = append(errs, err)
 	}
+
+	errs = append(errs, doc.Validate()...)
+	if len(errs) != 0 {
+		return nil, errs
+	}
+
 	return doc, nil
 }
 

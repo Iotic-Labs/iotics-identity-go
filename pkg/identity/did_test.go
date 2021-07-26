@@ -4,9 +4,10 @@ package identity_test
 
 import (
 	"fmt"
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/test"
 	"strings"
 	"testing"
+
+	"github.com/Iotic-Labs/iotics-identity-go/pkg/test"
 
 	"github.com/Iotic-Labs/iotics-identity-go/pkg/identity"
 	"github.com/Iotic-Labs/iotics-identity-go/pkg/validation"
@@ -17,6 +18,11 @@ func Test_can_make_identifier(t *testing.T) {
 	id, err := identity.MakeIdentifier(test.ValidKeyPair.PublicKeyBytes)
 	assert.NilError(t, err)
 	assert.Equal(t, strings.HasPrefix(id, validation.IdentifierPrefix), true)
+}
+
+func Test_cannot_make_identifier_bad_publickey(t *testing.T) {
+	_, err := identity.MakeIdentifier([]byte{})
+	assert.ErrorContains(t, err, "public key bytes wrong length 0 != 65")
 }
 
 func Test_make_identifier_is_idempotent(t *testing.T) {
@@ -55,4 +61,9 @@ func Test_is_same_identifier_return_false_for_different_identifier_ignoring_name
 		result := identity.IsSameIdentifier(d.id1, d.id2)
 		assert.Equal(t, result, false)
 	}
+}
+
+func Test_MakeName(t *testing.T) {
+	name := identity.MakeName(identity.Twin)
+	assert.Check(t, name == "#twin-0")
 }
