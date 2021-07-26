@@ -5,7 +5,6 @@ package register
 import (
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/Iotic-Labs/iotics-identity-go/pkg/identity"
 	"github.com/Iotic-Labs/iotics-identity-go/pkg/validation"
@@ -122,24 +121,26 @@ func (document RegisterDocument) Validate() []error {
 	}
 
 	// Check key/delegation names are unique in the document
-	bufOfNames := ""
+	bufOfNames := map[string]bool{}
 
 	for _, publicKey := range document.PublicKeys {
 		errs = append(errs, validatePublicKey(PublicKeyTypeString, publicKey)...)
 
-		if strings.Contains(bufOfNames, publicKey.ID+"|") {
+		if _, found := bufOfNames[publicKey.ID]; found {
 			errs = append(errs, fmt.Errorf("key name '%s' is not unique", publicKey.ID))
+			continue
 		}
-		bufOfNames = bufOfNames + publicKey.ID + "|"
+		bufOfNames[publicKey.ID] = true
 	}
 
 	for _, publicKey := range document.AuthenticationKeys {
 		errs = append(errs, validatePublicKey(AuthenticationKeyTypeString, publicKey)...)
 
-		if strings.Contains(bufOfNames, publicKey.ID+"|") {
+		if _, found := bufOfNames[publicKey.ID]; found {
 			errs = append(errs, fmt.Errorf("key name '%s' is not unique", publicKey.ID))
+			continue
 		}
-		bufOfNames = bufOfNames + publicKey.ID + "|"
+		bufOfNames[publicKey.ID] = true
 	}
 
 	for _, delegation := range append(document.DelegateControl, document.DelegateAuthentication...) {
@@ -153,10 +154,11 @@ func (document RegisterDocument) Validate() []error {
 			errs = append(errs, err)
 		}
 
-		if strings.Contains(bufOfNames, delegation.ID+"|") {
+		if _, found := bufOfNames[delegation.ID]; found {
 			errs = append(errs, fmt.Errorf("delegation name '%s' is not unique", delegation.ID))
+			continue
 		}
-		bufOfNames = bufOfNames + delegation.ID + "|"
+		bufOfNames[delegation.ID] = true
 	}
 
 	if len(document.PublicKeys)+len(document.Controller) == 0 {
