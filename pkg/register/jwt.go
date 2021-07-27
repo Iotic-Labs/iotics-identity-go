@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/Iotic-Labs/iotics-identity-go/pkg/proof"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt"
 )
 
 // AuthenticationClaims Structure for returning decoded authentication tokens

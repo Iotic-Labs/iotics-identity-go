@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/Iotic-Labs/iotics-identity-go/pkg/validation"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt"
 )
 
 var defaultSigningMethod = jwt.SigningMethodES256
