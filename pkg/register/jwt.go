@@ -109,7 +109,10 @@ func DecodeDocumentToken(token JwtToken, publicKeyBase58 string, audience string
 		return nil, err
 	}
 
-	claims, _ := decoded.Claims.(*didDocumentClaims)
+	claims, ok := decoded.Claims.(*didDocumentClaims)
+	if !ok || claims.Doc == nil {
+		return nil, errors.New("failed to parse token")
+	}
 
 	if len(audience) != 0 && claims.Audience != audience {
 		return nil, errors.New("audience does not match")

@@ -8,6 +8,7 @@ import (
 	"crypto/sha256"
 	"encoding/asn1"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"math/big"
 )
@@ -73,7 +74,7 @@ func ValidateProof(proof *Proof, publicBase58 string) error {
 	sig := &ecdsaSignature{}
 	_, err = asn1.Unmarshal(der, sig)
 	if err != nil {
-		return err
+		return errors.New("unable to decode proof signature") // The err "asn1: structure error: tags don't match"
 	}
 
 	valid := ecdsa.Verify(publicKey, slice, sig.R, sig.S)
