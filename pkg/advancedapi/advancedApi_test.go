@@ -378,6 +378,32 @@ func Test_can_validate_document(t *testing.T) {
 	assert.NilError(t, err)
 }
 
+func Test_can_validate_document_delegations(t *testing.T) {
+	resolver := test.NewInMemoryResolver()
+	agentId, err := advancedapi.NewRegisteredIdentity(resolver, identity.Agent, test.ValidKeyPairPlop, "#agent", false)
+	assert.NilError(t, err)
+	userId, err := advancedapi.NewRegisteredIdentity(resolver, identity.User, test.ValidKeyPairPlop2, "#user", false)
+	assert.NilError(t, err)
+
+	agentDoc, _ := resolver.GetDocument(agentId.Did())
+	_, proof, err := advancedapi.CreateDelegationProof(userId.Issuer(), agentDoc, agentId.KeyPair())
+	assert.NilError(t, err)
+
+	err = advancedapi.AddAuthenticationDelegationToDocument(resolver, "#deleg", agentId.Issuer().String(), proof.Signature, userId)
+	assert.NilError(t, err)
+
+	err = advancedapi.ValidateRegisterDocument(resolver, agentDoc)
+	assert.NilError(t, err)
+
+	userDoc, _ := resolver.GetDocument(userId.Did())
+	err = advancedapi.ValidateRegisterDocument(resolver, userDoc)
+	assert.NilError(t, err)
+
+	userDoc.DelegateAuthentication[0].Proof = "aGVsbG8gd29ybGQ=" // hello world
+	err = advancedapi.ValidateRegisterDocument(resolver, userDoc)
+	assert.ErrorContains(t, err, "unable to decode proof signature")
+}
+
 func Test_can_set_document_controller(t *testing.T) {
 	resolver := test.NewInMemoryResolver()
 	twinId, err := advancedapi.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
