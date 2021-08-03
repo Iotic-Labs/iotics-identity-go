@@ -52,6 +52,7 @@ func CreateAgentAuthToken(agentID register.RegisteredIdentity, userDid string, d
 	return advancedapi.CreateAgentAuthToken(agentID, userDid, duration, audience, startOffset)
 }
 
+// CreateTwinWithControlDelegation Create a twin with control delegation to Agent.
 func CreateTwinWithControlDelegation(resolverClient register.ResolverClient, opts *CreateTwinOpts) (register.RegisteredIdentity, error) {
 	createOpts := &CreateIdentityOpts{
 		Seed:     opts.Seed,
@@ -60,12 +61,12 @@ func CreateTwinWithControlDelegation(resolverClient register.ResolverClient, opt
 		Name:     opts.Name,
 		Override: opts.OverideDoc,
 	}
-	twinId, err := CreateTwinIdentity(resolverClient, createOpts)
+	twinID, err := CreateTwinIdentity(resolverClient, createOpts)
 	if err != nil {
 		return nil, err
 	}
-	err = DelegateControl(resolverClient, twinId, opts.AgentId, opts.DelegationName)
-	return twinId, err
+	err = DelegateControl(resolverClient, twinID, opts.AgentId, opts.DelegationName)
+	return twinID, err
 }
 
 // DelegateControl registers a twin identity with twin delegating control to the agent

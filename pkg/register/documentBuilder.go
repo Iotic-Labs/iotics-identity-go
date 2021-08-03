@@ -32,8 +32,8 @@ type RegisterDocumentBuilder struct {
 	DelegateControl        map[string]*RegisterDelegationProof
 }
 
-func defaultUpdateTimeSeconds() int64 {
-	return time.Now().Unix()
+func defaultUpdateTimeMillis() int64 {
+	return time.Now().UnixNano() / 1000000
 }
 
 func specVersionExists(val string) bool {
@@ -82,11 +82,6 @@ func (b RegisterDocumentBuilder) build() (*RegisterDocument, error) {
 		specVersion = b.SpecVersion
 	}
 
-	updateTime := defaultUpdateTimeSeconds()
-	if b.UpdateTime != 0 {
-		updateTime = b.UpdateTime
-	}
-
 	doc := &RegisterDocument{
 		Context:                DocumentContext,
 		ID:                     b.ID,
@@ -94,7 +89,7 @@ func (b RegisterDocumentBuilder) build() (*RegisterDocument, error) {
 		IoticsDIDType:          b.Purpose,
 		Controller:             b.Controller,
 		Creator:                b.Creator,
-		UpdateTime:             updateTime,
+		UpdateTime:             defaultUpdateTimeMillis(),
 		Proof:                  b.Proof,
 		Revoked:                b.Revoked,
 		AuthenticationKeys:     convertRegisterPublicKeyMapToSlice(b.AuthenticationKeys),

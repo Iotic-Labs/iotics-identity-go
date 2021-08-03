@@ -409,12 +409,17 @@ func Test_can_set_document_controller(t *testing.T) {
 	twinId, err := advancedapi.NewRegisteredIdentity(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
 	assert.NilError(t, err)
 
+	initialDoc, err := resolver.GetDocument(twinId.Did())
+	assert.NilError(t, err)
+
+	time.Sleep(time.Millisecond) // Note: Need to sleep to ensure UpdateTime is updated on document build
 	err = advancedapi.SetDocumentController(resolver, twinId, test.ValidIssuer)
 	assert.NilError(t, err)
 
-	doc, err := resolver.GetDocument(twinId.Did())
+	updatedDoc, err := resolver.GetDocument(twinId.Did())
 	assert.NilError(t, err)
-	assert.Check(t, doc.Controller == test.ValidIssuer.Did)
+	assert.Check(t, updatedDoc.Controller == test.ValidIssuer.Did)
+	assert.Check(t, updatedDoc.UpdateTime > initialDoc.UpdateTime)
 }
 
 func Test_can_set_document_creator(t *testing.T) {

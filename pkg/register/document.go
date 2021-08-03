@@ -58,7 +58,7 @@ type RegisterDocument struct {
 	IoticsDIDType          string                    `json:"ioticsDIDType"` // note: also known as Purpose
 	Controller             string                    `json:"controller,omitempty"`
 	Creator                string                    `json:"creator,omitempty"`
-	UpdateTime             int64                     `json:"updateTime"`
+	UpdateTime             int64                     `json:"updateTime"` // milliseconds
 	Proof                  string                    `json:"proof"`
 	Revoked                bool                      `json:"revoked,omitempty"`
 	AuthenticationKeys     []RegisterPublicKey       `json:"authentication,omitempty"`
