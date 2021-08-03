@@ -88,11 +88,6 @@ func (c *RestResolverClient) GetDocument(documentID string) (*RegisterDocument, 
 		return nil, &ResolverError{err: err, errType: NotFound}
 	}
 
-	if response.StatusCode != http.StatusOK {
-		totalResolverErrors.WithLabelValues(MetricErrorTypeServer).Inc()
-		return nil, &ResolverError{err: err, errType: ServerError}
-	}
-
 	data, err := ioutil.ReadAll(response.Body)
 	if err != nil {
 		neterr, ok := err.(net.Error)
@@ -107,6 +102,15 @@ func (c *RestResolverClient) GetDocument(documentID string) (*RegisterDocument, 
 	var resp map[string]interface{}
 	if err := json.Unmarshal(data, &resp); err != nil {
 		totalResolverErrors.WithLabelValues(MetricErrorTypeServer).Inc()
+		return nil, &ResolverError{err: err, errType: ServerError}
+	}
+
+	// For certain error cases body of response can contain additional information (resp[error])
+	if response.StatusCode != http.StatusOK {
+		totalResolverErrors.WithLabelValues(MetricErrorTypeServer).Inc()
+		if _, found := resp["error"]; found {
+			err = fmt.Errorf("error: %s", resp["error"])
+		}
 		return nil, &ResolverError{err: err, errType: ServerError}
 	}
 
