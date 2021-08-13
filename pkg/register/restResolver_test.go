@@ -85,19 +85,54 @@ func Test_Resolver_Notfound_Error(t *testing.T) {
 	discoverReply := map[string]interface{}{
 		"error": "Notfound",
 	}
-	responder, _ := httpmock.NewJsonResponder(404, discoverReply)
+	responder, _ := httpmock.NewJsonResponder(http.StatusNotFound, discoverReply)
 	httpmock.RegisterResponder("GET", addr.String()+"/1.0/discover/"+url.QueryEscape(ValidID), responder)
 
 	// Place the call
 	_, err := rslv.GetDocument(ValidID)
-	assert.Assert(t, err != nil)
 
+	assert.Assert(t, register.IsResolverError(err))
 	re := err.(*register.ResolverError)
-	assert.Assert(t, re.ErrorType() == register.NotFound)
+	assert.Equal(t, re.ErrorType(), register.NotFound)
 
 	expected := `# HELP iotics_identity_resolver_errors_total Total resolver client errors by error type
 	# TYPE iotics_identity_resolver_errors_total counter
 	iotics_identity_resolver_errors_total{type="notfound"} 1
+`
+	checkMetrics(t, reg, expected)
+}
+
+func Test_Resolver_Server_Error(t *testing.T) {
+	register.ResetMetrics()
+	reg := prometheus.NewRegistry()
+	register.RegisterMetrics(reg)
+
+	addr, _ := url.Parse("http://localhost:9044")
+
+	// Setup a resolver client
+	rslv := register.NewRestResolverClientWithCustomClient(addr, http.DefaultClient)
+
+	errCode := http.StatusBadRequest
+	errMsg := "Something invalid"
+	// Setup a mock resolver
+	discoverReply := map[string]interface{}{
+		"error": errMsg,
+	}
+	responder, _ := httpmock.NewJsonResponder(errCode, discoverReply)
+	httpmock.RegisterResponder("GET", addr.String()+"/1.0/discover/"+url.QueryEscape(ValidID), responder)
+
+	// Place the call
+	_, err := rslv.GetDocument(ValidID)
+
+	assert.Assert(t, register.IsResolverError(err))
+	re := err.(*register.ResolverError)
+	assert.Equal(t, re.ErrorType(), register.ServerError)
+	assert.ErrorContains(t, re.Err(), errMsg)
+	assert.ErrorContains(t, re.Err(), http.StatusText(errCode))
+
+	expected := `# HELP iotics_identity_resolver_errors_total Total resolver client errors by error type
+	# TYPE iotics_identity_resolver_errors_total counter
+	iotics_identity_resolver_errors_total{type="server"} 1
 `
 	checkMetrics(t, reg, expected)
 }
@@ -125,5 +160,41 @@ func Test_Resolver_Successful_Register(t *testing.T) {
 	assert.NilError(t, err)
 
 	expected := ""
+	checkMetrics(t, reg, expected)
+}
+
+func Test_Resolver_Failed_Register(t *testing.T) {
+	register.ResetMetrics()
+	reg := prometheus.NewRegistry()
+	register.RegisterMetrics(reg)
+
+	addr, _ := url.Parse("http://localhost:9031")
+
+	// Setup a resolver client
+	rslv := register.NewRestResolverClientWithCustomClient(addr, http.DefaultClient)
+
+	errCode := http.StatusInternalServerError
+	errMsg := "oh dear"
+	// Setup a mock resolver
+	registerReply := map[string]interface{}{
+		"error": errMsg,
+	}
+	responder, _ := httpmock.NewJsonResponder(errCode, registerReply)
+	httpmock.RegisterResponder("POST", addr.String()+"/1.0/register", responder)
+
+	// Place the call
+	document, issuer, keypair := test.HelperGetRegisterDocument()
+	err := rslv.RegisterDocument(document, keypair.PrivateKey, issuer)
+
+	assert.Assert(t, register.IsResolverError(err))
+	re := err.(*register.ResolverError)
+	assert.Equal(t, re.ErrorType(), register.ServerError)
+	assert.ErrorContains(t, re.Err(), errMsg)
+	assert.ErrorContains(t, re.Err(), http.StatusText(errCode))
+
+	expected := `# HELP iotics_identity_resolver_errors_total Total resolver client errors by error type
+	# TYPE iotics_identity_resolver_errors_total counter
+	iotics_identity_resolver_errors_total{type="server"} 1
+`
 	checkMetrics(t, reg, expected)
 }

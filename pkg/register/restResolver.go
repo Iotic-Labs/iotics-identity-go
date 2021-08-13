@@ -5,6 +5,7 @@ package register
 import (
 	"crypto/ecdsa"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -106,12 +107,13 @@ func (c *RestResolverClient) GetDocument(documentID string) (*RegisterDocument, 
 	}
 
 	// For certain error cases body of response can contain additional information (resp[error])
+	errMsg := http.StatusText(response.StatusCode)
 	if response.StatusCode != http.StatusOK {
 		totalResolverErrors.WithLabelValues(MetricErrorTypeServer).Inc()
-		if _, found := resp["error"]; found {
-			err = fmt.Errorf("error: %s", resp["error"])
+		if errDetail, found := resp["error"]; found {
+			errMsg += fmt.Sprintf(": %s", errDetail)
 		}
-		return nil, &ResolverError{err: err, errType: ServerError}
+		return nil, &ResolverError{err: errors.New(errMsg), errType: ServerError}
 	}
 
 	// Verify the document using ourselves
@@ -142,11 +144,6 @@ func (c *RestResolverClient) RegisterDocument(document *RegisterDocument, privat
 		return &ResolverError{err: err, errType: ConnectionError}
 	}
 
-	if response.StatusCode != http.StatusCreated && response.StatusCode != http.StatusOK {
-		totalResolverErrors.WithLabelValues(MetricErrorTypeServer).Inc()
-		return &ResolverError{err: err, errType: ServerError}
-	}
-
 	data, err := ioutil.ReadAll(response.Body)
 	if err != nil {
 		neterr, ok := err.(net.Error)
@@ -158,11 +155,18 @@ func (c *RestResolverClient) RegisterDocument(document *RegisterDocument, privat
 		return &ResolverError{err: err, errType: ConnectionError}
 	}
 
-	var resp map[string]interface{}
-	if err := json.Unmarshal(data, &resp); err != nil {
-		totalResolverErrors.WithLabelValues(MetricErrorTypeServer).Inc()
-		return &ResolverError{err: err, errType: ServerError}
+	if response.StatusCode == http.StatusCreated || response.StatusCode == http.StatusOK {
+		return nil
 	}
 
-	return nil
+	errMsg := http.StatusText(response.StatusCode)
+
+	var resp map[string]interface{}
+	if err := json.Unmarshal(data, &resp); err == nil {
+		if errDetail, found := resp["error"]; found {
+			errMsg += fmt.Sprintf(": %s", errDetail)
+		}
+	}
+	totalResolverErrors.WithLabelValues(MetricErrorTypeServer).Inc()
+	return &ResolverError{err: errors.New(errMsg), errType: ServerError}
 }
