@@ -24,6 +24,8 @@ The SDK is split into two API's according to the user needs:
 
 See tutorials on [docs.iotics.com](https://docs.iotics.com/docs/create-decentralized-identity-documents).
 
+[Foreign Function Interface](./ffi/rust/README.md).
+
 ## Reporting issues
 
 The issue tracker for this project is currently located at [GitHub](https://github.com/Iotic-Labs/iotics-identity-go/issues).
