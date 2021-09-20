@@ -18,12 +18,36 @@ import (
 	"github.com/Iotic-Labs/iotics-identity-go/pkg/validation"
 )
 
-var defaultResolverTimeout = time.Second * 60
+var (
+	defaultResolverTimeout = time.Second * 60
+
+	defaultCacheSize    = 8192
+	defaultCacheTimeout = time.Second * 60
+)
 
 // RestResolverClient REST Resolver struct
 type RestResolverClient struct {
 	url    *url.URL
 	client *http.Client
+	cache  *cache
+}
+
+// NewDefaultRestResolverClientWithCache build a new REST Resolver Client with default timeout and cache
+func NewDefaultRestResolverClientWithCache(url *url.URL) ResolverClient {
+	return &RestResolverClient{
+		url: url,
+		client: &http.Client{
+			Timeout: defaultResolverTimeout,
+			Transport: &http.Transport{
+				// Since only using a single URL, use equal limits
+				MaxIdleConnsPerHost: 2,
+				MaxIdleConns:        2,
+				// Re-use should only apply when making many repeated calls in quick succession.
+				IdleConnTimeout: 5 * time.Second,
+			},
+		},
+		cache: newCache(defaultCacheSize, defaultCacheTimeout),
+	}
 }
 
 // NewDefaultRestResolverClient build a new REST Resolver Client with default HTTP timeout
@@ -70,6 +94,13 @@ func (c *RestResolverClient) GetDocument(documentID string) (*RegisterDocument, 
 	err := validation.ValidateIdentifier(documentID)
 	if err != nil {
 		return nil, err
+	}
+
+	if c.cache != nil {
+		cacheDoc, found := c.cache.Lookup(documentID)
+		if found {
+			return cacheDoc.(*RegisterDocument), nil
+		}
 	}
 
 	discoverURL := fmt.Sprintf("%s/1.0/discover/%s", c.url.String(), url.QueryEscape(documentID)) // todo: join path?
@@ -121,6 +152,12 @@ func (c *RestResolverClient) GetDocument(documentID string) (*RegisterDocument, 
 	if err != nil {
 		return nil, err
 	}
+
+	if c.cache != nil {
+		// Add fetched document to the cache
+		c.cache.Add(documentID, claims.Doc)
+	}
+
 	return claims.Doc, err
 }
 
