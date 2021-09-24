@@ -14,7 +14,7 @@ import (
 	"gotest.tools/assert"
 )
 
-func assertNewDocAndIdentity(t gobdd.StepTest, ctx gobdd.Context, seed []byte, keyName string, issuerName string, doc *register.RegisterDocument, id register.RegisteredIdentity) {
+func assertNewDocAndIdentity(t gobdd.StepTest, _ gobdd.Context, seed []byte, keyName string, issuerName string, doc *register.RegisterDocument, id register.RegisteredIdentity) {
 	assert.Assert(t, doc != nil)
 	assert.Assert(t, id != nil)
 

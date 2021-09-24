@@ -53,7 +53,7 @@ func ValidateDelegation(resolverClient ResolverClient, registeredID string, regi
 	var controllerPublicKey *RegisterPublicKey
 	for _, v := range controllerDoc.PublicKeys {
 		if v.ID == controllerIssuer.Name {
-			controllerPublicKey = &v
+			controllerPublicKey = &v //nolint:gosec
 			break
 		}
 	}

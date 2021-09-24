@@ -19,6 +19,7 @@ func createIdentity(resolverClient register.ResolverClient, purpose identity.Did
 	if err != nil {
 		return nil, err
 	}
+
 	return advancedapi.NewRegisteredIdentity(resolverClient, purpose, keyPair, opts.Name, opts.Override)
 }
 
@@ -35,16 +36,6 @@ func CreateAgentIdentity(resolverClient register.ResolverClient, opts *CreateIde
 // CreateTwinIdentity Create and register a twin identity.
 func CreateTwinIdentity(resolverClient register.ResolverClient, opts *CreateIdentityOpts) (register.RegisteredIdentity, error) {
 	return createIdentity(resolverClient, identity.Twin, opts)
-}
-
-func getRegisteredIdentity(keyPairSecrets crypto.KeyPairSecrets, did string, name string) (register.RegisteredIdentity, error) {
-	issuer, err := register.NewIssuer(did, name)
-	if err != nil {
-		return nil, err
-	}
-	keyPair, _ := crypto.GetKeyPair(keyPairSecrets)
-	result := register.NewRegisteredIdentity(keyPair, issuer)
-	return result, nil
 }
 
 func getIdentity(purpose identity.DidType, opts *GetIdentityOpts) (register.RegisteredIdentity, error) {

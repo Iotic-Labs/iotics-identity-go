@@ -30,12 +30,14 @@ func RegisterNewDocument(resolverClient register.ResolverClient, keyPair *crypto
 	if err != nil {
 		return err
 	}
+
 	if !override {
 		getDoc, _ := GetRegisterDocument(resolverClient, did)
 		if getDoc != nil {
 			return nil
 		}
 	}
+
 	issuer, err := register.NewIssuer(did, name)
 	if err != nil {
 		return err
@@ -93,13 +95,13 @@ func ValidateRegisterDocument(resolverClient register.ResolverClient, document *
 	// What it actually does it validate the delegations on the passed document
 
 	for _, v := range document.DelegateControl {
-		err := register.ValidateDelegation(resolverClient, document.ID, &v)
+		err := register.ValidateDelegation(resolverClient, document.ID, &v) //nolint:gosec
 		if err != nil {
 			return err
 		}
 	}
 	for _, v := range document.DelegateAuthentication {
-		err := register.ValidateDelegation(resolverClient, document.ID, &v)
+		err := register.ValidateDelegation(resolverClient, document.ID, &v) //nolint:gosec
 		if err != nil {
 			return err
 		}

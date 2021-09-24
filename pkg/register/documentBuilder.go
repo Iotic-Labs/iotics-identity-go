@@ -102,14 +102,6 @@ func (b RegisterDocumentBuilder) build() (*RegisterDocument, error) {
 	return doc, nil
 }
 
-func (b RegisterDocumentBuilder) remove(name string) {
-	// NOTE: the original name in Python version was remove_key
-	delete(b.PublicKeys, name)
-	delete(b.AuthenticationKeys, name)
-	delete(b.DelegateControl, name)
-	delete(b.DelegateAuthentication, name)
-}
-
 // CloneRegisterPublicKey Clone a RegisterPublicKey
 func CloneRegisterPublicKey(obj map[string]*RegisterPublicKey) map[string]*RegisterPublicKey {
 	publicKeys := map[string]*RegisterPublicKey{}

@@ -28,10 +28,10 @@ func NewInMemoryResolver(docs ...*register.RegisterDocument) *InMemoryResolver {
 	}
 }
 
-func (c InMemoryResolver) GetDocument(documentId string) (*register.RegisterDocument, error) {
+func (c InMemoryResolver) GetDocument(documentID string) (*register.RegisterDocument, error) {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
-	v, exists := c.documents[documentId]
+	v, exists := c.documents[documentID]
 	if exists {
 		return v, nil
 	}

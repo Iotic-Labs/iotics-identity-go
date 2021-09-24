@@ -51,9 +51,11 @@ func SetupIdentitiesForAuth(resolver register.ResolverClient, control bool, auth
 	agentIdentity, _ := advancedapi.NewRegisteredIdentity(resolver, identity.Agent, agentKeypair, "#agent", true)
 
 	if control {
-		advancedapi.DelegateControl(resolver, userKeypair, userIdentity.Did(), agentKeypair, agentIdentity.Did(), "#delegCtrl")
+		opts.Name = "#delegCtrl"
+		_ = advancedapi.DelegateControl(opts)
 	} else if auth {
-		advancedapi.DelegateAuthentication(resolver, userKeypair, userIdentity.Did(), agentKeypair, agentIdentity.Did(), "#delegAuth")
+		opts.Name = "#delegAuth"
+		_ = advancedapi.DelegateAuthentication(opts)
 	}
 
 	return userIdentity, agentIdentity

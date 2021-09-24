@@ -171,6 +171,10 @@ func GetPrivateKey(secrets KeyPairSecrets) (*ecdsa.PrivateKey, error) {
 // GetPublicKeyBase58FromKeyPairSecrets  Get public key base58 fron key pair secrets
 func GetPublicKeyBase58FromKeyPairSecrets(secrets KeyPairSecrets) (string, error) {
 	privateKey, err := GetPrivateKey(secrets)
+	if err != nil {
+		return "", err
+	}
+
 	_, publicKeyBase58, err := GetPublicKeysFromPrivateKey(privateKey)
 	return publicKeyBase58, err
 }

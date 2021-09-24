@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	validDid = "did:iotics:iotPJFSNrw69fxyFQ1hFzRVRZsdaU9iFfQbC"
+	validDid   = "did:iotics:iotPJFSNrw69fxyFQ1hFzRVRZsdaU9iFfQbC"
 	invalidDid = "did:iotics:iotHHHmKpPGWyEC4FFo4d6oyzVVk6MXLmEgY"
 	validName  = "#aName"
 )

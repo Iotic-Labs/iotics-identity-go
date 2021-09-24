@@ -7,6 +7,7 @@ import (
 	"github.com/Iotic-Labs/iotics-identity-go/pkg/register"
 )
 
+// CreateUserAndAgentWithAuthDelegationOpts Create user and agent options for high level API
 type CreateUserAndAgentWithAuthDelegationOpts struct {
 	UserSeed       []byte
 	UserKeyName    string
@@ -20,15 +21,7 @@ type CreateUserAndAgentWithAuthDelegationOpts struct {
 	OverrideDocs   bool
 }
 
-type CreateIdentityOpts struct {
-	Seed     []byte
-	KeyName  string
-	Password string
-	Name     string
-	Method   crypto.SeedMethod
-	Override bool
-}
-
+// CreateTwinOpts Create twin options (with agent delegation) for highlevel API
 type CreateTwinOpts struct {
 	Seed           []byte
 	KeyName        string
@@ -39,6 +32,17 @@ type CreateTwinOpts struct {
 	OverideDoc     bool
 }
 
+// CreateIdentityOpts Create identity options for regular API
+type CreateIdentityOpts struct {
+	Seed     []byte
+	KeyName  string
+	Password string
+	Name     string
+	Method   crypto.SeedMethod
+	Override bool
+}
+
+// GetIdentityOpts get identity options for regular API
 type GetIdentityOpts struct {
 	Did      string
 	Seed     []byte
@@ -48,6 +52,7 @@ type GetIdentityOpts struct {
 	Method   crypto.SeedMethod
 }
 
+// GetKeyPairOpts get key pair options for regular API
 type GetKeyPairOpts struct {
 	Seed     []byte
 	KeyName  string
