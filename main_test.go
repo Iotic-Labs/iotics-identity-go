@@ -827,6 +827,8 @@ func theRevokedOwnerIsNotAllowedForAuthenticationOrControlOnTheDocument(t gobdd.
 	doc, err := advancedapi.GetRegisterDocument(resolver, initialOwner.Did())
 	assert.NilError(t, err)
 	revokedIssuer, err := advancedapi.GetIssuerByPublicKey(doc, revokedTwinPublicKeyBase58)
+	assert.NilError(t, err)
+
 	otherIssuer, _ := ctx.Get(ctxOtherTwinIdentityIssuer)
 	assert.DeepEqual(t, revokedIssuer, otherIssuer)
 	assert.Assert(t, revokedIssuer.Did == initialOwner.Did())

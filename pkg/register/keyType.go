@@ -4,7 +4,6 @@ package register
 
 import "errors"
 
-
 // KeyType number
 type KeyType uint
 

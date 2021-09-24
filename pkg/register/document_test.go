@@ -104,16 +104,16 @@ func Test_validate_public_keys(t *testing.T) {
 func Test_validate_delegation(t *testing.T) {
 	doc, _, _ := test.HelperGetRegisterDocument()
 	doc.DelegateControl = append(doc.DelegateControl, register.RegisterDelegationProof{
-		ID: "#$?!&",
+		ID:         "#$?!&",
 		Controller: "bad id",
-		Proof: "not validated",
-		Revoked: false,
+		Proof:      "not validated",
+		Revoked:    false,
 	})
 	doc.DelegateControl = append(doc.DelegateControl, register.RegisterDelegationProof{
-		ID: "#$?!&",
+		ID:         "#$?!&",
 		Controller: "bad id",
-		Proof: "not validated",
-		Revoked: false,
+		Proof:      "not validated",
+		Revoked:    false,
 	})
 	errs := doc.Validate()
 	assert.Check(t, len(errs) == 5)
