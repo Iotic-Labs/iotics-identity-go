@@ -30,12 +30,14 @@ func RegisterNewDocument(resolverClient register.ResolverClient, keyPair *crypto
 	if err != nil {
 		return err
 	}
+
 	if !override {
 		getDoc, _ := GetRegisterDocument(resolverClient, did)
 		if getDoc != nil {
 			return nil
 		}
 	}
+
 	issuer, err := register.NewIssuer(did, name)
 	if err != nil {
 		return err

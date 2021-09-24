@@ -100,6 +100,7 @@ func Test_can_decode_auth_token(t *testing.T) {
 	assert.Check(t, len(token) > 1)
 
 	authClaims, err := register.DecodeAuthTokenNoVerify(token)
+	assert.NilError(t, err)
 	assert.Equal(t, authClaims.Audience, test.ValidAudience)
 	assert.DeepEqual(t, authClaims.Issuer, test.ValidIssuer)
 	assert.Equal(t, authClaims.ExpiresAt-authClaims.IssuedAt, int64(duration.Seconds()))
@@ -113,6 +114,7 @@ func Test_can_decode_and_verify_auth_token(t *testing.T) {
 	assert.Check(t, len(token) > 1)
 
 	authClaims, err := register.DecodeAuthToken(token, test.ValidKeyPair.PublicKeyBase58, test.ValidAudience)
+	assert.NilError(t, err)
 	assert.Equal(t, authClaims.Audience, test.ValidAudience)
 	assert.DeepEqual(t, authClaims.Issuer, test.ValidIssuer)
 	assert.Equal(t, authClaims.ExpiresAt-authClaims.IssuedAt, int64(duration.Seconds()))
@@ -148,6 +150,7 @@ func Test_create_challenge_token(t *testing.T) {
 	userIdentity, agentIdentity := test.SetupIdentitiesForAuth(resolver, false, true)
 
 	proof, err := advancedapi.CreateProof(test.ValidKeyPair2, agentIdentity.Issuer(), []byte(userIdentity.Did()))
+	assert.NilError(t, err)
 
 	token, err := register.CreateChallengeToken(proof, test.ValidKeyPair2.PrivateKey)
 	assert.NilError(t, err)
@@ -159,6 +162,7 @@ func Test_decode_challenge_token_no_verify(t *testing.T) {
 	userIdentity, agentIdentity := test.SetupIdentitiesForAuth(resolver, false, true)
 
 	proof, err := advancedapi.CreateProof(test.ValidKeyPair2, agentIdentity.Issuer(), []byte(userIdentity.Did()))
+	assert.NilError(t, err)
 
 	token, err := register.CreateChallengeToken(proof, test.ValidKeyPair2.PrivateKey)
 	assert.NilError(t, err)
@@ -174,6 +178,7 @@ func Test_decode_challenge_token(t *testing.T) {
 	userIdentity, agentIdentity := test.SetupIdentitiesForAuth(resolver, false, true)
 
 	proof, err := advancedapi.CreateProof(test.ValidKeyPair2, agentIdentity.Issuer(), []byte(userIdentity.Did()))
+	assert.NilError(t, err)
 
 	token, err := register.CreateChallengeToken(proof, test.ValidKeyPair2.PrivateKey)
 	assert.NilError(t, err)

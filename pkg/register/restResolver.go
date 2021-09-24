@@ -48,6 +48,7 @@ func NewRestResolverClient(url *url.URL, timeout time.Duration) ResolverClient {
 	)
 }
 
+// NewRestResolverClientWithCustomClient build a ResolverClient with customer http.Client
 func NewRestResolverClientWithCustomClient(url *url.URL, client *http.Client) ResolverClient {
 	return &RestResolverClient{
 		url:    url,

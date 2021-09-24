@@ -31,6 +31,7 @@ func (didType DidType) String() string {
 	return keyTypes[didType]
 }
 
+// ParseDidType translate a DID type in string (eg "user") to internal type
 func ParseDidType(didType string) (DidType, error) {
 	switch didType {
 	case "host":
