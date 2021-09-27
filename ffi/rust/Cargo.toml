@@ -10,3 +10,4 @@ thiserror = "1.0"
 
 [build-dependencies]
 bindgen = "0.59"
+cargo-emit = "0.2"

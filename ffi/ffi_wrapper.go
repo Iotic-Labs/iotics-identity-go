@@ -7,13 +7,14 @@ import "C"
 import (
 	"encoding/hex"
 	"fmt"
+	"net/url"
+	"time"
+	"unsafe"
+
 	"github.com/Iotic-Labs/iotics-identity-go/pkg/api"
 	"github.com/Iotic-Labs/iotics-identity-go/pkg/crypto"
 	"github.com/Iotic-Labs/iotics-identity-go/pkg/identity"
 	"github.com/Iotic-Labs/iotics-identity-go/pkg/register"
-	"net/url"
-	"time"
-	"unsafe"
 )
 
 //export CreateAgentAuthToken
