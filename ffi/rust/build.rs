@@ -1,16 +1,25 @@
 use std::env;
+use std::path::Path;
 
 fn main() {
     let out_dir = env::var("OUT_DIR").expect("Failed get OUT_DIR.");
+    let manifest_dir = env::var("CARGO_MANIFEST_DIR").expect("Failed get CARGO_MANIFEST_DIR.");
+    let ffi_wrapper_path = Path::new(&manifest_dir)
+        .parent()
+        .expect("Failed to get the FFI wrapper dir.")
+        .join("ffi_wrapper.go");
+    let ffi_wrapper_path = ffi_wrapper_path
+        .to_str()
+        .expect("Failed to get the FFI wrapper path.");
 
     // Add search path and link to static library.
     cargo_emit::rustc_link_search!(
-        "./target" => "native"
+        out_dir => "native"
     );
     cargo_emit::rustc_link_lib!(
         "ffi" => "static"
     );
-    cargo_emit::rerun_if_changed!("../ffi_wrapper.go", "src/ffi_wrapper.rs");
+    cargo_emit::rerun_if_changed!(ffi_wrapper_path);
 
     // Call command to create a static library (C archive file).
     std::process::Command::new("go")
@@ -19,7 +28,7 @@ fn main() {
             "-o",
             &format!("{}/libffi.a", &out_dir),
             "-buildmode=c-archive",
-            "../ffi_wrapper.go",
+            ffi_wrapper_path,
         ])
         .status()
         .expect("Failed to create C archive.");
