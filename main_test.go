@@ -125,7 +125,7 @@ func aRegisteredTwin(t gobdd.StepTest, ctx gobdd.Context) {
 
 func registerTwinIdentity(t gobdd.StepTest, name string) register.RegisteredIdentity {
 	keyPair := getNewKeyPair(name)
-	registeredTwin, err := advancedapi.NewRegisteredIdentity(resolver, identity.Twin, keyPair, name, false)
+	registeredTwin, _, err := advancedapi.RegisterNewIdentity(resolver, identity.Twin, keyPair, name, false)
 	assert.NilError(t, err)
 	return registeredTwin
 }
@@ -158,7 +158,7 @@ func aRegisterDocumentWithSeveralOwners(t gobdd.StepTest, ctx gobdd.Context) {
 	o3name := "#Owner3"
 	o3publicKeyBase58 := getNewKeyPair(o3name).PublicKeyBase58
 
-	registeredTwin, _ := advancedapi.NewRegisteredIdentity(resolver, identity.Twin, keyPair, name, false)
+	registeredTwin, _, _ := advancedapi.RegisterNewIdentity(resolver, identity.Twin, keyPair, name, false)
 	api.AddNewOwner(resolver, o2name, o2publicKeyBase58, registeredTwin)
 	api.AddNewOwner(resolver, o3name, o3publicKeyBase58, registeredTwin)
 
@@ -186,7 +186,7 @@ func aAnotherTwinAuthenticationPublicKey(t gobdd.StepTest, ctx gobdd.Context, na
 	keyPair := getNewKeyPair(name)
 	registeredTwin, _ := ctx.Get(ctxRegisteredTwin)
 	assert.Assert(t, registeredTwin != nil)
-	err := advancedapi.AddAuthenticationKeyToDocument(resolver, name, keyPair.PublicKeyBase58, registeredTwin.(register.RegisteredIdentity))
+	err := advancedapi.AddAuthenticationKeyToDocument(resolver, nil, name, keyPair.PublicKeyBase58, registeredTwin.(register.RegisteredIdentity))
 	assert.NilError(t, err)
 	ctx.Set(ctxOtherTwinIdentityName, name)
 	ctx.Set(ctxOtherTwinIdentityPubKey, keyPair.PublicKeyBase58)
@@ -362,7 +362,7 @@ func iAddTheNewOwnerToTheDocument(t gobdd.StepTest, ctx gobdd.Context) {
 	name, _ := ctx.GetString(ctxOtherTwinIdentityName)
 	publicKeyBase58, _ := ctx.GetString(ctxOtherTwinIdentityPubKey)
 	registeredTwin, _ := ctx.Get(ctxRegisteredTwin)
-	advancedapi.AddPublicKeyToDocument(resolver, name, publicKeyBase58, registeredTwin.(register.RegisteredIdentity))
+	advancedapi.AddPublicKeyToDocument(resolver, nil, name, publicKeyBase58, registeredTwin.(register.RegisteredIdentity))
 }
 
 func iRemoveTheOtherOwnerFromTheDocument(t gobdd.StepTest, ctx gobdd.Context) {
@@ -376,7 +376,7 @@ func iRemoveTheOtherOwnerFromTheDocument(t gobdd.StepTest, ctx gobdd.Context) {
 	otherIssuer, err := advancedapi.GetIssuerByPublicKey(doc, publicKeyBase58ToRemove)
 	assert.NilError(t, err)
 
-	advancedapi.RemovePublicKeyFromDocument(resolver, nameToRemove, initialOwner)
+	advancedapi.RemovePublicKeyFromDocument(resolver, nil, nameToRemove, initialOwner)
 	ctx.Set(ctxOtherTwinIdentityIssuer, otherIssuer)
 }
 
@@ -391,7 +391,7 @@ func iRevokeTheOtherOwnerKey(t gobdd.StepTest, ctx gobdd.Context) {
 	otherIssuer, err := advancedapi.GetIssuerByPublicKey(doc, publicKeyBase58ToRevoke)
 	assert.NilError(t, err)
 
-	advancedapi.RevokePublicKeyFromDocument(resolver, nameToRevoke, initialOwner)
+	advancedapi.RevokePublicKeyFromDocument(resolver, nil, nameToRevoke, initialOwner)
 	ctx.Set(ctxOtherTwinIdentityIssuer, otherIssuer)
 }
 
@@ -399,21 +399,21 @@ func iAddTheNewAuthenticationKeyToTheDocument(t gobdd.StepTest, ctx gobdd.Contex
 	name, _ := ctx.GetString(ctxOtherTwinIdentityName)
 	publicKeyBase58, _ := ctx.GetString(ctxOtherTwinIdentityPubKey)
 	twin := ctxRegisteredTwin.GetRegisteredIdentity(t, ctx)
-	err := advancedapi.AddAuthenticationKeyToDocument(resolver, name, publicKeyBase58, twin)
+	err := advancedapi.AddAuthenticationKeyToDocument(resolver, nil, name, publicKeyBase58, twin)
 	assert.NilError(t, err)
 }
 
 func iRemoveTheAuthenticationKeyFromTheDocument(t gobdd.StepTest, ctx gobdd.Context) {
 	nameToRemove, _ := ctx.GetString(ctxOtherTwinIdentityName)
 	initialOwner := ctxRegisteredTwin.GetRegisteredIdentity(t, ctx)
-	err := advancedapi.RemovePublicKeyFromDocument(resolver, nameToRemove, initialOwner)
+	err := advancedapi.RemovePublicKeyFromDocument(resolver, nil, nameToRemove, initialOwner)
 	assert.NilError(t, err)
 }
 
 func iRevokeTheAuthenticationKeyFromTheDocument(t gobdd.StepTest, ctx gobdd.Context) {
 	nameToRevoke, _ := ctx.GetString(ctxOtherTwinIdentityName)
 	initialOwner := ctxRegisteredTwin.GetRegisteredIdentity(t, ctx)
-	err := advancedapi.RevokePublicKeyFromDocument(resolver, nameToRevoke, initialOwner)
+	err := advancedapi.RevokePublicKeyFromDocument(resolver, nil, nameToRevoke, initialOwner)
 	assert.NilError(t, err)
 }
 
@@ -422,8 +422,18 @@ func iDADelegatesControlToIDB(t gobdd.StepTest, ctx gobdd.Context, name string) 
 	delegatingIdentity := registeredTwin.(register.RegisteredIdentity)
 	subjectRegisteredTwin, _ := ctx.Get(ctxOtherRegisteredTwin)
 	subjectIdentity := subjectRegisteredTwin.(register.RegisteredIdentity)
-	advancedapi.DelegateControl(
-		resolver, delegatingIdentity.KeyPair(), delegatingIdentity.Did(), subjectIdentity.KeyPair(), subjectIdentity.Did(), name)
+
+	opts := advancedapi.DelegationOpts{
+		ResolverClient: resolver,
+		DelegatingKeyPair: delegatingIdentity.KeyPair(),
+		DelegatingDid: delegatingIdentity.Did(),
+		DelegatingDocument: nil,
+		SubjectKeyPair: subjectIdentity.KeyPair(),
+		SubjectDid: subjectIdentity.Did(),
+		SubjectDocument: nil,
+		Name: name,
+	}
+	advancedapi.DelegateControl(opts)
 	ctx.Set(ctxDelegationName, name)
 }
 
@@ -436,8 +446,18 @@ func iDADelegatesControlToIDBWithExtraOwner(t gobdd.StepTest, ctx gobdd.Context,
 	otherIdentity := otherRegisteredTwin.(register.RegisteredIdentity)
 	extraOwnerKeyPair, _ := ctx.Get(ctxOtherTwinIdentityExtraOwnerKeyPair)
 	assert.Assert(t, extraOwnerKeyPair != nil)
-	advancedapi.DelegateControl(
-		resolver, initialIdentity.KeyPair(), initialIdentity.Did(), extraOwnerKeyPair.(*crypto.KeyPair), otherIdentity.Did(), delegationName)
+
+	opts := advancedapi.DelegationOpts{
+		ResolverClient: resolver,
+		DelegatingKeyPair: initialIdentity.KeyPair(),
+		DelegatingDid: initialIdentity.Did(),
+		DelegatingDocument: nil,
+		SubjectKeyPair: extraOwnerKeyPair.(*crypto.KeyPair),
+		SubjectDid: otherIdentity.Did(),
+		SubjectDocument: nil,
+		Name: delegationName,
+	}
+	advancedapi.DelegateControl(opts)
 	ctx.Set(ctxDelegationName, delegationName)
 }
 
@@ -449,28 +469,37 @@ func iAddTheControlDelegationProofToTheDocument(t gobdd.StepTest, ctx gobdd.Cont
 	assert.Assert(t, delegationProof != nil)
 	pr := delegationProof.(*proof.Proof)
 
-	advancedapi.AddControlDelegationToDocument(
-		resolver, delegationProofName, otherIdentity.Issuer().String(), pr.Signature, initialIdentity)
+	advancedapi.AddControlDelegationToDocument(resolver, nil, delegationProofName, otherIdentity.Issuer().String(), pr.Signature, initialIdentity)
 	ctx.Set(ctxDelegationName, delegationProofName)
 }
 
 func iRemoveTheControlDelegationProofFromTheDocument(t gobdd.StepTest, ctx gobdd.Context) {
 	delegationName, _ := ctx.GetString(ctxDelegationName)
 	initialIdentity := ctxRegisteredTwin.GetRegisteredIdentity(t, ctx)
-	advancedapi.RemoveControlDelegationFromDocument(resolver, delegationName, initialIdentity)
+	advancedapi.RemoveControlDelegationFromDocument(resolver, nil, delegationName, initialIdentity)
 }
 
 func iRevokeTheControlDelegationProof(t gobdd.StepTest, ctx gobdd.Context) {
 	delegationName, _ := ctx.GetString(ctxDelegationName)
 	initialIdentity := ctxRegisteredTwin.GetRegisteredIdentity(t, ctx)
-	advancedapi.RevokeControlDelegationFromDocument(resolver, delegationName, initialIdentity)
+	advancedapi.RevokeControlDelegationFromDocument(resolver, nil, delegationName, initialIdentity)
 }
 
 func iDADelegatesAuthenticationToIDB(t gobdd.StepTest, ctx gobdd.Context, delegationName string) {
 	initialIdentity := ctxRegisteredTwin.GetRegisteredIdentity(t, ctx)
 	otherIdentity := ctxOtherRegisteredTwin.GetRegisteredIdentity(t, ctx)
-	advancedapi.DelegateAuthentication(
-		resolver, initialIdentity.KeyPair(), initialIdentity.Did(), otherIdentity.KeyPair(), otherIdentity.Did(), delegationName)
+
+	opts := advancedapi.DelegationOpts{
+		ResolverClient: resolver,
+		DelegatingKeyPair: initialIdentity.KeyPair(),
+		DelegatingDid: initialIdentity.Did(),
+		DelegatingDocument: nil,
+		SubjectKeyPair: otherIdentity.KeyPair(),
+		SubjectDid: otherIdentity.Did(),
+		SubjectDocument: nil,
+		Name: delegationName,
+	}
+	advancedapi.DelegateAuthentication(opts)
 	ctx.Set(ctxDelegationName, delegationName)
 }
 
@@ -483,8 +512,18 @@ func iDADelegatesAuthenticationToIDBWithExtraOwner(t gobdd.StepTest, ctx gobdd.C
 	otherIdentity := otherRegisteredTwin.(register.RegisteredIdentity)
 	extraOwnerKeyPair, _ := ctx.Get(ctxOtherTwinIdentityExtraOwnerKeyPair)
 	assert.Assert(t, extraOwnerKeyPair != nil)
-	advancedapi.DelegateAuthentication(
-		resolver, initialIdentity.KeyPair(), initialIdentity.Did(), extraOwnerKeyPair.(*crypto.KeyPair), otherIdentity.Did(), delegationName)
+
+	opts := advancedapi.DelegationOpts{
+		ResolverClient: resolver,
+		DelegatingKeyPair: initialIdentity.KeyPair(),
+		DelegatingDid: initialIdentity.Did(),
+		DelegatingDocument: nil,
+		SubjectKeyPair: extraOwnerKeyPair.(*crypto.KeyPair),
+		SubjectDid: otherIdentity.Did(),
+		SubjectDocument: nil,
+		Name: delegationName,
+	}
+	advancedapi.DelegateAuthentication(opts)
 	ctx.Set(ctxDelegationName, delegationName)
 }
 
@@ -499,21 +538,20 @@ func iAddTheAuthenticationDelegationProofToTheDocument(t gobdd.StepTest, ctx gob
 	assert.Assert(t, registeredTwin != nil)
 	initialIdentity := registeredTwin.(register.RegisteredIdentity)
 
-	advancedapi.AddAuthenticationDelegationToDocument(
-		resolver, delegationProofName, otherIdentity.Issuer().String(), pr.Signature, initialIdentity)
+	advancedapi.AddAuthenticationDelegationToDocument(resolver, nil, delegationProofName, otherIdentity.Issuer().String(), pr.Signature, initialIdentity)
 	ctx.Set(ctxDelegationName, delegationProofName)
 }
 
 func iRemoveTheAuthenticationDelegationProofFromTheDocument(t gobdd.StepTest, ctx gobdd.Context) {
 	delegationName, _ := ctx.GetString(ctxDelegationName)
 	initialIdentity := ctxRegisteredTwin.GetRegisteredIdentity(t, ctx)
-	advancedapi.RemoveAuthenticationDelegationFromDocument(resolver, delegationName, initialIdentity)
+	advancedapi.RemoveAuthenticationDelegationFromDocument(resolver, nil, delegationName, initialIdentity)
 }
 
 func iRevokeTheAuthenticationDelegationProof(t gobdd.StepTest, ctx gobdd.Context) {
 	delegationName, _ := ctx.GetString(ctxDelegationName)
 	initialIdentity := ctxRegisteredTwin.GetRegisteredIdentity(t, ctx)
-	advancedapi.RevokeAuthenticationDelegationFromDocument(resolver, delegationName, initialIdentity)
+	advancedapi.RevokeAuthenticationDelegationFromDocument(resolver, nil, delegationName, initialIdentity)
 }
 
 func iSetTheControllerOnMyDocument(t gobdd.StepTest, ctx gobdd.Context) {
@@ -523,7 +561,7 @@ func iSetTheControllerOnMyDocument(t gobdd.StepTest, ctx gobdd.Context) {
 	otherRegisteredTwin, _ := ctx.Get(ctxOtherRegisteredTwin)
 	assert.Assert(t, otherRegisteredTwin != nil)
 	otherIdentity := otherRegisteredTwin.(register.RegisteredIdentity)
-	advancedapi.SetDocumentController(resolver, initialIdentity, otherIdentity.Issuer())
+	advancedapi.SetDocumentController(resolver, nil, initialIdentity, otherIdentity.Issuer())
 }
 
 func theDelegatedIdentityOwnerUsedForTheProofIsRevoked(t gobdd.StepTest, ctx gobdd.Context) {
@@ -531,7 +569,7 @@ func theDelegatedIdentityOwnerUsedForTheProofIsRevoked(t gobdd.StepTest, ctx gob
 	assert.Assert(t, extraOwnerName != "")
 	otherRegisteredTwin, _ := ctx.Get(ctxOtherRegisteredTwin)
 	otherIdentity := otherRegisteredTwin.(register.RegisteredIdentity)
-	advancedapi.RevokePublicKeyFromDocument(resolver, extraOwnerName, otherIdentity)
+	advancedapi.RevokePublicKeyFromDocument(resolver, nil, extraOwnerName, otherIdentity)
 }
 
 func theDelegatedIdentityOwnerUsedForTheProofIsRemoved(t gobdd.StepTest, ctx gobdd.Context) {
@@ -539,7 +577,7 @@ func theDelegatedIdentityOwnerUsedForTheProofIsRemoved(t gobdd.StepTest, ctx gob
 	assert.Assert(t, extraOwnerName != "")
 	otherRegisteredTwin, _ := ctx.Get(ctxOtherRegisteredTwin)
 	otherIdentity := otherRegisteredTwin.(register.RegisteredIdentity)
-	advancedapi.RemovePublicKeyFromDocument(resolver, extraOwnerName, otherIdentity)
+	advancedapi.RemovePublicKeyFromDocument(resolver, nil, extraOwnerName, otherIdentity)
 }
 
 func iCreateTheIdentityOverridingTheDocumentWithANewName(t gobdd.StepTest, ctx gobdd.Context, identityType string) {

@@ -44,16 +44,27 @@ func HelperGetRegisterDocument() (*register.RegisterDocument, *register.Issuer, 
 func SetupIdentitiesForAuth(resolver register.ResolverClient, control bool, auth bool) (register.RegisteredIdentity, register.RegisteredIdentity) {
 	userSecret, _ := crypto.NewDefaultKeyPairSecrets(ValidBip39Seed32B, "iotics/0/user/00")
 	userKeypair, _ := crypto.GetKeyPair(userSecret)
-	userIdentity, _ := advancedapi.NewRegisteredIdentity(resolver, identity.User, userKeypair, "#user", true)
+	userIdentity, _, _ := advancedapi.RegisterNewIdentity(resolver, identity.User, userKeypair, "#user", true)
 
 	agentSecret, _ := crypto.NewDefaultKeyPairSecrets(ValidBip39Seed32B, "iotics/0/agent/00")
 	agentKeypair, _ := crypto.GetKeyPair(agentSecret)
-	agentIdentity, _ := advancedapi.NewRegisteredIdentity(resolver, identity.Agent, agentKeypair, "#agent", true)
+	agentIdentity, _, _ := advancedapi.RegisterNewIdentity(resolver, identity.Agent, agentKeypair, "#agent", true)
 
+	opts := advancedapi.DelegationOpts{
+		ResolverClient: resolver,
+		DelegatingKeyPair: userKeypair,
+		DelegatingDid: userIdentity.Did(),
+		DelegatingDocument: nil,
+		SubjectKeyPair: agentKeypair,
+		SubjectDid: agentIdentity.Did(),
+		SubjectDocument: nil,
+	}
 	if control {
-		advancedapi.DelegateControl(resolver, userKeypair, userIdentity.Did(), agentKeypair, agentIdentity.Did(), "#delegCtrl")
+		opts.Name = "#delegCtrl"
+		advancedapi.DelegateControl(opts)
 	} else if auth {
-		advancedapi.DelegateAuthentication(resolver, userKeypair, userIdentity.Did(), agentKeypair, agentIdentity.Did(), "#delegAuth")
+		opts.Name = "#delegAuth"
+		advancedapi.DelegateAuthentication(opts)
 	}
 
 	return userIdentity, agentIdentity
