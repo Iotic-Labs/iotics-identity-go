@@ -11,37 +11,59 @@ import (
 	"github.com/Iotic-Labs/iotics-identity-go/pkg/register"
 )
 
-const defaultSeedLength = 256
+const (
+	defaultSeedLength = 256
+	defaultSeedMethod = crypto.SeedMethodBip39
+)
 
 // CreateUserAndAgentWithAuthDelegation Create and register a user and an agent identities with user delegating authentication to the agent.
 //func CreateUserAndAgentWithAuthDelegation(resolverClient register.ResolverClient, userSeed []byte, userKeyName string, agentSeed []byte, agentKeyName string, delegationName string, userName string, agentName string, userPassword string, agentPassword string, overrideDocs bool) (userID register.RegisteredIdentity, agentID register.RegisteredIdentity, err error) {
 func CreateUserAndAgentWithAuthDelegation(resolverClient register.ResolverClient, opts *CreateUserAndAgentWithAuthDelegationOpts) (userID register.RegisteredIdentity, agentID register.RegisteredIdentity, err error) {
-	userPath := crypto.PathForDIDType(opts.UserKeyName, identity.User)
-	userSecrets, err := crypto.NewKeyPairSecrets(opts.UserSeed, userPath, crypto.SeedMethodBip39, opts.UserPassword)
+	agentPath := crypto.PathForDIDType(opts.AgentKeyName, identity.Agent)
+	agentSecrets, err := crypto.NewDefaultKeyPairSecretsWithPassword(opts.AgentSeed, agentPath, opts.AgentPassword)
 	if err != nil {
 		return nil, nil, err
 	}
-	userKeyPair, _ := crypto.GetKeyPair(userSecrets)
-	userID, err = advancedapi.NewRegisteredIdentity(resolverClient, identity.User, userKeyPair, opts.UserName, opts.OverrideDocs)
+	agentKeyPair, err := crypto.GetKeyPair(agentSecrets)
 	if err != nil {
-		return userID, nil, err
+		return nil, nil, err
 	}
 
-	agentPath := crypto.PathForDIDType(opts.AgentKeyName, identity.Agent)
-	agentSecrets, err := crypto.NewDefaultKeyPairSecretsWithPassword(opts.AgentSeed, agentPath, opts.AgentPassword)
-	agentKeyPair, _ := crypto.GetKeyPair(agentSecrets)
+	agentID, agentDocument, err := advancedapi.CreateNewIdentityAndRegister(resolverClient, identity.Agent, agentKeyPair, opts.AgentName, false)
 	if err != nil {
-		return userID, nil, err
-	}
-	agentID, err = advancedapi.NewRegisteredIdentity(resolverClient, identity.Agent, agentKeyPair, opts.AgentName, opts.OverrideDocs)
-	if err != nil {
-		return userID, agentID, err
+		return nil, nil, err
 	}
 
-	err = advancedapi.DelegateAuthentication(resolverClient, userKeyPair, userID.Did(), agentKeyPair, agentID.Did(), opts.DelegationName)
+	userPath := crypto.PathForDIDType(opts.UserKeyName, identity.User)
+	userSecrets, err := crypto.NewKeyPairSecrets(opts.UserSeed, userPath, defaultSeedMethod, opts.UserPassword)
 	if err != nil {
-		return userID, agentID, err
+		return nil, nil, err
 	}
+	userKeyPair, err := crypto.GetKeyPair(userSecrets)
+	if err != nil {
+		return nil, nil, err
+	}
+	userDocument, userIssuer, err := advancedapi.CreateNewDocument(identity.User, userKeyPair, opts.UserName)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	delegOpts := advancedapi.DelegationOpts{
+		ResolverClient:     resolverClient,
+		DelegatingKeyPair:  userKeyPair,
+		DelegatingDid:      userIssuer.Did,
+		DelegatingDocument: userDocument,
+		SubjectKeyPair:     agentKeyPair,
+		SubjectDid:         agentID.Did(),
+		SubjectDocument:    agentDocument,
+		Name:               opts.DelegationName,
+	}
+	err = advancedapi.DelegateAuthentication(delegOpts)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	userID = register.NewRegisteredIdentity(userKeyPair, userIssuer)
 
 	return userID, agentID, nil
 }
@@ -54,30 +76,49 @@ func CreateAgentAuthToken(agentID register.RegisteredIdentity, userDid string, d
 
 // CreateTwinWithControlDelegation Create a twin with control delegation to Agent.
 func CreateTwinWithControlDelegation(resolverClient register.ResolverClient, opts *CreateTwinOpts) (register.RegisteredIdentity, error) {
-	createOpts := &CreateIdentityOpts{
-		Seed:     opts.Seed,
-		KeyName:  opts.KeyName,
-		Password: opts.Password,
-		Name:     opts.Name,
-		Override: opts.OverideDoc,
-	}
-	twinID, err := CreateTwinIdentity(resolverClient, createOpts)
+	twinPath := crypto.PathForDIDType(opts.KeyName, identity.Twin)
+	twinSecrets, err := crypto.NewKeyPairSecrets(opts.Seed, twinPath, defaultSeedMethod, opts.Password)
 	if err != nil {
 		return nil, err
 	}
-	err = DelegateControl(resolverClient, twinID, opts.AgentId, opts.DelegationName)
-	return twinID, err
+	twinKeyPair, err := crypto.GetKeyPair(twinSecrets)
+	if err != nil {
+		return nil, err
+	}
+	twinDocument, twinIssuer, err := advancedapi.CreateNewDocument(identity.Twin, twinKeyPair, opts.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	delegOpts := advancedapi.DelegationOpts{
+		ResolverClient:     resolverClient,
+		DelegatingKeyPair:  twinKeyPair,
+		DelegatingDid:      twinIssuer.Did,
+		DelegatingDocument: twinDocument,
+		SubjectKeyPair:     opts.AgentID.KeyPair(),
+		SubjectDid:         opts.AgentID.Did(),
+		SubjectDocument:    opts.AgentDoc,
+		Name:               opts.DelegationName,
+	}
+	err = advancedapi.DelegateControl(delegOpts)
+	if err != nil {
+		return nil, err
+	}
+
+	twinIdentity := register.NewRegisteredIdentity(twinKeyPair, twinIssuer)
+
+	return twinIdentity, nil
 }
 
 // DelegateControl registers a twin identity with twin delegating control to the agent
 // NOTE: this is a duplicate of regularApi - TwinDelegatesControlToAgent
 func DelegateControl(resolverClient register.ResolverClient, twinID register.RegisteredIdentity, agentID register.RegisteredIdentity, delegationName string) error {
-	return advancedapi.DelegateControl(resolverClient, twinID.KeyPair(), twinID.Did(), agentID.KeyPair(), agentID.Did(), delegationName)
+	return TwinDelegatesControlToAgent(resolverClient, twinID, agentID, delegationName)
 }
 
 // GetOwnershipOfTwinFromRegisteredIdentity Get Ownership of a twin using a registered identity you owned.
 func GetOwnershipOfTwinFromRegisteredIdentity(resolverClient register.ResolverClient, twinID register.RegisteredIdentity, newOwnerID register.RegisteredIdentity, newOwnerKeyName string) error {
-	return advancedapi.AddPublicKeyToDocument(resolverClient, newOwnerKeyName, newOwnerID.KeyPair().PublicKeyBase58, twinID)
+	return advancedapi.AddPublicKeyToDocument(resolverClient, nil, newOwnerKeyName, newOwnerID.KeyPair().PublicKeyBase58, twinID)
 }
 
 // CreateDefaultSeed Create a new seed (secrets) with the default length.

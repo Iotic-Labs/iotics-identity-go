@@ -20,7 +20,8 @@ func createIdentity(resolverClient register.ResolverClient, purpose identity.Did
 		return nil, err
 	}
 
-	return advancedapi.NewRegisteredIdentity(resolverClient, purpose, keyPair, opts.Name, opts.Override)
+	createdIdentity, _, err := advancedapi.CreateNewIdentityAndRegister(resolverClient, purpose, keyPair, opts.Name, opts.Override)
+	return createdIdentity, err
 }
 
 // CreateUserIdentity Create and register a user identity.
@@ -49,8 +50,8 @@ func getIdentity(purpose identity.DidType, opts *GetIdentityOpts) (register.Regi
 	if err != nil {
 		return nil, err
 	}
-	result := register.NewRegisteredIdentity(keyPair, issuer)
-	return result, nil
+
+	return register.NewRegisteredIdentity(keyPair, issuer), nil
 }
 
 // GetUserIdentity Get user registered identity from secrets.
@@ -70,27 +71,43 @@ func GetTwinIdentity(opts *GetIdentityOpts) (register.RegisteredIdentity, error)
 
 // UserDelegatesAuthenticationToAgent User delegates authentication to agent.
 func UserDelegatesAuthenticationToAgent(resolverClient register.ResolverClient, userIdentity register.RegisteredIdentity, agentIdentity register.RegisteredIdentity, delegationName string) error {
-	return advancedapi.DelegateAuthentication(resolverClient, userIdentity.KeyPair(), userIdentity.Did(), agentIdentity.KeyPair(), agentIdentity.Did(), delegationName)
+	opts := advancedapi.DelegationOpts{
+		ResolverClient:     resolverClient,
+		DelegatingKeyPair:  userIdentity.KeyPair(),
+		DelegatingDid:      userIdentity.Did(),
+		SubjectKeyPair:     agentIdentity.KeyPair(),
+		SubjectDid:         agentIdentity.Did(),
+		Name:               delegationName,
+	}
+	return advancedapi.DelegateAuthentication(opts)
 }
 
 // TwinDelegatesControlToAgent Twin delegates control to the agent. The agent can control the twin.
 func TwinDelegatesControlToAgent(resolverClient register.ResolverClient, twinIdentity register.RegisteredIdentity, agentIdentity register.RegisteredIdentity, delegationName string) error {
-	return advancedapi.DelegateControl(resolverClient, twinIdentity.KeyPair(), twinIdentity.Did(), agentIdentity.KeyPair(), agentIdentity.Did(), delegationName)
+	opts := advancedapi.DelegationOpts{
+		ResolverClient:     resolverClient,
+		DelegatingKeyPair:  twinIdentity.KeyPair(),
+		DelegatingDid:      twinIdentity.Did(),
+		SubjectKeyPair:     agentIdentity.KeyPair(),
+		SubjectDid:         agentIdentity.Did(),
+		Name:               delegationName,
+	}
+	return advancedapi.DelegateControl(opts)
 }
 
 // SetDocumentController Set controller issuer to the register document associated to the provided registered identity.
 func SetDocumentController(resolverClient register.ResolverClient, identity register.RegisteredIdentity, controller *register.Issuer) error {
-	return advancedapi.SetDocumentController(resolverClient, identity, controller)
+	return advancedapi.SetDocumentController(resolverClient, nil, identity, controller)
 }
 
 // SetDocumentCreator Set creator to the register document associated to the provided registered identity.
 func SetDocumentCreator(resolverClient register.ResolverClient, identity register.RegisteredIdentity, creator *register.Issuer) error {
-	return advancedapi.SetDocumentCreator(resolverClient, identity, creator)
+	return advancedapi.SetDocumentCreator(resolverClient, nil, identity, creator)
 }
 
 // SetDocumentRevoked Set register document associated to the provided registered identity revoke field.
 func SetDocumentRevoked(resolverClient register.ResolverClient, identity register.RegisteredIdentity, revoked bool) error {
-	return advancedapi.SetDocumentRevoked(resolverClient, identity, revoked)
+	return advancedapi.SetDocumentRevoked(resolverClient, nil, identity, revoked)
 }
 
 // GetRegisteredDocument Get a register document from the resolver.
@@ -129,10 +146,10 @@ func GetKeyPairFromTwin(opts *GetKeyPairOpts) (*crypto.KeyPair, error) {
 
 // AddNewOwner Add new register document owner.
 func AddNewOwner(resolverClient register.ResolverClient, newOwnerName string, newOwnerPublicBase58 string, identity register.RegisteredIdentity) error {
-	return advancedapi.AddPublicKeyToDocument(resolverClient, newOwnerName, newOwnerPublicBase58, identity)
+	return advancedapi.AddPublicKeyToDocument(resolverClient, nil, newOwnerName, newOwnerPublicBase58, identity)
 }
 
 // RemoveOwnership Remove owner from a register document.
 func RemoveOwnership(resolverClient register.ResolverClient, removeOwnerName string, identity register.RegisteredIdentity) error {
-	return advancedapi.RemovePublicKeyFromDocument(resolverClient, removeOwnerName, identity)
+	return advancedapi.RemovePublicKeyFromDocument(resolverClient, nil, removeOwnerName, identity)
 }
