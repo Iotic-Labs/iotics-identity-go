@@ -27,9 +27,10 @@ type CreateTwinOpts struct {
 	KeyName        string
 	Name           string
 	Password       string
-	AgentId        register.RegisteredIdentity
+	AgentID        register.RegisteredIdentity
+	AgentDoc       *register.RegisterDocument
 	DelegationName string
-	OverideDoc     bool
+	Override       bool
 }
 
 // CreateIdentityOpts Create identity options for regular API

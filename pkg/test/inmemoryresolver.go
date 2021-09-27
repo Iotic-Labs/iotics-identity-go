@@ -12,9 +12,23 @@ import (
 	"github.com/Iotic-Labs/iotics-identity-go/pkg/register"
 )
 
+type counter struct {
+	count int
+}
+
+func (s *counter) Increment() {
+	s.count++
+}
+
+func (s *counter) Value() int {
+	return s.count
+}
+
 type InMemoryResolver struct {
 	documents map[string]*register.RegisterDocument
 	lock      *sync.RWMutex
+	CountDiscover *counter
+	CountRegister *counter
 }
 
 func NewInMemoryResolver(docs ...*register.RegisterDocument) *InMemoryResolver {
@@ -25,22 +39,30 @@ func NewInMemoryResolver(docs ...*register.RegisterDocument) *InMemoryResolver {
 	return &InMemoryResolver{
 		documents: documents,
 		lock:      &sync.RWMutex{},
+		CountDiscover: &counter{0},
+		CountRegister: &counter{0},
 	}
 }
 
 func (c InMemoryResolver) GetDocument(documentID string) (*register.RegisterDocument, error) {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
+
+	c.CountDiscover.Increment()
+
 	v, exists := c.documents[documentID]
 	if exists {
 		return v, nil
 	}
-	return nil, fmt.Errorf("document not found")
+
+	return nil, register.NewResolverError(fmt.Errorf("document not found"), register.NotFound)
 }
 
 func (c InMemoryResolver) RegisterDocument(document *register.RegisterDocument, _ *ecdsa.PrivateKey, _ *register.Issuer) error {
 	c.lock.Lock()
 	defer c.lock.Unlock()
+
+	c.CountRegister.Increment()
 
 	errs := document.Validate()
 	if len(errs) != 0 {

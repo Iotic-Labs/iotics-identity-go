@@ -18,9 +18,8 @@ import (
 )
 
 //export CreateAgentAuthToken
-// Fprint formats using the default formats for its operands and writes to w.
-// Spaces are added between operands when neither is a string.
-// It returns the number of bytes written and any write error encountered.
+// CreateAgentAuthToken creates an Agent Authentication token given the secrets
+// It returns the token string or error string
 func CreateAgentAuthToken(
 	agentDid string, agentKeyName string, agentName string, userDid string, seed string, duration int64,
 ) (*C.char, *C.char) {
@@ -50,10 +49,10 @@ func CreateTwinDidWithControlDelegation(
 	}
 	opts := &api.CreateTwinOpts{
 		Seed:           seedBytes,
-		AgentId:        agent,
-		DelegationName: "#TwinToAgentControlDeleg",
 		KeyName:        twinKeyName,
 		Name:           twinName,
+		AgentID:        agent,
+		DelegationName: "#TwinToAgentControlDeleg",
 	}
 	twinIdentity, err := api.CreateTwinWithControlDelegation(resolver, opts)
 	if err != nil {

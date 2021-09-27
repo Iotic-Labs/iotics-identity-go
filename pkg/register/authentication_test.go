@@ -65,9 +65,10 @@ func Test_can_validate_allowed_for_control_with_controller_doc(t *testing.T) {
 	resolver := test.NewInMemoryResolver()
 	userIdentity, agentIdentity := test.SetupIdentitiesForAuth(resolver, false, false)
 
-	advancedapi.SetDocumentController(resolver, userIdentity, agentIdentity.Issuer())
+	err := advancedapi.SetDocumentController(resolver, nil, userIdentity, agentIdentity.Issuer())
+	assert.NilError(t, err)
 
-	err := register.ValidateAllowedForControl(resolver, agentIdentity.Issuer(), userIdentity.Did())
+	err = register.ValidateAllowedForControl(resolver, agentIdentity.Issuer(), userIdentity.Did())
 	assert.NilError(t, err)
 }
 
@@ -75,9 +76,10 @@ func Test_can_validate_allowed_for_auth_with_controller_doc(t *testing.T) {
 	resolver := test.NewInMemoryResolver()
 	userIdentity, agentIdentity := test.SetupIdentitiesForAuth(resolver, false, false)
 
-	advancedapi.SetDocumentController(resolver, userIdentity, agentIdentity.Issuer())
+	err := advancedapi.SetDocumentController(resolver, nil, userIdentity, agentIdentity.Issuer())
+	assert.NilError(t, err)
 
-	err := register.ValidateAllowedForAuth(resolver, agentIdentity.Issuer(), userIdentity.Did())
+	err = register.ValidateAllowedForAuth(resolver, agentIdentity.Issuer(), userIdentity.Did())
 	assert.NilError(t, err)
 }
 

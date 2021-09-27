@@ -6,7 +6,7 @@ import (
 	"github.com/Iotic-Labs/iotics-identity-go/pkg/crypto"
 )
 
-// RegisteredIdentity interface
+// RegisteredIdentity interface.
 type RegisteredIdentity interface {
 	Did() string
 	Name() string
