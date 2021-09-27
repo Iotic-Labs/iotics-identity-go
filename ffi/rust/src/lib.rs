@@ -10,7 +10,14 @@ use std::str::Utf8Error;
 
 use thiserror::Error;
 
-#[allow(non_camel_case_types, non_upper_case_globals, improper_ctypes, clippy::missing_safety_doc, clippy::redundant_static_lifetimes)]
+#[allow(
+    non_camel_case_types,
+    non_upper_case_globals,
+    improper_ctypes,
+    non_snake_case,
+    clippy::missing_safety_doc,
+    clippy::redundant_static_lifetimes
+)]
 pub mod ffi_wrapper;
 
 /// Struct containing all the required secrets and parameters for working with this library.
@@ -92,7 +99,11 @@ pub fn create_agent_auth_token(config: &Config) -> Result<String, IdentityLibErr
 /// Returns:
 /// - [`Result`][Result::Ok] with [`String`] if generating a DID success.
 /// - [`Result`][Result::Err] with [`IdentityLibError`] if generating a DID fails.
-pub fn create_twin_did_with_control_delegation(config: &Config, twin_key_name: &str, twin_name: &str) -> Result<String, IdentityLibError> {
+pub fn create_twin_did_with_control_delegation(
+    config: &Config,
+    twin_key_name: &str,
+    twin_name: &str,
+) -> Result<String, IdentityLibError> {
     let result = unsafe {
         ffi_wrapper::CreateTwinDidWithControlDelegation(
             go_string(&CString::new(config.resolver_address.as_str())?),
