@@ -3,6 +3,7 @@
 package api
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/Iotic-Labs/iotics-identity-go/pkg/advancedapi"
@@ -129,4 +130,58 @@ func CreateDefaultSeed() ([]byte, error) {
 // CreateSeed Create a new seed (secrets).
 func CreateSeed(length int) ([]byte, error) {
 	return advancedapi.CreateSeed(length)
+}
+
+// DelegateControlByPrivateExponentHex registers a twin identity with a control delegate to agent
+func DelegateControlByPrivateExponentHex(resolverClient register.ResolverClient, twinIssuer *register.Issuer, twinPrivateExponent string, agentID register.RegisteredIdentity, delegationName string) error {
+	twinKeypair, err := advancedapi.GetKeyPairFromPrivateExponentHex(twinPrivateExponent)
+	if err != nil {
+		return err
+	}
+
+	twinID := register.NewRegisteredIdentity(twinKeypair, twinIssuer)
+
+	return TwinDelegatesControlToAgent(resolverClient, twinID, agentID, delegationName)
+}
+
+// TakeOwnershipOfTwinByPrivateExponentHex Get Ownership of a twin using the private exponent of the twin.
+func TakeOwnershipOfTwinByPrivateExponentHex(resolverClient register.ResolverClient, twinIssuer *register.Issuer, twinPrivateExponent string, newOwnerID register.RegisteredIdentity, newOwnerKeyName string) error {
+	twinKeypair, err := advancedapi.GetKeyPairFromPrivateExponentHex(twinPrivateExponent)
+	if err != nil {
+		return err
+	}
+
+	twinID := register.NewRegisteredIdentity(twinKeypair, twinIssuer)
+
+	return advancedapi.AddPublicKeyToDocument(resolverClient, nil, newOwnerKeyName, newOwnerID.KeyPair().PublicKeyBase58, twinID)
+}
+
+// TakeOwnershipOfTwinAndDelegateControlByPrivateExponentHex Get Ownership of a twin using the agent identity and delegate control to that agent using twin private key exponent.
+func TakeOwnershipOfTwinAndDelegateControlByPrivateExponentHex(resolverClient register.ResolverClient, twinIssuer *register.Issuer, twinPrivateExponent string, newOwnerID register.RegisteredIdentity, newOwnerKeyName string, delegationName string) error {
+	twinKeypair, err := advancedapi.GetKeyPairFromPrivateExponentHex(twinPrivateExponent)
+	if err != nil {
+		return err
+	}
+
+	twinDoc, err := resolverClient.GetDocument(twinIssuer.Did)
+	if err != nil {
+		return err
+	}
+
+	dProof, err := advancedapi.CreateProof(newOwnerID.KeyPair(), newOwnerID.Issuer(), []byte(twinIssuer.Did))
+	if err != nil {
+		return err
+	}
+
+	opts := []register.RegisterDocumentOpts{
+		register.AddFromExistingDocument(twinDoc),
+		register.AddPublicKey(newOwnerKeyName, newOwnerID.KeyPair().PublicKeyBase58, false),
+		register.AddControlDelegation(delegationName, newOwnerID.Issuer().String(), dProof.Signature, false),
+	}
+	updatedDoc, errs := register.NewRegisterDocument(opts)
+	if len(errs) != 0 {
+		return fmt.Errorf("error while creating new RegisterDocument: %v", errs)
+	}
+
+	return advancedapi.RegisterUpdatedDocument(resolverClient, updatedDoc, twinKeypair, twinIssuer)
 }
