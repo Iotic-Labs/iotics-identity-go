@@ -87,7 +87,7 @@ func (c *RestResolverClient) GetDocument(documentID string) (*RegisterDocument, 
 
 	if response.StatusCode == http.StatusNotFound {
 		totalResolverErrors.WithLabelValues(MetricErrorTypeNotFound).Inc()
-		return nil, &ResolverError{err: err, errType: NotFound}
+		return nil, &ResolverError{err: fmt.Errorf("%s: document %s", http.StatusText(http.StatusNotFound), documentID), errType: NotFound}
 	}
 
 	data, err := ioutil.ReadAll(response.Body)

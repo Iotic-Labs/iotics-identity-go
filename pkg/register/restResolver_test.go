@@ -94,6 +94,9 @@ func Test_Resolver_Notfound_Error(t *testing.T) {
 	assert.Assert(t, register.IsResolverError(err))
 	re := err.(*register.ResolverError)
 	assert.Equal(t, re.ErrorType(), register.NotFound)
+	assert.Assert(t, re.Err() != nil)
+	assert.ErrorContains(t, re.Err(), fmt.Sprintf("document %s", ValidID))
+	assert.ErrorContains(t, re.Err(), http.StatusText(http.StatusNotFound))
 
 	expected := `# HELP iotics_identity_resolver_errors_total Total resolver client errors by error type
 	# TYPE iotics_identity_resolver_errors_total counter
