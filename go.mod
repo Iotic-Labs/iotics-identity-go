@@ -3,7 +3,7 @@ module github.com/Iotic-Labs/iotics-identity-go
 go 1.16
 
 require (
-	github.com/ethereum/go-ethereum v1.10.9
+	github.com/ethereum/go-ethereum v1.10.13
 	github.com/go-bdd/gobdd v1.1.3
 	github.com/golang-jwt/jwt v3.2.1+incompatible
 	github.com/google/go-cmp v0.5.6 // indirect
