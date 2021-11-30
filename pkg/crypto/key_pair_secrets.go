@@ -7,6 +7,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"crypto/sha512"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"strings"
@@ -14,7 +15,6 @@ import (
 	id "github.com/Iotic-Labs/iotics-identity-go/pkg/identity"
 	"github.com/Iotic-Labs/iotics-identity-go/pkg/validation"
 
-	ethcrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/tyler-smith/go-bip39"
 )
 
@@ -165,7 +165,7 @@ func GetPrivateKey(secrets KeyPairSecrets) (*ecdsa.PrivateKey, error) {
 	_, _ = h.Write([]byte(secrets.Path()))
 	privateKeyBytes := h.Sum(nil)
 
-	return ethcrypto.ToECDSA(privateKeyBytes)
+	return GetPrivateKeyFromExponent(hex.EncodeToString(privateKeyBytes))
 }
 
 // GetPublicKeyBase58FromKeyPairSecrets  Get public key base58 fron key pair secrets

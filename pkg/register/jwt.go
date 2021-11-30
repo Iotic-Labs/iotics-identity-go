@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/Iotic-Labs/iotics-identity-go/pkg/crypto"
 	"github.com/Iotic-Labs/iotics-identity-go/pkg/proof"
 	"github.com/golang-jwt/jwt"
 )
@@ -99,7 +100,7 @@ func DecodeDocumentTokenNoVerify(token JwtToken) (*DidDocumentClaims, error) {
 // DecodeDocumentToken Decode a document token
 func DecodeDocumentToken(token JwtToken, publicKeyBase58 string, audience string) (*DidDocumentClaims, error) {
 	decoded, err := jwt.ParseWithClaims(string(token), &didDocumentClaims{}, func(token *jwt.Token) (interface{}, error) {
-		publicKey, err := getPublicKeyFromBase58(publicKeyBase58)
+		publicKey, err := crypto.GetPublicKeyFromBase58(publicKeyBase58)
 		if err != nil {
 			return nil, err
 		}
@@ -186,7 +187,7 @@ func DecodeAuthTokenNoVerify(token JwtToken) (*AuthenticationClaims, error) {
 // DecodeAuthToken Decode a authentication token
 func DecodeAuthToken(token JwtToken, publicKeyBase58 string, audience string) (*AuthenticationClaims, error) {
 	decoded, err := jwt.ParseWithClaims(string(token), &jwt.StandardClaims{}, func(token *jwt.Token) (interface{}, error) {
-		publicKey, err := getPublicKeyFromBase58(publicKeyBase58)
+		publicKey, err := crypto.GetPublicKeyFromBase58(publicKeyBase58)
 		if err != nil {
 			return nil, err
 		}
@@ -263,7 +264,7 @@ func DecodeChallengeTokenNoVerify(token JwtToken) (*ChallengeClaims, error) {
 // DecodeChallengeToken Decode a challenge token
 func DecodeChallengeToken(token JwtToken, publicKeyBase58 string, audience string) (*ChallengeClaims, error) {
 	decoded, err := jwt.ParseWithClaims(string(token), &challengeClaims{}, func(token *jwt.Token) (interface{}, error) {
-		publicKey, err := getPublicKeyFromBase58(publicKeyBase58)
+		publicKey, err := crypto.GetPublicKeyFromBase58(publicKeyBase58)
 		if err != nil {
 			return nil, err
 		}
