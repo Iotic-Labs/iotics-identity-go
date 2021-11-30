@@ -9,7 +9,7 @@ import (
 
 	id "github.com/Iotic-Labs/iotics-identity-go/pkg/identity"
 
-	"github.com/ethereum/go-ethereum/crypto/secp256k1"
+	"github.com/fomichev/secp256k1"
 
 	"github.com/Iotic-Labs/iotics-identity-go/pkg/crypto"
 	"github.com/tyler-smith/go-bip39"
@@ -164,7 +164,6 @@ func Test_validate_bip39_seed_should_raise_if_invalid_seed(t *testing.T) {
 }
 
 func Test_can_get_private_key_from_key_pair_secrets_bip39(t *testing.T) {
-	expectedBitSize := 256
 	validKeyPairSecrets, _ := crypto.NewKeyPairSecrets(test.ValidBip39Seed32B, test.ValidKeyPairPath, crypto.SeedMethodBip39, "")
 
 	privateKey, err := crypto.GetPrivateKey(validKeyPairSecrets)
@@ -172,13 +171,11 @@ func Test_can_get_private_key_from_key_pair_secrets_bip39(t *testing.T) {
 	assert.NilError(t, err)
 	assert.Assert(t, privateKey != nil)
 
-	bitCurve := privateKey.PublicKey.Curve.(*secp256k1.BitCurve)
-	assert.Assert(t, bitCurve != nil)
-	assert.Assert(t, bitCurve.BitSize == expectedBitSize)
+	curve := secp256k1.SECP256K1()
+	assert.Assert(t, curve.IsOnCurve(privateKey.X, privateKey.Y))
 }
 
 func Test_can_get_private_key_from_key_pair_secrets_none(t *testing.T) {
-	expectedBitSize := 256
 	validKeyPairSecrets, _ := crypto.NewKeyPairSecrets(test.ValidBip39Seed32B, test.ValidKeyPairPath, crypto.SeedMethodNone, "")
 
 	privateKey, err := crypto.GetPrivateKey(validKeyPairSecrets)
@@ -186,9 +183,8 @@ func Test_can_get_private_key_from_key_pair_secrets_none(t *testing.T) {
 	assert.NilError(t, err)
 	assert.Assert(t, privateKey != nil)
 
-	bitCurve := privateKey.PublicKey.Curve.(*secp256k1.BitCurve)
-	assert.Assert(t, bitCurve != nil)
-	assert.Assert(t, bitCurve.BitSize == expectedBitSize)
+	curve := secp256k1.SECP256K1()
+	assert.Assert(t, curve.IsOnCurve(privateKey.X, privateKey.Y))
 }
 
 func Test_can_get_public_base58_key(t *testing.T) {

@@ -11,6 +11,8 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+
+	"github.com/Iotic-Labs/iotics-identity-go/pkg/crypto"
 )
 
 // Proof struct
@@ -64,7 +66,7 @@ func ValidateProof(proof *Proof, publicBase58 string) error {
 		return err
 	}
 
-	publicKey, err := getPublicKeyFromBase58(publicBase58)
+	publicKey, err := crypto.GetPublicKeyFromBase58(publicBase58)
 	if err != nil {
 		return err
 	}
