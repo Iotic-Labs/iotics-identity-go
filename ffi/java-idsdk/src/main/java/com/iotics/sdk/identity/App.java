@@ -9,7 +9,7 @@ public class App {
     public static void main(String[] args) {
 
         SdkApi api = new JnaSdkApiInitialiser().get();
-        String resolver = "https://did.stg.iotics.com/";
+        String resolver = "https://did.stg.iotics.com";
         SimpleIdentity idSdk = new SimpleIdentity(api, resolver);
 
         String res;
@@ -23,11 +23,15 @@ public class App {
         res = idSdk.MnemonicBip39ToSeed(res);
         System.out.println("MnemonicBip39ToSeed: " + res);
 
-        res = idSdk.CreateAgentIdentity("aKey1", "#app1");
-        System.out.println("CreateAgentIdentity: " + res);
+        Identity agentIdentity = idSdk.CreateAgentIdentity("aKey1", "#app1");
+        System.out.println("CreateAgentIdentity: " + agentIdentity );
 
-        res = idSdk.CreateUserIdentity("uKey1", "#user1");
-        System.out.println("CreateUserIdentity: " + res);
+        Identity userIdentity = idSdk.CreateUserIdentity("uKey1", "#user1");
+        System.out.println("CreateUserIdentity: " + userIdentity);
+
+        Identity twinIdentity = idSdk.CreateTwinDidWithControlDelegation(agentIdentity, "tKey1", "#tName");
+        System.out.println("CreateTwinDidWithControlDelegation: " + twinIdentity);
+
     }
 
 }
