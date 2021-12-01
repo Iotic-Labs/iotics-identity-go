@@ -7,8 +7,13 @@ import java.util.Arrays;
 import java.util.List;
 
 public class StringResult extends Structure implements Structure.ByValue {
+    // need to be public for jra to work
     public String value;
     public String err;
+
+    // needed for jra to instantiate this class
+    public StringResult() {
+    }
 
     public StringResult(String value, String err) {
         this.value = value;

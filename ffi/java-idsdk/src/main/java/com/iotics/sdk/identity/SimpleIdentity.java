@@ -3,6 +3,7 @@ package com.iotics.sdk.identity;
 import com.iotics.sdk.identity.jna.SdkApi;
 
 import java.net.URI;
+import java.time.Duration;
 import java.util.Objects;
 
 import static com.iotics.sdk.identity.Validator.getValueOrThrow;
@@ -43,6 +44,13 @@ public class SimpleIdentity {
                 agentIdentity.did(), agentIdentity.keyName(), agentIdentity.name(), agentSeed, twinKeyName, twinName));
         return new Identity(twinKeyName, twinName, did);
     }
+
+    public String CreateAgentAuthToken(Identity agentIdentity, String userDid, Duration duration) {
+        int secs = Math.toIntExact(duration.toSeconds());
+        return getValueOrThrow(api.CreateAgentAuthToken(
+                agentIdentity.did(), agentIdentity.keyName(), agentIdentity.name(), agentSeed, userDid, secs));
+    }
+
 
     String getAgentSeed() {
         return agentSeed;

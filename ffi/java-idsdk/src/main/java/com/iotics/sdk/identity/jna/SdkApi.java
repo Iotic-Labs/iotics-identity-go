@@ -60,7 +60,7 @@ public interface SdkApi extends Library {
 
             String delegationName);
 
-    String CreateAgentAuthToken(
+    StringResult CreateAgentAuthToken(
             String agentDid,
             String agentKeyName,
             String agentName,
