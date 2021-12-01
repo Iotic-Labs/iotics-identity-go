@@ -1,0 +1,3 @@
+.vscode/settings.json
+ffi/java-idsdk/bin
+ffi/java-idsdk/**/*.class
