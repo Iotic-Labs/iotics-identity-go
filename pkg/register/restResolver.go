@@ -75,9 +75,12 @@ func (c *RestResolverClient) GetDocument(documentID string) (*RegisterDocument, 
 		return nil, err
 	}
 
-	discoverURL := fmt.Sprintf("%s/1.0/discover/%s", c.url.String(), url.QueryEscape(documentID)) // todo: join path?
-	response, err := c.client.Get(discoverURL)
-
+	discoverURL := url.URL{
+		Scheme: c.url.Scheme,
+		Host:   c.url.Host,
+		Path:   fmt.Sprintf("/1.0/discover/%s", url.QueryEscape(documentID)),
+	}
+	response, err := c.client.Get(discoverURL.String())
 	if err != nil {
 		neterr, ok := err.(net.Error)
 		if ok && neterr.Timeout() {
@@ -120,9 +123,8 @@ func (c *RestResolverClient) GetDocument(documentID string) (*RegisterDocument, 
 		return nil, &ResolverError{err: errors.New(errMsg), errType: ServerError}
 	}
 
-	// Verify the document using ourselves
-	claims, err := DecodeDocumentTokenNoVerify(JwtToken(resp["token"].(string))) // TODO: Must verify here !!
-
+	// Decode the token without verification (todo: verifcation)
+	claims, err := DecodeDocumentTokenNoVerify(JwtToken(resp["token"].(string)))
 	if err != nil {
 		return nil, err
 	}
@@ -136,9 +138,13 @@ func (c *RestResolverClient) RegisterDocument(document *RegisterDocument, privat
 		return err
 	}
 
-	registerURL := fmt.Sprintf("%s/1.0/register", c.url.String())
+	registerURL := url.URL{
+		Scheme: c.url.Scheme,
+		Host:   c.url.Host,
+		Path:   "/1.0/register",
+	}
 	rdr := strings.NewReader(string(token))
-	response, err := c.client.Post(registerURL, "text/plain", rdr) // FIXME content type
+	response, err := c.client.Post(registerURL.String(), "text/plain", rdr)
 	if err != nil {
 		neterr, ok := err.(net.Error)
 		if ok && neterr.Timeout() {
