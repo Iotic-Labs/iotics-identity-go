@@ -14,9 +14,6 @@ to build the jar
 
 Both as `make all`
 
-## Run
+## Test
 
-Sample app
-
-`java -cp target/java-idsdk-1.0-SNAPSHOT.jar com.iotics.sdk.identity.App
-`
+A sample app is in the test/java directory: `com.iotics.sdk.identity.App`

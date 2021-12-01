@@ -1,7 +1,11 @@
 package com.iotics.sdk.identity;
 
-import com.iotics.sdk.identity.go.StringResult;
 import com.iotics.sdk.identity.jna.SdkApi;
+
+import java.net.URI;
+import java.util.Objects;
+
+import static com.iotics.sdk.identity.Validator.getValueOrThrow;
 
 public class SimpleIdentity {
     private final SdkApi api;
@@ -18,23 +22,10 @@ public class SimpleIdentity {
     }
 
     public SimpleIdentity(SdkApi api, String resolverAddress, String userSeed, String agentSeed) {
-        this.api = api;
-        this.userSeed = userSeed;
-        this.agentSeed = agentSeed;
-        this.resolverAddress = resolverAddress;
-        // TODO: validate
-    }
-
-    public String CreateDefaultSeed() {
-        return getValueOrThrow(api.CreateDefaultSeed());
-    }
-
-    public String MnemonicBip39ToSeed(String mnemonics) {
-        return getValueOrThrow(api.MnemonicBip39ToSeed(mnemonics));
-    }
-
-    public String SeedBip39ToMnemonic(String seed) {
-        return getValueOrThrow(api.SeedBip39ToMnemonic(seed));
+        this.api = Objects.requireNonNull(api);
+        this.userSeed = Objects.requireNonNull(userSeed);
+        this.agentSeed = Objects.requireNonNull(agentSeed);
+        this.resolverAddress = URI.create(resolverAddress).toString();
     }
 
     public Identity CreateAgentIdentity(String keyName, String name) {
@@ -53,12 +44,11 @@ public class SimpleIdentity {
         return new Identity(twinKeyName, twinName, did);
     }
 
-    private static String getValueOrThrow(StringResult ret) {
-        if (ret.err != null) {
-            throw new SimpleIdentityException(ret.err);
-        }
-        return ret.value;
-
+    String getAgentSeed() {
+        return agentSeed;
     }
 
+    String getUserSeed() {
+        return userSeed;
+    }
 }
