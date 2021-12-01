@@ -10,18 +10,20 @@ public class App {
 
         SdkApi api = new JnaSdkApiInitialiser().get();
         String resolver = "https://did.stg.iotics.com";
-        SimpleIdentity idSdk = new SimpleIdentity(api, resolver);
+        Seeds seeds = new Seeds(api);
 
         String res;
 
-        res = idSdk.CreateDefaultSeed();
+        res = seeds.CreateDefaultSeed();
         System.out.println("CreateDefaultSeed: " + res);
 
-        res = idSdk.SeedBip39ToMnemonic(res);
+        res = seeds.SeedBip39ToMnemonic(res);
         System.out.println("SeedBip39ToMnemonic: " + res);
 
-        res = idSdk.MnemonicBip39ToSeed(res);
+        res = seeds.MnemonicBip39ToSeed(res);
         System.out.println("MnemonicBip39ToSeed: " + res);
+
+        SimpleIdentity idSdk = new SimpleIdentity(api, resolver);
 
         Identity agentIdentity = idSdk.CreateAgentIdentity("aKey1", "#app1");
         System.out.println("CreateAgentIdentity: " + agentIdentity );

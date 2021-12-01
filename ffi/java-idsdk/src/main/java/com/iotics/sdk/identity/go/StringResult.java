@@ -10,6 +10,11 @@ public class StringResult extends Structure implements Structure.ByValue {
     public String value;
     public String err;
 
+    public StringResult(String value, String err) {
+        this.value = value;
+        this.err = err;
+    }
+
     protected List<String> getFieldOrder() {
         return Arrays.asList("value", "err");
     }

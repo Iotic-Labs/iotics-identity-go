@@ -5,7 +5,4 @@ public class SimpleIdentityException extends RuntimeException {
         super(message);
     }
 
-    public SimpleIdentityException(String message, Throwable cause) {
-        super(message, cause);
-    }
 }
