@@ -75,8 +75,8 @@ pub fn create_agent_auth_token(config: &Config) -> Result<String, IdentityLibErr
             go_string(&CString::new(config.agent_did.as_str())?),
             go_string(&CString::new(config.agent_key_name.as_str())?),
             go_string(&CString::new(config.agent_name.as_str())?),
-            go_string(&CString::new(config.user_did.as_str())?),
             go_string(&CString::new(config.agent_secret.as_str())?),
+            go_string(&CString::new(config.user_did.as_str())?),
             config.token_duration,
         )
     };
