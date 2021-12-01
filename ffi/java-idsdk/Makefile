@@ -6,3 +6,8 @@ GO_SRC=../ffi_wrapper.go
 
 so: clean
 	@go build -buildmode=c-shared -o bin/lib-iotics-id-sdk.so ${GO_SRC}
+
+java-package:
+	@mvn clean package
+
+all: so java-package

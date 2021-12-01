@@ -37,18 +37,21 @@ public class SimpleIdentity {
         return getValueOrThrow(api.SeedBip39ToMnemonic(seed));
     }
 
-    public String CreateTwinDidWithControlDelegation(String resolverAddress, String agentDid, String agentKeyName, String agentName, String agentSeed, String twinKeyName, String twinName) {
-        return getValueOrThrow(api.CreateTwinDidWithControlDelegation(resolverAddress, agentDid, agentKeyName, agentName, agentSeed, twinKeyName, twinName));
+    public Identity CreateAgentIdentity(String keyName, String name) {
+        String did = getValueOrThrow(api.CreateAgentIdentity(resolverAddress, keyName, name, agentSeed));
+        return new Identity(keyName, name, did);
     }
 
-    public String CreateAgentIdentity(String keyName, String name) {
-        return getValueOrThrow(api.CreateAgentIdentity(resolverAddress, keyName, name, agentSeed));
+    public Identity CreateUserIdentity(String keyName, String name) {
+        String did = getValueOrThrow(api.CreateUserIdentity(resolverAddress, keyName, name, userSeed));
+        return new Identity(keyName, name, did);
     }
 
-    public String CreateUserIdentity(String keyName, String name) {
-        return getValueOrThrow(api.CreateUserIdentity(resolverAddress, keyName, name, userSeed));
+    public Identity CreateTwinDidWithControlDelegation(Identity agentIdentity, String twinKeyName, String twinName) {
+        String did = getValueOrThrow(api.CreateTwinDidWithControlDelegation(resolverAddress,
+                agentIdentity.did(), agentIdentity.keyName(), agentIdentity.name(), agentSeed, twinKeyName, twinName));
+        return new Identity(twinKeyName, twinName, did);
     }
-
 
     private static String getValueOrThrow(StringResult ret) {
         if (ret.err != null) {

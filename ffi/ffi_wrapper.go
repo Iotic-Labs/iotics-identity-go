@@ -23,7 +23,7 @@ type GetIDFunc = func(opts *api.GetIdentityOpts) (register.RegisteredIdentity, e
 func CreateDefaultSeed() (*C.char, *C.char) {
 	res, err := api.CreateDefaultSeed()
 	if err != nil {
-		return C.CString(""), C.CString(fmt.Sprintf("FFI lib error: failed to create default length seed: %+v", err))
+		return nil, C.CString(fmt.Sprintf("FFI lib error: failed to create default length seed: %+v", err))
 	}
 	return C.CString(hex.EncodeToString(res)), nil
 }
@@ -33,7 +33,7 @@ func MnemonicBip39ToSeed(cMnemonic *C.char) (*C.char, *C.char) {
 	mnemonic := C.GoString(cMnemonic)
 	res, err := crypto.MnemonicBip39ToSeed(mnemonic)
 	if err != nil {
-		return C.CString(""), C.CString(fmt.Sprintf("FFI lib error: failed to create default length seed: %+v", err))
+		return nil, C.CString(fmt.Sprintf("FFI lib error: failed to create default length seed: %+v", err))
 	}
 	return C.CString(hex.EncodeToString(res)), nil
 }
@@ -42,7 +42,7 @@ func MnemonicBip39ToSeed(cMnemonic *C.char) (*C.char, *C.char) {
 func SeedBip39ToMnemonic(cSeed *C.char) (*C.char, *C.char) {
 	seedBytes, err := hex.DecodeString(C.GoString(cSeed))
 	if err != nil {
-		return C.CString(""), C.CString(fmt.Sprintf("FFI lib error: failed to decode seed: %+v", err))
+		return nil, C.CString(fmt.Sprintf("FFI lib error: failed to decode seed: %+v", err))
 	}
 	res, err := crypto.SeedBip39ToMnemonic(seedBytes)
 	if err != nil {
@@ -116,7 +116,7 @@ func UserDelegatesAuthenticationToAgent(
 	if err != nil {
 		return C.CString(fmt.Sprintf("FFI lib error: unable to delegate control to agent: %+v", err))
 	}
-	return C.CString("")
+	return nil
 }
 
 //export TwinDelegatesControlToAgent
@@ -170,7 +170,7 @@ func TwinDelegatesControlToAgent(cResolverAddress *C.char,
 	if err != nil {
 		return C.CString(fmt.Sprintf("FFI lib error: unable to delegate control to agent: %+v", err))
 	}
-	return C.CString("")
+	return nil
 }
 
 //export CreateAgentAuthToken
@@ -189,13 +189,13 @@ func CreateAgentAuthToken(
 
 	agent, _, err := getIdentity(api.GetAgentIdentity, agentDid, agentKeyName, agentName, seed)
 	if err != nil {
-		return C.CString(""), C.CString(fmt.Sprintf("FFI lib error: failed to get agent registered identity: %+v", err))
+		return nil, C.CString(fmt.Sprintf("FFI lib error: failed to get agent registered identity: %+v", err))
 	}
 	token, err := api.CreateAgentAuthToken(agent, userDid, time.Duration(duration)*time.Second, "")
 	if err != nil {
-		return C.CString(""), C.CString(fmt.Sprintf("FFI lib error: failed to get token: %+v", err))
+		return nil, C.CString(fmt.Sprintf("FFI lib error: failed to get token: %+v", err))
 	}
-	return C.CString(string(token)), C.CString("")
+	return C.CString(string(token)), nil
 }
 
 //export CreateTwinDidWithControlDelegation
@@ -219,12 +219,12 @@ func CreateTwinDidWithControlDelegation(
 
 	addr, err := url.Parse(resolverAddress)
 	if err != nil {
-		return C.CString(""), C.CString(fmt.Sprintf("FFI lib error: parsing resolver address failed: %+v", err))
+		return nil, C.CString(fmt.Sprintf("FFI lib error: parsing resolver address failed: %+v", err))
 	}
 	resolver := register.NewDefaultRestResolverClient(addr)
 	agent, seedBytes, err := getIdentity(api.GetAgentIdentity, agentDid, agentKeyName, agentName, agentSeed)
 	if err != nil {
-		return C.CString(""), C.CString(fmt.Sprintf("FFI lib error: failed to get agent registered identity: %+v", err))
+		return nil, C.CString(fmt.Sprintf("FFI lib error: failed to get agent registered identity: %+v", err))
 	}
 	opts := &api.CreateTwinOpts{
 		Seed:           seedBytes,
@@ -235,9 +235,9 @@ func CreateTwinDidWithControlDelegation(
 	}
 	twinIdentity, err := api.CreateTwinWithControlDelegation(resolver, opts)
 	if err != nil {
-		return C.CString(""), C.CString(fmt.Sprintf("FFI lib error: creating twin DiD Doc failed: %+vs", err))
+		return nil, C.CString(fmt.Sprintf("FFI lib error: creating twin DiD Doc failed: %+vs", err))
 	}
-	return C.CString(twinIdentity.Did()), C.CString("")
+	return C.CString(twinIdentity.Did()), nil
 }
 
 //export FreeUpCString
@@ -256,11 +256,11 @@ func createIdentity(isUser bool, // true for userId, false for agentId
 
 	seedBytes, err := hex.DecodeString(seed)
 	if err != nil {
-		return C.CString(""), C.CString(fmt.Sprintf("FFI lib error: failed to decode seed: %+v", err))
+		return nil, C.CString(fmt.Sprintf("FFI lib error: failed to decode seed: %+v", err))
 	}
 	addr, err := url.Parse(resolverAddress)
 	if err != nil {
-		return C.CString(""), C.CString(fmt.Sprintf("FFI lib error: parsing resolver address failed: %+v", err))
+		return nil, C.CString(fmt.Sprintf("FFI lib error: parsing resolver address failed: %+v", err))
 	}
 
 	opts := &api.CreateIdentityOpts{
@@ -272,9 +272,6 @@ func createIdentity(isUser bool, // true for userId, false for agentId
 		Override: true,
 	}
 
-	fmt.Printf("seed %v", seed)
-	fmt.Printf("opts %v", opts)
-
 	resolver := register.NewDefaultRestResolverClient(addr)
 	var id register.RegisteredIdentity
 	if isUser {
@@ -284,10 +281,10 @@ func createIdentity(isUser bool, // true for userId, false for agentId
 	}
 
 	if err != nil {
-		return C.CString(""), C.CString(fmt.Sprintf("FFI lib error: unable to create identity: %+v", err))
+		return nil, C.CString(fmt.Sprintf("FFI lib error: unable to create identity: %+v", err))
 	}
 
-	return C.CString(id.Did()), C.CString("")
+	return C.CString(id.Did()), nil
 }
 
 func getIdentity(idFunc GetIDFunc,
