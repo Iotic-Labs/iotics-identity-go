@@ -177,17 +177,24 @@ func TwinDelegatesControlToAgent(cResolverAddress *C.char,
 // CreateAgentAuthToken creates an Agent Authentication token given the secrets
 // It returns the token string or error string
 func CreateAgentAuthToken(
-	cAgentDid *C.char, cAgentKeyName *C.char, cAgentName *C.char, cUserDid *C.char, cSeed *C.char, duration int64,
-) (*C.char, *C.char) {
+
+	cAgentDid *C.char,
+	cAgentKeyName *C.char,
+	cAgentName *C.char,
+	cAgentSeed *C.char,
+
+	cUserDid *C.char,
+	duration int64) (*C.char, *C.char) {
 
 	// validation
 	agentDid := C.GoString(cAgentDid)
 	agentKeyName := C.GoString(cAgentKeyName)
 	agentName := C.GoString(cAgentName)
+	agentSeed := C.GoString(cAgentSeed)
 	userDid := C.GoString(cUserDid)
-	seed := C.GoString(cSeed)
 
-	agent, _, err := getIdentity(api.GetAgentIdentity, agentDid, agentKeyName, agentName, seed)
+	agent, _, err := getIdentity(api.GetAgentIdentity, agentDid, agentKeyName, agentName, agentSeed)
+
 	if err != nil {
 		return nil, C.CString(fmt.Sprintf("FFI lib error: failed to get agent registered identity: %+v", err))
 	}
@@ -287,9 +294,7 @@ func createIdentity(isUser bool, // true for userId, false for agentId
 	return C.CString(id.Did()), nil
 }
 
-func getIdentity(idFunc GetIDFunc,
-	theDid string, theKeyName string, theName string, seed string,
-) (register.RegisteredIdentity, []byte, error) {
+func getIdentity(idFunc GetIDFunc, theDid string, theKeyName string, theName string, seed string) (register.RegisteredIdentity, []byte, error) {
 	seedBytes, err := hex.DecodeString(seed)
 	if err != nil {
 		return nil, nil, err

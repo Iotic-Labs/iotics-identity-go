@@ -4,7 +4,7 @@ import com.iotics.sdk.identity.go.StringResult;
 
 public final class Validator {
 
-     static String getValueOrThrow(StringResult ret) {
+    static String getValueOrThrow(StringResult ret) {
         if (ret.err != null) {
             throw new SimpleIdentityException(ret.err);
         }
