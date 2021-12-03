@@ -17,7 +17,10 @@ public final class DataFactory {
 
     public static Identity aValidAgentIdentity() {
         return new Identity("aKeyName", "aName", "did:iotics:123");
+    }
 
+    public static Identity aValidUserIdentity() {
+        return new Identity("uKeyName", "uName", "did:iotics:abc");
     }
 
 }

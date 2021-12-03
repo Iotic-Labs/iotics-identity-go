@@ -12,4 +12,10 @@ public final class Validator {
 
     }
 
+    static void throwIfNotNull(String err) {
+        if (err != null) {
+            throw new SimpleIdentityException(err);
+        }
+    }
+
 }

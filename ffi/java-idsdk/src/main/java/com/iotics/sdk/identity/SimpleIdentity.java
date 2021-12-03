@@ -7,6 +7,7 @@ import java.time.Duration;
 import java.util.Objects;
 
 import static com.iotics.sdk.identity.Validator.getValueOrThrow;
+import static com.iotics.sdk.identity.Validator.throwIfNotNull;
 
 public class SimpleIdentity {
     private final SdkApi api;
@@ -39,7 +40,7 @@ public class SimpleIdentity {
         return new Identity(keyName, name, did);
     }
 
-    public Identity CreateTwinDidWithControlDelegation(Identity agentIdentity, String twinKeyName, String twinName) {
+    public Identity CreateTwinIdentityWithControlDelegation(Identity agentIdentity, String twinKeyName, String twinName) {
         String did = getValueOrThrow(api.CreateTwinDidWithControlDelegation(resolverAddress,
                 agentIdentity.did(), agentIdentity.keyName(), agentIdentity.name(), agentSeed, twinKeyName, twinName));
         return new Identity(twinKeyName, twinName, did);
@@ -50,6 +51,22 @@ public class SimpleIdentity {
         return getValueOrThrow(api.CreateAgentAuthToken(
                 agentIdentity.did(), agentIdentity.keyName(), agentIdentity.name(), agentSeed, userDid, secs));
     }
+
+    public void UserDelegatesAuthenticationToAgent(Identity agentId, Identity userId, String delegationName) {
+        throwIfNotNull(api.UserDelegatesAuthenticationToAgent(resolverAddress,
+                agentId.did(), agentId.keyName(), agentId.name(), agentSeed,
+                userId.did(), userId.keyName(), userId.name(), userSeed, delegationName));
+
+    }
+
+    public void TwinDelegatesControlToAgent(Identity agentId, Identity twinId, String delegationName) {
+        throwIfNotNull(api.TwinDelegatesControlToAgent(resolverAddress,
+                agentId.did(), agentId.keyName(), agentId.name(), agentSeed,
+                twinId.did(), twinId.keyName(), twinId.name(), agentSeed, delegationName));
+
+    }
+
+
 
 
     String getAgentSeed() {

@@ -34,6 +34,7 @@ public interface SdkApi extends Library {
 
     String UserDelegatesAuthenticationToAgent(
             String resolverAddress,
+
             String agentDid,
             String agentKeyName,
             String agentName,
@@ -48,6 +49,7 @@ public interface SdkApi extends Library {
 
     String TwinDelegatesControlToAgent(
             String resolverAddress,
+
             String agentDid,
             String agentKeyName,
             String agentName,
