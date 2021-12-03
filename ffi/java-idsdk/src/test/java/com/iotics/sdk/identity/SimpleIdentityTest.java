@@ -65,7 +65,7 @@ public class SimpleIdentityTest {
         Identity id = aValidAgentIdentity();
         when(sdkApi.CreateTwinDidWithControlDelegation(any(), any(), any(), any(), any(), any(), any())).thenReturn(validResult("twin did"));
 
-        Identity twinId = si.CreateTwinDidWithControlDelegation(id, "twinKeyName", "twinName");
+        Identity twinId = si.CreateTwinIdentityWithControlDelegation(id, "twinKeyName", "twinName");
 
         assertEquals(twinId.did(), "twin did");
         assertEquals(twinId.keyName(), "twinKeyName");
@@ -113,7 +113,6 @@ public class SimpleIdentityTest {
         });
     }
 
-
     @Test
     void whenCreateAgentAuthToken_thenMapsParametersAndDelegatesToApi() {
         String res = validUrl();
@@ -126,6 +125,40 @@ public class SimpleIdentityTest {
 
         assertEquals(token, "some token");
         verify(sdkApi).CreateAgentAuthToken(i.did(), i.keyName(),  i.name(), si.getAgentSeed(), "did:iotics:user", Integer.valueOf(123));
+    }
+
+    @Test
+    void whenUserDelegatesAuthenticationToAgent_thenMapsParametersAndDelegatesToApi() {
+        String res = validUrl();
+        String as = "agentSeed";
+        String us = "userSeed";
+        SimpleIdentity si = new SimpleIdentity(sdkApi, res, us, as);
+
+        Identity i = aValidAgentIdentity();
+        Identity u = aValidUserIdentity();
+        si.UserDelegatesAuthenticationToAgent(i, u, "#foobar");
+
+        verify(sdkApi).UserDelegatesAuthenticationToAgent(res,
+                i.did(), i.keyName(),  i.name(), si.getAgentSeed(),
+                u.did(), u.keyName(),  u.name(), si.getUserSeed(),
+                "#foobar");
+    }
+
+    @Test
+    void whenTwinDelegatesControlToAgent_thenMapsParametersAndDelegatesToApi() {
+        String res = validUrl();
+        String as = "agentSeed";
+        String us = "userSeed";
+        SimpleIdentity si = new SimpleIdentity(sdkApi, res, us, as);
+
+        Identity i = aValidAgentIdentity();
+        Identity u = aValidUserIdentity();
+        si.TwinDelegatesControlToAgent(i, u, "#foobar");
+
+        verify(sdkApi).TwinDelegatesControlToAgent(res,
+                i.did(), i.keyName(),  i.name(), si.getAgentSeed(),
+                u.did(), u.keyName(),  u.name(), si.getAgentSeed(),
+                "#foobar");
     }
 
 }

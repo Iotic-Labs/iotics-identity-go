@@ -6,27 +6,42 @@ import com.iotics.sdk.identity.jna.SdkApi;
 import java.time.Duration;
 
 public class App {
+    static SdkApi api = new JnaSdkApiInitialiser().get();
+    static String resolver = "https://did.stg.iotics.com";
+    static String seed = "f25a09c9d21ad5f7535fac4c30afe1a9f2ca025a192db549044b1b0130d1e945";
+    static String uDiD = "did:iotics:iotEBuXp2wHMREZmwYAyPhFzPYfWtt9Ka2R2";
+    static Identity agentIdentity = new Identity("aKey1", "#app1", "did:iotics:iotJxn2AHBkaFXKkBymbFYcVokGhLShLtUf1");
 
     public static void main(String[] args) {
-        SdkApi api = new JnaSdkApiInitialiser().get();
-        String resolver = "https://did.stg.iotics.com";
-
-        String seed = "f25a09c9d21ad5f7535fac4c30afe1a9f2ca025a192db549044b1b0130d1e945";
-
-        SimpleIdentity idSdk = new SimpleIdentity(api, resolver, seed);
-
-        Identity agentIdentity  = new Identity("aKey1", "#app1", "did:iotics:iotJxn2AHBkaFXKkBymbFYcVokGhLShLtUf1");
-        String uDiD = "did:iotics:iotEBuXp2wHMREZmwYAyPhFzPYfWtt9Ka2R2";
-        String token = idSdk.CreateAgentAuthToken(agentIdentity, uDiD, Duration.ofHours(10));
-
-        System.out.println("CreateAgentAuthToken: " + token);
-
+        delegation();
     }
 
-    public static void main2(String[] args) {
+    public static void delegation() {
+        SimpleIdentity idSdk = new SimpleIdentity(api, resolver, seed);
 
-        SdkApi api = new JnaSdkApiInitialiser().get();
-        String resolver = "https://did.stg.iotics.com";
+        Identity userIdentity = idSdk.CreateUserIdentity("uKey1", "#user1");
+        System.out.println("CreateUserIdentity: " + userIdentity);
+        System.out.println("Agent identity: " + agentIdentity);
+        idSdk.UserDelegatesAuthenticationToAgent(agentIdentity, userIdentity, "delegation1");
+
+        Identity twinIdentity = idSdk.CreateTwinIdentityWithControlDelegation(agentIdentity, "tKey1", "#tName");
+        System.out.println("CreateTwinDidWithControlDelegation: " + twinIdentity);
+
+        Identity anotherAgentIdentity = idSdk.CreateAgentIdentity("aKey1", "#app2");
+        System.out.println("CreateAgentIdentity: " + anotherAgentIdentity);
+
+        idSdk.TwinDelegatesControlToAgent(anotherAgentIdentity, twinIdentity, "delegation2");
+    }
+
+
+    public static void token() {
+        SimpleIdentity idSdk = new SimpleIdentity(api, resolver, seed);
+        String token = idSdk.CreateAgentAuthToken(agentIdentity, uDiD, Duration.ofHours(10));
+        System.out.println("CreateAgentAuthToken: " + token);
+    }
+
+    public static void seeds() {
+
         Seeds seeds = new Seeds(api);
 
         String res;
@@ -48,11 +63,9 @@ public class App {
         Identity userIdentity = idSdk.CreateUserIdentity("uKey1", "#user1");
         System.out.println("CreateUserIdentity: " + userIdentity);
 
-        Identity twinIdentity = idSdk.CreateTwinDidWithControlDelegation(agentIdentity, "tKey1", "#tName");
+        Identity twinIdentity = idSdk.CreateTwinIdentityWithControlDelegation(agentIdentity, "tKey1", "#tName");
         System.out.println("CreateTwinDidWithControlDelegation: " + twinIdentity);
 
-        String token = idSdk.CreateAgentAuthToken(agentIdentity, userIdentity.did(), Duration.ofHours(10));
-        System.out.println("CreateAgentAuthToken: " + token);
     }
 
 }
