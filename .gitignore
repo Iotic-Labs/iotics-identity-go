@@ -1,4 +1,4 @@
 .vscode/settings.json
-ffi/java-idsdk/bin
+ffi/bin
 ffi/java-idsdk/target
 ffi/java-idsdk/**/*.class
