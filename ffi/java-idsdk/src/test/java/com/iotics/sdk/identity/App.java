@@ -6,17 +6,17 @@ import com.iotics.sdk.identity.jna.SdkApi;
 import java.time.Duration;
 
 public class App {
-    static SdkApi api = new JnaSdkApiInitialiser().get();
     static String resolver = "https://did.stg.iotics.com";
     static String seed = "f25a09c9d21ad5f7535fac4c30afe1a9f2ca025a192db549044b1b0130d1e945";
     static String uDiD = "did:iotics:iotEBuXp2wHMREZmwYAyPhFzPYfWtt9Ka2R2";
     static Identity agentIdentity = new Identity("aKey1", "#app1", "did:iotics:iotJxn2AHBkaFXKkBymbFYcVokGhLShLtUf1");
 
     public static void main(String[] args) {
-        delegation();
+        SdkApi api = new JnaSdkApiInitialiser("../bin/lib-iotics-id-sdk-amd64.so").get();
+        delegation(api);
     }
 
-    public static void delegation() {
+    public static void delegation(SdkApi api) {
         SimpleIdentity idSdk = new SimpleIdentity(api, resolver, seed);
 
         Identity userIdentity = idSdk.CreateUserIdentity("uKey1", "#user1");
@@ -34,13 +34,13 @@ public class App {
     }
 
 
-    public static void token() {
+    public static void token(SdkApi api) {
         SimpleIdentity idSdk = new SimpleIdentity(api, resolver, seed);
         String token = idSdk.CreateAgentAuthToken(agentIdentity, uDiD, Duration.ofHours(10));
         System.out.println("CreateAgentAuthToken: " + token);
     }
 
-    public static void seeds() {
+    public static void seeds(SdkApi api) {
 
         Seeds seeds = new Seeds(api);
 

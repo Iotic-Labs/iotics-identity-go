@@ -63,11 +63,7 @@ public class SimpleIdentity {
         throwIfNotNull(api.TwinDelegatesControlToAgent(resolverAddress,
                 agentId.did(), agentId.keyName(), agentId.name(), agentSeed,
                 twinId.did(), twinId.keyName(), twinId.name(), agentSeed, delegationName));
-
     }
-
-
-
 
     String getAgentSeed() {
         return agentSeed;

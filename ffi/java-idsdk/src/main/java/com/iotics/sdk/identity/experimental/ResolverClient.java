@@ -51,7 +51,12 @@ public class ResolverClient {
 
     public static void main(String[] args) throws Exception {
         ResolverClient c = new ResolverClient(URI.create("https://did.stg.iotics.com").toURL());
-        Result result = c.discover("did:iotics:iotJxn2AHBkaFXKkBymbFYcVokGhLShLtUf1");
-        System.out.println(result);
+        Result agent = c.discover("did:iotics:iotJxn2AHBkaFXKkBymbFYcVokGhLShLtUf1");
+        Result user = c.discover("did:iotics:iotLUmwHDFtpfLEWTeGAQwyp4Y5FoSTt4jbg");
+
+        System.out.println("AGENT ------");
+        System.out.println(agent);
+        System.out.println("USER ------");
+        System.out.println(user);
     }
 }
