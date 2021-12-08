@@ -46,8 +46,8 @@ Usages:
     }
 
     // Generate identities
-    public static void seeds(SdkApi api) {
-        SimpleIdentity idSdk = new SimpleIdentity(api, resolver);
+    public static void identities(SdkApi api) {
+        SimpleIdentity idSdk = new SimpleIdentity(api, resolver, seed);
 
         Identity agentIdentity = idSdk.CreateAgentIdentity("aKey1", "#app1");
         System.out.println("CreateAgentIdentity: " + agentIdentity );
