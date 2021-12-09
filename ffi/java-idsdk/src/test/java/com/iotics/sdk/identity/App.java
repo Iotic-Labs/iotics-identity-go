@@ -1,5 +1,6 @@
 package com.iotics.sdk.identity;
 
+import com.iotics.sdk.identity.experimental.JWT;
 import com.iotics.sdk.identity.jna.JnaSdkApiInitialiser;
 import com.iotics.sdk.identity.jna.SdkApi;
 
@@ -13,7 +14,8 @@ public class App {
 
     public static void main(String[] args) {
         SdkApi api = new JnaSdkApiInitialiser("../bin/lib-iotics-id-sdk-amd64.so").get();
-        delegation(api);
+        token(api);
+//        delegation(api);
     }
 
     public static void delegation(SdkApi api) {
@@ -36,8 +38,10 @@ public class App {
 
     public static void token(SdkApi api) {
         SimpleIdentity idSdk = new SimpleIdentity(api, resolver, seed);
-        String token = idSdk.CreateAgentAuthToken(agentIdentity, uDiD, Duration.ofHours(10));
-        System.out.println("CreateAgentAuthToken: " + token);
+        String token = idSdk.CreateAgentAuthToken(agentIdentity, uDiD, Duration.ofSeconds(11));
+        System.out.println("CreateAgentAuthToken: " + new JWT(token).toNiceString());
+        token = idSdk.CreateAgentAuthToken(agentIdentity, uDiD, "random", Duration.ofSeconds(9));
+        System.out.println("CreateAgentAuthToken: " + new JWT(token).toNiceString());
     }
 
     public static void seeds(SdkApi api) {
