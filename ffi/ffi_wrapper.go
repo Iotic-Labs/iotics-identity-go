@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"net/url"
+	"strings"
 	"time"
 	"unsafe"
 
@@ -184,7 +185,10 @@ func CreateAgentAuthToken(
 	cAgentSeed *C.char,
 
 	cUserDid *C.char,
-	duration int64) (*C.char, *C.char) {
+
+	cAudience *C.char,
+
+	durationInSeconds int64) (*C.char, *C.char) {
 
 	// validation
 	agentDid := C.GoString(cAgentDid)
@@ -192,13 +196,19 @@ func CreateAgentAuthToken(
 	agentName := C.GoString(cAgentName)
 	agentSeed := C.GoString(cAgentSeed)
 	userDid := C.GoString(cUserDid)
+	audience := C.GoString(cAudience)
+
+	if strings.Trim(audience, " ") == "" {
+		return nil, C.CString(fmt.Sprintf("FFI lib error: audience can't be empty"))
+	}
 
 	agent, _, err := getIdentity(api.GetAgentIdentity, agentDid, agentKeyName, agentName, agentSeed)
 
 	if err != nil {
 		return nil, C.CString(fmt.Sprintf("FFI lib error: failed to get agent registered identity: %+v", err))
 	}
-	token, err := api.CreateAgentAuthToken(agent, userDid, time.Duration(duration)*time.Second, "")
+
+	token, err := api.CreateAgentAuthToken(agent, userDid, time.Duration(durationInSeconds)*time.Second, audience)
 	if err != nil {
 		return nil, C.CString(fmt.Sprintf("FFI lib error: failed to get token: %+v", err))
 	}

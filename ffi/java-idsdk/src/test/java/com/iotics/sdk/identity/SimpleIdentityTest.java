@@ -118,13 +118,27 @@ public class SimpleIdentityTest {
         String res = validUrl();
 
         SimpleIdentity si = new SimpleIdentity(sdkApi, res, "some seed");
-        when(sdkApi.CreateAgentAuthToken(any(), any(), any(), any(), any(), anyInt())).thenReturn(validResult("some token"));
+        when(sdkApi.CreateAgentAuthToken(any(), any(), any(), any(), any(), any(), anyInt())).thenReturn(validResult("some token"));
+
+        Identity i = aValidAgentIdentity();
+        String token = si.CreateAgentAuthToken(i, "did:iotics:user", "aud", Duration.ofSeconds(123));
+
+        assertEquals(token, "some token");
+        verify(sdkApi).CreateAgentAuthToken(i.did(), i.keyName(),  i.name(), si.getAgentSeed(), "did:iotics:user", "aud", Integer.valueOf(123));
+    }
+
+    @Test
+    void whenCreateAgentAuthToken_thenMapsParametersAndDelegatesToApiWithDefaultAudience() {
+        String res = validUrl();
+
+        SimpleIdentity si = new SimpleIdentity(sdkApi, res, "some seed");
+        when(sdkApi.CreateAgentAuthToken(any(), any(), any(), any(), any(), any(), anyInt())).thenReturn(validResult("some token"));
 
         Identity i = aValidAgentIdentity();
         String token = si.CreateAgentAuthToken(i, "did:iotics:user", Duration.ofSeconds(123));
 
         assertEquals(token, "some token");
-        verify(sdkApi).CreateAgentAuthToken(i.did(), i.keyName(),  i.name(), si.getAgentSeed(), "did:iotics:user", Integer.valueOf(123));
+        verify(sdkApi).CreateAgentAuthToken(i.did(), i.keyName(),  i.name(), si.getAgentSeed(), "did:iotics:user", res, Integer.valueOf(123));
     }
 
     @Test
