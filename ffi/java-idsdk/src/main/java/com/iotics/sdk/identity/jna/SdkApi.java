@@ -47,6 +47,10 @@ public interface SdkApi extends Library {
 
             String delegationName);
 
+    StringResult IsAllowedFor(
+            String resolverAddress,
+            String token);
+
     String TwinDelegatesControlToAgent(
             String resolverAddress,
 
@@ -73,4 +77,6 @@ public interface SdkApi extends Library {
             String audience,
 
             long durationInSeconds);
+
+
 }

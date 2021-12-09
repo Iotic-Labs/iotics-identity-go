@@ -89,6 +89,19 @@ public class SimpleIdentityTest {
     }
 
     @Test
+    void whenIsAllowedFor_thenDelegatesToApi() {
+        String res = validUrl();
+
+        SimpleIdentity si = new SimpleIdentity(sdkApi, res, "some seed");
+        when(sdkApi.IsAllowedFor(any(), any())).thenReturn(validResult("true"));
+
+        String allowed = si.IsAllowedFor("resolver", "token");
+
+        assertEquals(allowed, "true");
+        verify(sdkApi).IsAllowedFor("resolver", "token");
+    }
+
+    @Test
     void whenCreateUserIdentity_thenMapsParametersAndDelegatesToApi() {
         String res = validUrl();
 
@@ -118,7 +131,7 @@ public class SimpleIdentityTest {
         String res = validUrl();
 
         SimpleIdentity si = new SimpleIdentity(sdkApi, res, "some seed");
-        when(sdkApi.CreateAgentAuthToken(any(), any(), any(), any(), any(), any(), anyInt())).thenReturn(validResult("some token"));
+        when(sdkApi.CreateAgentAuthToken(any(), any(), any(), any(), any(), any(), anyLong())).thenReturn(validResult("some token"));
 
         Identity i = aValidAgentIdentity();
         String token = si.CreateAgentAuthToken(i, "did:iotics:user", "aud", Duration.ofSeconds(123));
@@ -132,7 +145,7 @@ public class SimpleIdentityTest {
         String res = validUrl();
 
         SimpleIdentity si = new SimpleIdentity(sdkApi, res, "some seed");
-        when(sdkApi.CreateAgentAuthToken(any(), any(), any(), any(), any(), any(), anyInt())).thenReturn(validResult("some token"));
+        when(sdkApi.CreateAgentAuthToken(any(), any(), any(), any(), any(), any(), anyLong())).thenReturn(validResult("some token"));
 
         Identity i = aValidAgentIdentity();
         String token = si.CreateAgentAuthToken(i, "did:iotics:user", Duration.ofSeconds(123));

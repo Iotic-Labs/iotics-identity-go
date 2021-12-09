@@ -55,6 +55,10 @@ public class SimpleIdentity {
         return CreateAgentAuthToken(agentIdentity, userDid, resolverAddress, duration);
     }
 
+    public String IsAllowedFor(String resolverAddress, String token) {
+        return getValueOrThrow(api.IsAllowedFor(resolverAddress, token));
+    }
+
     public void UserDelegatesAuthenticationToAgent(Identity agentId, Identity userId, String delegationName) {
         throwIfNotNull(api.UserDelegatesAuthenticationToAgent(resolverAddress,
                 agentId.did(), agentId.keyName(), agentId.name(), agentSeed,
