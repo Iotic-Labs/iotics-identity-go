@@ -46,10 +46,16 @@ public class SimpleIdentity {
         return new Identity(twinKeyName, twinName, did);
     }
 
+    public String CreateAgentAuthToken(Identity agentIdentity, String userDid, String audience, Duration duration) {
+        int secs = Math.toIntExact(duration.toSeconds());
+        return getValueOrThrow(api.CreateAgentAuthToken(
+                agentIdentity.did(), agentIdentity.keyName(), agentIdentity.name(), agentSeed, userDid, audience, secs));
+    }
+
     public String CreateAgentAuthToken(Identity agentIdentity, String userDid, Duration duration) {
         int secs = Math.toIntExact(duration.toSeconds());
         return getValueOrThrow(api.CreateAgentAuthToken(
-                agentIdentity.did(), agentIdentity.keyName(), agentIdentity.name(), agentSeed, userDid, secs));
+                agentIdentity.did(), agentIdentity.keyName(), agentIdentity.name(), agentSeed, userDid, resolverAddress, secs));
     }
 
     public void UserDelegatesAuthenticationToAgent(Identity agentId, Identity userId, String delegationName) {
@@ -71,5 +77,9 @@ public class SimpleIdentity {
 
     String getUserSeed() {
         return userSeed;
+    }
+
+    public String getResolverAddress() {
+        return resolverAddress;
     }
 }

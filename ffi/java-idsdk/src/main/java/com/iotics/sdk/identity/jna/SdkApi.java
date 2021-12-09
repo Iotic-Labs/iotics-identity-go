@@ -70,5 +70,7 @@ public interface SdkApi extends Library {
 
             String userDid,
 
+            String audience,
+
             int duration);
 }
