@@ -174,6 +174,43 @@ func TwinDelegatesControlToAgent(cResolverAddress *C.char,
 	return nil
 }
 
+//export IsAllowedFor
+func IsAllowedFor(
+	cResolverAddress *C.char,
+	cToken *C.char,
+) (*C.char, *C.char) {
+	resolverAddress := C.GoString(cResolverAddress)
+	rAdd, err := url.Parse(resolverAddress)
+	if err != nil {
+		return nil, C.CString(fmt.Sprintf("FFI lib error: resolver address invalid"))
+	}
+	resolver := register.NewDefaultRestResolverClient(rAdd)
+
+	token := C.GoString(cToken)
+	authToken := register.JwtToken(token)
+	claims, err := register.VerifyAuthentication(resolver, authToken)
+	if err != nil {
+		return nil, C.CString(fmt.Sprintf("FFI lib error: error with token verification: %v", err))
+	}
+	userDid := claims.Subject
+	agentDid := claims.Issuer.Did
+	agentDoc, err := resolver.GetDocument(agentDid)
+	if err != nil {
+		return nil, C.CString(fmt.Sprintf("FFI lib error: unable to fetch agent document: %v", err))
+	}
+	userDoc, err := resolver.GetDocument(userDid)
+	if err != nil {
+		return nil, C.CString(fmt.Sprintf("FFI lib error: unable to fetch user document: %v", err))
+	}
+
+	allowed, err := register.IsAllowFor(resolver, claims.Issuer, agentDoc, userDoc, true)
+	if err != nil {
+		return nil, C.CString(fmt.Sprintf("FFI lib error: unable to determine result: %v", err))
+	}
+	return C.CString(fmt.Sprintf("%v", allowed)), nil
+
+}
+
 //export CreateAgentAuthToken
 // CreateAgentAuthToken creates an Agent Authentication token given the secrets
 // It returns the token string or error string
