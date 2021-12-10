@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
 	"strings"
 	"time"
 
@@ -75,6 +76,7 @@ func (c *RestResolverClient) GetDocument(documentID string) (*RegisterDocument, 
 
 	discoverURL := fmt.Sprintf("%s/1.0/discover/%s", c.url.String(), url.QueryEscape(documentID)) // todo: join path?
 	response, err := c.client.Get(discoverURL)
+
 	if err != nil {
 		neterr, ok := err.(net.Error)
 		if ok && neterr.Timeout() {
@@ -120,9 +122,14 @@ func (c *RestResolverClient) GetDocument(documentID string) (*RegisterDocument, 
 	// Verify the document using ourselves
 	claims, err := DecodeDocumentTokenNoVerify(JwtToken(resp["token"].(string))) // TODO: Must verify here !!
 
-	fmt.Printf("URL for %v\n%v\n", documentID, discoverURL)
-	fmt.Printf("TOKEN\n%v\n----", resp["token"].(string))
-	fmt.Printf("CLAIMS\n%v\n----", claims)
+	cmd := exec.Command("curl", discoverURL)
+	out, _ := cmd.Output()
+	fmt.Printf("URL\n%v\n----\n", string(discoverURL))
+	fmt.Printf("DATA\n%v\n----\n", string(data))
+	fmt.Printf("CURL\n%v\n----\n", string(out))
+	fmt.Printf("MAP\n%v\n----\n", resp)
+	b, err := json.Marshal(claims)
+	fmt.Printf("CLAIMS\n%v\n----\n", string(b))
 
 	if err != nil {
 		return nil, err
