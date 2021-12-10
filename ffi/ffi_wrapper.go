@@ -188,7 +188,7 @@ func IsAllowedFor(
 
 	token := C.GoString(cToken)
 	authToken := register.JwtToken(token)
-	claims, err := register.VerifyAuthentication(resolver, authToken)
+	claims, err := register.DecodeAuthTokenNoVerify(authToken)
 	if err != nil {
 		return nil, C.CString(fmt.Sprintf("FFI lib error: error with token verification: %v", err))
 	}
@@ -199,6 +199,7 @@ func IsAllowedFor(
 		return nil, C.CString(fmt.Sprintf("FFI lib error: unable to fetch agent document: %v", err))
 	}
 	userDoc, err := resolver.GetDocument(userDid)
+
 	if err != nil {
 		return nil, C.CString(fmt.Sprintf("FFI lib error: unable to fetch user document: %v", err))
 	}

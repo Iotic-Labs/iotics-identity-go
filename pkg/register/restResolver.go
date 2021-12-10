@@ -119,6 +119,11 @@ func (c *RestResolverClient) GetDocument(documentID string) (*RegisterDocument, 
 
 	// Verify the document using ourselves
 	claims, err := DecodeDocumentTokenNoVerify(JwtToken(resp["token"].(string))) // TODO: Must verify here !!
+
+	fmt.Printf("URL for %v\n%v\n", documentID, discoverURL)
+	fmt.Printf("TOKEN\n%v\n----", resp["token"].(string))
+	fmt.Printf("CLAIMS\n%v\n----", claims)
+
 	if err != nil {
 		return nil, err
 	}
