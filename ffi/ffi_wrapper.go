@@ -55,13 +55,25 @@ func SeedBip39ToMnemonic(cSeed *C.char) (*C.char, *C.char) {
 //export CreateAgentIdentity
 func CreateAgentIdentity(cResolverAddress *C.char, cKeyName *C.char, cName *C.char, cSeed *C.char,
 ) (*C.char, *C.char) {
-	return createIdentity(false, cResolverAddress, cKeyName, cName, cSeed)
+	return createIdentity(false, cResolverAddress, cKeyName, cName, cSeed, false)
+}
+
+//export RecreateAgentIdentity
+func RecreateAgentIdentity(cResolverAddress *C.char, cKeyName *C.char, cName *C.char, cSeed *C.char,
+) (*C.char, *C.char) {
+	return createIdentity(false, cResolverAddress, cKeyName, cName, cSeed, true)
 }
 
 //export CreateUserIdentity
 func CreateUserIdentity(cResolverAddress *C.char, cKeyName *C.char, cName *C.char, cSeed *C.char,
 ) (*C.char, *C.char) {
-	return createIdentity(true, cResolverAddress, cKeyName, cName, cSeed)
+	return createIdentity(true, cResolverAddress, cKeyName, cName, cSeed, false)
+}
+
+//export RecreateUserIdentity
+func RecreateUserIdentity(cResolverAddress *C.char, cKeyName *C.char, cName *C.char, cSeed *C.char,
+) (*C.char, *C.char) {
+	return createIdentity(true, cResolverAddress, cKeyName, cName, cSeed, true)
 }
 
 //export UserDelegatesAuthenticationToAgent
@@ -188,7 +200,7 @@ func IsAllowedFor(
 
 	token := C.GoString(cToken)
 	authToken := register.JwtToken(token)
-	claims, err := register.VerifyAuthentication(resolver, authToken)
+	claims, err := register.DecodeAuthTokenNoVerify(authToken)
 	if err != nil {
 		return nil, C.CString(fmt.Sprintf("FFI lib error: error with token verification: %v", err))
 	}
@@ -199,6 +211,7 @@ func IsAllowedFor(
 		return nil, C.CString(fmt.Sprintf("FFI lib error: unable to fetch agent document: %v", err))
 	}
 	userDoc, err := resolver.GetDocument(userDid)
+
 	if err != nil {
 		return nil, C.CString(fmt.Sprintf("FFI lib error: unable to fetch user document: %v", err))
 	}
@@ -300,7 +313,7 @@ func FreeUpCString(pointer *C.char) {
 }
 
 func createIdentity(isUser bool, // true for userId, false for agentId
-	cResolverAddress *C.char, cKeyName *C.char, cName *C.char, cSeed *C.char,
+	cResolverAddress *C.char, cKeyName *C.char, cName *C.char, cSeed *C.char, override bool,
 ) (*C.char, *C.char) {
 	var err error
 	resolverAddress := C.GoString(cResolverAddress)
@@ -323,7 +336,7 @@ func createIdentity(isUser bool, // true for userId, false for agentId
 		//Password: nil,
 		Name:     name,
 		Method:   crypto.SeedMethodBip39,
-		Override: true,
+		Override: override,
 	}
 
 	resolver := register.NewDefaultRestResolverClient(addr)
