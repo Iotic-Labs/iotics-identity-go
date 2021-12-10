@@ -20,6 +20,6 @@ clean:
 GO_SRC=./ffi_wrapper.go
 
 compile:
-	@env GOOS=$(OS_FLAG) GOARCH=$(ARCH_FLAG) go build -buildmode=c-shared -o bin/lib-iotics-id-sdk-amd64.so ${GO_SRC}
+	@env GOOS=$(OS_FLAG) GOARCH=$(ARCH_FLAG) go build -buildmode=c-shared -o bin/lib-iotics-id-sdk-$(ARCH_FLAG).so ${GO_SRC}
 
 so: clean compile
