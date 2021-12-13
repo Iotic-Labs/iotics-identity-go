@@ -11,6 +11,18 @@ public interface SdkApi extends Library {
 
     StringResult SeedBip39ToMnemonic(String seed);
 
+    StringResult RecreateAgentIdentity(
+            String resolverAddress,
+            String keyName,
+            String name,
+            String seed);
+
+    StringResult RecreateUserIdentity(
+            String resolverAddress,
+            String keyName,
+            String name,
+            String seed);
+
     StringResult CreateAgentIdentity(
             String resolverAddress,
             String keyName,

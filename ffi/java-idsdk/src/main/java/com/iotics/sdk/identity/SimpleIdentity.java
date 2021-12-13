@@ -35,8 +35,18 @@ public class SimpleIdentity {
         return new Identity(keyName, name, did);
     }
 
+    public Identity RecreateAgentIdentity(String keyName, String name) {
+        String did = getValueOrThrow(api.RecreateAgentIdentity(resolverAddress, keyName, name, agentSeed));
+        return new Identity(keyName, name, did);
+    }
+
     public Identity CreateUserIdentity(String keyName, String name) {
         String did = getValueOrThrow(api.CreateUserIdentity(resolverAddress, keyName, name, userSeed));
+        return new Identity(keyName, name, did);
+    }
+
+    public Identity RecreateUserIdentity(String keyName, String name) {
+        String did = getValueOrThrow(api.RecreateUserIdentity(resolverAddress, keyName, name, userSeed));
         return new Identity(keyName, name, did);
     }
 
@@ -52,6 +62,15 @@ public class SimpleIdentity {
     }
 
     public String CreateAgentAuthToken(Identity agentIdentity, String userDid, Duration duration) {
+        return CreateAgentAuthToken(agentIdentity, userDid, resolverAddress, duration);
+    }
+
+    public String RecreateAgentAuthToken(Identity agentIdentity, String userDid, String audience, Duration duration) {
+        return getValueOrThrow(api.CreateAgentAuthToken(
+                agentIdentity.did(), agentIdentity.keyName(), agentIdentity.name(), agentSeed, userDid, audience, duration.toSeconds()));
+    }
+
+    public String RecreateAgentAuthToken(Identity agentIdentity, String userDid, Duration duration) {
         return CreateAgentAuthToken(agentIdentity, userDid, resolverAddress, duration);
     }
 
