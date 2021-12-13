@@ -3,6 +3,7 @@ package com.iotics.sdk.identity.experimental;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.ResponseBody;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -12,9 +13,8 @@ import java.net.URL;
 import java.util.Base64;
 import java.util.Objects;
 
-public class ResolverClient {
+public final class ResolverClient {
     private final URL base;
-    private final int DEFAULT_TIMEOUT = 2000;
     private final OkHttpClient client;
 
     public ResolverClient(URL base) {
@@ -80,13 +80,22 @@ public class ResolverClient {
                 .get()
                 .build();
         try (Response response = client.newCall(request).execute()) {
+            ResponseBody body = response.body();
             if(response.code() > 299) {
                 if(response.code() == 404) {
                     return new Result("DID not found", "application/text", true);
                 }
-                return new Result(response.body().string(), "application/xml", true);
+                if(body != null) {
+                    return new Result(body.string(), "application/xml", true);
+                }
+                else {
+                    return new Result("No result found", "application/text", true);
+                }
             }
-            JSONObject obj = new JSONObject(response.body().string());
+            if(body == null) {
+                return new Result("invalid response", "application/text", true);
+            }
+            JSONObject obj = new JSONObject(body.string());
             String token = obj.getString("token");
             Base64.Decoder decoder = Base64.getDecoder();
             String payload = new String(decoder.decode(token.split("\\.")[1]));

@@ -18,28 +18,36 @@ public class JWT {
         String[] chunks = token.split("\\.");
         Base64.Decoder decoder = Base64.getDecoder();
 
-        this.header = new String(decoder.decode(chunks[0]));
-        this.payload = new String(decoder.decode(chunks[1]));
-        this.signature = chunks[2];
+        try {
+            this.header = new String(decoder.decode(chunks[0]));
+            this.payload = new String(decoder.decode(chunks[1]));
+            this.signature = chunks[2];
+        } catch (ArrayIndexOutOfBoundsException e) {
+            throw new IllegalArgumentException("Invalid JWT token");
+        }
     }
 
     public String toNiceString() {
         JSONObject h = new JSONObject(this.header);
 
-        JSONObject p = new JSONObject(this.payload);
-        long exp = p.getInt("exp");
-        long iat = p.getInt("iat");
+        try {
+            JSONObject p = new JSONObject(this.payload);
+            long exp = p.getLong("exp");
+            long iat = p.getLong("iat");
 
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MMM-dd HH:mm:ss");
-        simpleDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MMM-dd HH:mm:ss");
+            simpleDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
 
-        String sExp = simpleDateFormat.format(new Date(exp * 1000));
-        String sIat = simpleDateFormat.format(new Date(iat * 1000));
-        p.put("exp", sExp).put("iat", sIat);
+            String sExp = simpleDateFormat.format(new Date(exp * 1000));
+            String sIat = simpleDateFormat.format(new Date(iat * 1000));
+            p.put("exp", sExp).put("iat", sIat);
 
-        JSONObject obj = new JSONObject();
-        obj.put("header", h).put("payload", p).put("signature", this.signature);
-        return obj.toString(2);
+            JSONObject obj = new JSONObject();
+            obj.put("header", h).put("payload", p).put("signature", this.signature);
+            return obj.toString(2);
+        } catch (Exception e) {
+            throw new RuntimeException("Invalid token", e);
+        }
     }
 
     @Override

@@ -74,6 +74,21 @@ public class SimpleIdentityTest {
     }
 
     @Test
+    void whenRecreateAgentIdentity_thenMapsParametersAndDelegatesToApi() {
+        String res = validUrl();
+
+        SimpleIdentity si = new SimpleIdentity(sdkApi, res, "some seed");
+        when(sdkApi.RecreateAgentIdentity(any(), any(), any(), any())).thenReturn(validResult("agent did"));
+
+        Identity agentIdentity = si.RecreateAgentIdentity("agentKeyName", "agentName");
+
+        assertEquals(agentIdentity.did(), "agent did");
+        assertEquals(agentIdentity.keyName(), "agentKeyName");
+        assertEquals(agentIdentity.name(), "agentName");
+        verify(sdkApi).RecreateAgentIdentity(res,  "agentKeyName",  "agentName", "some seed");
+    }
+
+    @Test
     void whenCreateAgentIdentity_thenMapsParametersAndDelegatesToApi() {
         String res = validUrl();
 
@@ -99,6 +114,21 @@ public class SimpleIdentityTest {
 
         assertEquals(allowed, "true");
         verify(sdkApi).IsAllowedFor("resolver", "token");
+    }
+
+    @Test
+    void whenRecreateUserIdentity_thenMapsParametersAndDelegatesToApi() {
+        String res = validUrl();
+
+        SimpleIdentity si = new SimpleIdentity(sdkApi, res, "some seed");
+        when(sdkApi.RecreateUserIdentity(any(), any(), any(), any())).thenReturn(validResult("user did"));
+
+        Identity userIdentity = si.RecreateUserIdentity("userKeyName", "userName");
+
+        assertEquals(userIdentity.did(), "user did");
+        assertEquals(userIdentity.keyName(), "userKeyName");
+        assertEquals(userIdentity.name(), "userName");
+        verify(sdkApi).RecreateUserIdentity(res,  "userKeyName",  "userName", "some seed");
     }
 
     @Test
