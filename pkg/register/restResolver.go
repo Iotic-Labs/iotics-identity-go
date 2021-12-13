@@ -12,7 +12,8 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"os/exec"
+
+	// "os/exec"
 	"strings"
 	"time"
 
@@ -122,14 +123,14 @@ func (c *RestResolverClient) GetDocument(documentID string) (*RegisterDocument, 
 	// Verify the document using ourselves
 	claims, err := DecodeDocumentTokenNoVerify(JwtToken(resp["token"].(string))) // TODO: Must verify here !!
 
-	cmd := exec.Command("curl", discoverURL)
-	out, _ := cmd.Output()
-	fmt.Printf("URL\n%v\n----\n", string(discoverURL))
-	fmt.Printf("DATA\n%v\n----\n", string(data))
-	fmt.Printf("CURL\n%v\n----\n", string(out))
-	fmt.Printf("MAP\n%v\n----\n", resp)
-	b, err := json.Marshal(claims)
-	fmt.Printf("CLAIMS\n%v\n----\n", string(b))
+	// cmd := exec.Command("curl", discoverURL)
+	// out, _ := cmd.Output()
+	// fmt.Printf("URL\n%v\n----\n", string(discoverURL))
+	// fmt.Printf("DATA\n%v\n----\n", string(data))
+	// fmt.Printf("CURL\n%v\n----\n", string(out))
+	// fmt.Printf("MAP\n%v\n----\n", resp)
+	// b, err := json.Marshal(claims)
+	// fmt.Printf("CLAIMS\n%v\n----\n", string(b))
 
 	if err != nil {
 		return nil, err
