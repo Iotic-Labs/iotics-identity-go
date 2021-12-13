@@ -2,7 +2,7 @@ module ei-559
 
 go 1.17
 
-replace github.com/Iotic-Labs/iotics-identity-go => /home/tc/tac/work/ioticlabs/iotics-identity-go.git
+// replace github.com/Iotic-Labs/iotics-identity-go => /home/tc/tac/work/ioticlabs/iotics-identity-go.git
 
 require github.com/Iotic-Labs/iotics-identity-go v1.1.0
 
