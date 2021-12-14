@@ -1,5 +1,5 @@
 # Build
 
-`make so`
+`make compile`
 
 Currently supported platform: `linux/amd64`
