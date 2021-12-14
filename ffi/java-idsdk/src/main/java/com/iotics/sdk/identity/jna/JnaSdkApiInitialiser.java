@@ -5,7 +5,7 @@ import com.sun.jna.Native;
 import java.io.File;
 
 public class JnaSdkApiInitialiser {
-    private static String LIB_PATH = new File("./bin/lib-iotics-id-sdk.so").getAbsolutePath();
+    private static String LIB_PATH = new File("./lib/lib-iotics-id-sdk.so").getAbsolutePath();
     private final String libPath;
 
     private final SdkApi idProxy;

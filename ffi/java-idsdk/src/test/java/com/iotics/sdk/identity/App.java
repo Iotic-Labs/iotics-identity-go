@@ -13,9 +13,9 @@ public class App {
     static Identity agentIdentity = new Identity("aKey1", "#app1", "did:iotics:iotJxn2AHBkaFXKkBymbFYcVokGhLShLtUf1");
 
     public static void main(String[] args) {
-        SdkApi api = new JnaSdkApiInitialiser("../bin/lib-iotics-id-sdk-amd64.so").get();
+        SdkApi api = new JnaSdkApiInitialiser("../lib/lib-iotics-id-sdk-amd64.so").get();
         token(api);
-//        delegation(api);
+        // delegation(api);
     }
 
     public static void delegation(SdkApi api) {
@@ -34,7 +34,6 @@ public class App {
 
         idSdk.TwinDelegatesControlToAgent(anotherAgentIdentity, twinIdentity, "delegation2");
     }
-
 
     public static void token(SdkApi api) {
         SimpleIdentity idSdk = new SimpleIdentity(api, resolver, seed);
@@ -62,7 +61,7 @@ public class App {
         SimpleIdentity idSdk = new SimpleIdentity(api, resolver);
 
         Identity agentIdentity = idSdk.CreateAgentIdentity("aKey1", "#app1");
-        System.out.println("CreateAgentIdentity: " + agentIdentity );
+        System.out.println("CreateAgentIdentity: " + agentIdentity);
 
         Identity userIdentity = idSdk.CreateUserIdentity("uKey1", "#user1");
         System.out.println("CreateUserIdentity: " + userIdentity);

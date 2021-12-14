@@ -4,7 +4,12 @@ FFI wrapper using JNA
 
 ## Build
 
+Build the java library with:
+
 `mvn pakage`
+
+In order for the library to work, the relevant sdk library must be compile for your operating system.
+Follow instructions here `ffi/README.md` for how to build it.
 
 ## Test
 
@@ -18,13 +23,13 @@ Initialise the API with:
 SdkApi api = new JnaSdkApiInitialiser("<path_to>/lib-iotics-id-sdk-amd64.so").get();
 ```
 
-or, if your `so` library is installed at `./bin/lib-iotics-id-sdk.so`, use:
+or, if your `so` library is installed at `./lib/lib-iotics-id-sdk.so`, use:
 
 ```java
 SdkApi api = new JnaSdkApiInitialiser().get();
 ```
 
-Usages:
+Usages: see also `ffi/java-idsdk/src/test/java/com/iotics/sdk/identity/App.java`
 
 ```java
 
