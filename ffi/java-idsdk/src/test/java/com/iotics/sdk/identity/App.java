@@ -4,6 +4,7 @@ import com.iotics.sdk.identity.experimental.JWT;
 import com.iotics.sdk.identity.jna.JnaSdkApiInitialiser;
 import com.iotics.sdk.identity.jna.SdkApi;
 
+import java.nio.file.Paths;
 import java.time.Duration;
 
 public class App {
@@ -13,7 +14,11 @@ public class App {
     static Identity agentIdentity = new Identity("aKey1", "#app1", "did:iotics:iotJxn2AHBkaFXKkBymbFYcVokGhLShLtUf1");
 
     public static void main(String[] args) {
-        SdkApi api = new JnaSdkApiInitialiser("../lib/lib-iotics-id-sdk-amd64.so").get();
+        String os = System.getProperty("os.name").toLowerCase();
+        String libPath = Paths.get(os.contains("win") ? "ffi/lib/lib-iotics-id-sdk.dll" : "ffi/lib/lib-iotics-id-sdk.so")
+                .toAbsolutePath()
+                .toString();
+        SdkApi api = new JnaSdkApiInitialiser(libPath).get();
         token(api);
         // delegation(api);
     }
