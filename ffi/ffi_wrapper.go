@@ -90,7 +90,8 @@ func UserDelegatesAuthenticationToAgent(
 	cUserName *C.char,
 	cUserSeed *C.char,
 
-	cDelegationName *C.char) *C.char {
+	cDelegationName *C.char,
+) *C.char {
 
 	resolverAddress := C.GoString(cResolverAddress)
 	delegationName := C.GoString(cDelegationName)
@@ -248,8 +249,11 @@ func CreateAgentAuthToken(
 	userDid := C.GoString(cUserDid)
 	audience := C.GoString(cAudience)
 
-	if strings.Trim(audience, " ") == "" {
-		return nil, C.CString(fmt.Sprintf("FFI lib error: audience can't be empty"))
+	// an empty audience will break token validation.
+	// the sdk isn't fully validating audience though so for now we just check
+	// whether it's empty or not
+	if strings.TrimSpace(audience) == "" {
+		return nil, C.CString("FFI lib error: audience can't be empty")
 	}
 
 	agent, _, err := getIdentity(api.GetAgentIdentity, agentDid, agentKeyName, agentName, agentSeed)
@@ -302,7 +306,7 @@ func CreateTwinDidWithControlDelegation(
 	}
 	twinIdentity, err := api.CreateTwinWithControlDelegation(resolver, opts)
 	if err != nil {
-		return nil, C.CString(fmt.Sprintf("FFI lib error: creating twin DiD Doc failed: %+vs", err))
+		return nil, C.CString(fmt.Sprintf("FFI lib error: creating twin DiD Doc failed: %+v", err))
 	}
 	return C.CString(twinIdentity.Did()), nil
 }
@@ -312,10 +316,14 @@ func FreeUpCString(pointer *C.char) {
 	C.free(unsafe.Pointer(pointer))
 }
 
-func createIdentity(isUser bool, // true for userId, false for agentId
-	cResolverAddress *C.char, cKeyName *C.char, cName *C.char, cSeed *C.char, override bool,
+func createIdentity(
+	isUser bool, // true for userId, false for agentId
+	cResolverAddress *C.char,
+	cKeyName *C.char,
+	cName *C.char,
+	cSeed *C.char,
+	override bool,
 ) (*C.char, *C.char) {
-	var err error
 	resolverAddress := C.GoString(cResolverAddress)
 	keyName := C.GoString(cKeyName)
 	name := C.GoString(cName)
