@@ -20,20 +20,11 @@ A sample app is in the test/java directory: `com.iotics.sdk.identity.App`
 Initialise the API with:
 
 ```java
-String os = System.getProperty("os.name").toLowerCase();
-String libPath = Paths.get(os.contains("win") ? "ffi/lib/lib-iotics-id-sdk.dll" : "ffi/lib/lib-iotics-id-sdk.so")
-        .toAbsolutePath()
-        .toString();
+String libPath = "<path to library>";
 SdkApi api = new JnaSdkApiInitialiser(libPath).get();
 ```
 
-or, if your `so` library is installed at `./lib/lib-iotics-id-sdk.so`, use:
-
-```java
-SdkApi api = new JnaSdkApiInitialiser().get();
-```
-
-Usages: see also `ffi/java-idsdk/src/test/java/com/iotics/sdk/identity/App.java`
+Usages: see also `src/test/java/com/iotics/sdk/identity/App.java`
 
 ```java
 

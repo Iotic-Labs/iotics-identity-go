@@ -15,7 +15,7 @@ public class App {
 
     public static void main(String[] args) {
         String os = System.getProperty("os.name").toLowerCase();
-        String libPath = Paths.get(os.contains("win") ? "ffi/lib/lib-iotics-id-sdk.dll" : "ffi/lib/lib-iotics-id-sdk.so")
+        String libPath = Paths.get(os.contains("win") ? "../lib/lib-iotics-id-sdk.dll" : "../lib/lib-iotics-id-sdk.so")
                 .toAbsolutePath()
                 .toString();
         SdkApi api = new JnaSdkApiInitialiser(libPath).get();
