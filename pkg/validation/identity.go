@@ -3,13 +3,12 @@
 package validation
 
 import (
-	"crypto/elliptic"
 	"encoding/hex"
 	"fmt"
 	"regexp"
 	"strings"
 
-	"github.com/fomichev/secp256k1"
+	ethcrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/jbenet/go-base58"
 
 	"golang.org/x/crypto/blake2b"
@@ -60,14 +59,8 @@ func ValidatePublicKey(publicKeyBytes []byte) error {
 	if publicKeyBytes[0] != 4 {
 		return fmt.Errorf("public key bytes not in uncompressed format")
 	}
-
-	curve := secp256k1.SECP256K1()
-	x, _ := elliptic.Unmarshal(curve, publicKeyBytes)
-	if x == nil {
-		return fmt.Errorf("invalid secp256k1 public key")
-	}
-
-	return nil
+	_, err := ethcrypto.UnmarshalPubkey(publicKeyBytes)
+	return err
 }
 
 // ValidateKeyName validates key name.

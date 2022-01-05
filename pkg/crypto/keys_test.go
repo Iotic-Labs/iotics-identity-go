@@ -9,7 +9,7 @@ import (
 	"github.com/Iotic-Labs/iotics-identity-go/pkg/test"
 
 	"github.com/Iotic-Labs/iotics-identity-go/pkg/crypto"
-	"github.com/fomichev/secp256k1"
+	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"github.com/jbenet/go-base58"
 	"gotest.tools/assert"
 )
@@ -30,11 +30,14 @@ func Test_get_public_keys_from_private_ecdsa(t *testing.T) {
 }
 
 func Test_get_public_ecdsa_from_base58(t *testing.T) {
+	const expectedBitSize = 256
 	publicKey, err := crypto.GetPublicKeyFromBase58(test.ValidPublicBase58)
 	assert.NilError(t, err)
 	assert.Assert(t, publicKey != nil)
 
-	curve := secp256k1.SECP256K1()
+	curve := publicKey.Curve.(*secp256k1.BitCurve)
+	assert.Assert(t, curve != nil)
+	assert.Assert(t, curve.BitSize == expectedBitSize)
 	assert.Assert(t, curve.IsOnCurve(publicKey.X, publicKey.Y))
 }
 
