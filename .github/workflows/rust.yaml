@@ -1,0 +1,37 @@
+name: Rust
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  checks:
+    name: Rust checks
+    runs-on: ubuntu-latest
+    env:
+      working-directory: ./ffi/rust
+
+    steps:
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - uses: davidB/rust-cargo-make@v1
+      - uses: actions/checkout@v2
+      - name: Run check
+        run: cargo make check
+        working-directory: ${{env.working-directory}}
+      - name: Run format
+        run: cargo make format
+        working-directory: ${{env.working-directory}}
+      - name: Run clippy
+        run: cargo make clippy
+        working-directory: ${{env.working-directory}}
+      - name: Run test
+        run: cargo make test
+        working-directory: ${{env.working-directory}}
