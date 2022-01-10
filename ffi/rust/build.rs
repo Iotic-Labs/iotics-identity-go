@@ -4,6 +4,12 @@ use std::path::Path;
 fn main() {
     let out_dir = env::var("OUT_DIR").expect("Failed get OUT_DIR.");
     let manifest_dir = env::var("CARGO_MANIFEST_DIR").expect("Failed get CARGO_MANIFEST_DIR.");
+
+    let lock_path = Path::new(&manifest_dir).join("Cargo.lock");
+    let lock_path = lock_path
+        .to_str()
+        .expect("Failed to get the FFI wrapper path.");
+
     let ffi_wrapper_path = Path::new(&manifest_dir)
         .parent()
         .expect("Failed to get the FFI wrapper dir.")
@@ -19,6 +25,7 @@ fn main() {
     cargo_emit::rustc_link_lib!(
         "ffi" => "static"
     );
+    cargo_emit::rerun_if_changed!(lock_path);
     cargo_emit::rerun_if_changed!(ffi_wrapper_path);
 
     // Call command to create a static library (C archive file).

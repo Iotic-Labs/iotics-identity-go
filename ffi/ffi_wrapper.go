@@ -266,6 +266,7 @@ func CreateAgentAuthToken(
 	if err != nil {
 		return nil, C.CString(fmt.Sprintf("FFI lib error: failed to get token: %+v", err))
 	}
+
 	return C.CString(string(token)), nil
 }
 
