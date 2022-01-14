@@ -1,3 +1,5 @@
+.DEFAULT_GOAL := compile_task
+
 ifeq ($(OS),Windows_NT)
     OS_FLAG=windows
     ifeq ($(PROCESSOR_ARCHITEW6432),AMD64)
