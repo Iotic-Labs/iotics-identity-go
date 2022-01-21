@@ -1,0 +1,47 @@
+project_name: iotics-identity-ffi
+before:
+  hooks:
+    - go mod tidy
+    - go generate ./...
+builds:
+  - dir: ffi
+    binary: iotics-identity-ffi
+    env:
+      - CGO_ENABLED=1
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+    flags:
+      - -buildmode=c-archive
+      - -v
+archives:
+  - replacements:
+      darwin: darwin
+      linux: linux
+      windows: windows
+      amd64: x86_64
+    format_overrides:
+    - goos: windows
+      format: zip
+    files:
+    # include the c-archive headers
+    - src: 'dist/*_{{.Os}}_*/*.h'
+      dst: ./
+      strip_parent: true
+    - LICENSE*
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+release:
+  name_template: "{{.ProjectName}}-v{{.Version}}"
+  draft: true
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'

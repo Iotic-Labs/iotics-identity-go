@@ -17,8 +17,8 @@ This SDK is used to manage identities and authentication in the Iotics Host.
 
 The SDK is split into two API's according to the user needs:
 
-* [High level identity API](pkg/api): minimal set of features to interact with Iotics Host
-* [Advanced identity API](pkg/advancedapi): set of features for advanced identities management
+- [High level identity API](pkg/api): minimal set of features to interact with Iotics Host
+- [Advanced identity API](pkg/advancedapi): set of features for advanced identities management
 
 ## How to
 
@@ -44,7 +44,8 @@ Copyright (c) IOTIC LABS LIMITED. All rights reserved. Licensed under the Apache
 
 ## Technology Used
 
-* Markdown
-* Golang
-* DID
-* BDD
+- GoReleaser
+- Markdown
+- Golang
+- DID
+- BDD

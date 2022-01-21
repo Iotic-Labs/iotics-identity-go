@@ -1,0 +1,26 @@
+name: ffi
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: GoReleaser Action
+        uses: goreleaser/goreleaser-action@v2
+        with:
+          args: release --rm-dist
+          workdir: ffi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
