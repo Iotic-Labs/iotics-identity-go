@@ -2,6 +2,10 @@
 name = "iotics-identity"
 version = "0.1.0"
 edition = "2018"
+description = "IOTICS Identity SDK"
+license = "Apache-2.0"
+repository = "https://github.com/Iotic-Labs/iotics-identity-go/tree/main/ffi/rust"
+homepage = "https://iotics.com"
 
 [dependencies]
 thiserror = "1.0"
