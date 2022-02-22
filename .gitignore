@@ -3,5 +3,4 @@ ffi/lib
 ffi/java-idsdk/.idea
 ffi/java-idsdk/target
 ffi/java-idsdk/**/*.class
-examples
 dist/

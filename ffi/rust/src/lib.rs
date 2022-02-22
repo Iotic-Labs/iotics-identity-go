@@ -370,7 +370,6 @@ mod tests {
 
     #[test]
     fn it_works() {
-        // Creating an User, an Agent and a delegation from the User to the Agent
         let resolver_address = "https://did.stg.iotics.com";
 
         let user_key_name = "00";
@@ -385,12 +384,10 @@ mod tests {
 
         let user_did = create_user_identity(resolver_address, user_key_name, user_name, user_seed)
             .expect("Creating user identity failed.");
-        println!("USER DID {:?}", user_did);
 
         let agent_did =
             create_agent_identity(resolver_address, agent_key_name, agent_name, agent_seed)
                 .expect("Creating agent identity failed.");
-        println!("AGENT DID {:?}", agent_did);
 
         user_delegates_authentication_to_agent(
             resolver_address,
@@ -407,7 +404,6 @@ mod tests {
         .expect("Creating the Authentication Delegation from an User to an Agent failed.");
         println!("DELEGATION CREATED");
 
-        // Using the Agent to create an authentication token and a twin
         let config = Config {
             resolver_address: resolver_address.to_string(),
             user_did: user_did.to_string(),
@@ -418,14 +414,11 @@ mod tests {
             token_duration: 600,
         };
 
-        let token = create_agent_auth_token(&config).expect("Creating token failed.");
-        let token = format!("bearer {}", token);
-        println!("AUTH TOKEN {:?}", token);
+        let _ = create_agent_auth_token(&config).expect("Creating token failed.");
 
-        let twin_key_name = "00"; // Used to create and recreate the same DID
-        let twin_name = "#twin-0"; // Used to identify a document
-        let twin_did = create_twin_did_with_control_delegation(&config, twin_key_name, twin_name)
+        let twin_key_name = "00";
+        let twin_name = "#twin-0";
+        let _ = create_twin_did_with_control_delegation(&config, twin_key_name, twin_name)
             .expect("Creating twin DID failed.");
-        println!("NEW TWIN DID: {:?}", twin_did);
     }
 }
