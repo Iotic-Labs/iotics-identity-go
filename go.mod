@@ -3,7 +3,7 @@ module github.com/Iotic-Labs/iotics-identity-go
 go 1.17
 
 require (
-	github.com/ethereum/go-ethereum v1.10.14
+	github.com/ethereum/go-ethereum v1.10.17
 	github.com/go-bdd/gobdd v1.1.3
 	github.com/golang-jwt/jwt v3.2.1+incompatible
 	github.com/jarcoal/httpmock v1.0.8
@@ -17,8 +17,10 @@ require (
 require (
 	github.com/beorn7/perks v1.0.0 // indirect
 	github.com/btcsuite/btcd v0.20.1-beta // indirect
+	github.com/btcsuite/btcd/btcec/v2 v2.1.2 // indirect
 	github.com/cucumber/gherkin-go/v13 v13.0.0 // indirect
 	github.com/cucumber/messages-go/v12 v12.0.0 // indirect
+	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1 // indirect
 	github.com/gofrs/uuid v3.3.0+incompatible // indirect
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/golang/protobuf v1.4.3 // indirect
