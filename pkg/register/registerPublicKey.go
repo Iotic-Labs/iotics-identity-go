@@ -98,6 +98,7 @@ func convertReturnDelegationSliceToMap(slice []RegisterDelegationProof) map[stri
 			ID:         v.ID,
 			Controller: v.Controller,
 			Proof:      v.Proof,
+			ProofType:  v.ProofType,
 			Revoked:    v.Revoked,
 		}
 	}

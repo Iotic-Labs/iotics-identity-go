@@ -176,7 +176,7 @@ func TakeOwnershipOfTwinAndDelegateControlByPrivateExponentHex(resolverClient re
 	opts := []register.RegisterDocumentOpts{
 		register.AddFromExistingDocument(twinDoc),
 		register.AddPublicKey(newOwnerKeyName, newOwnerID.KeyPair().PublicKeyBase58, false),
-		register.AddControlDelegation(delegationName, newOwnerID.Issuer().String(), dProof.Signature, false),
+		register.AddControlDelegation(delegationName, newOwnerID.Issuer().String(), dProof.Signature, register.DidProof, false),
 	}
 	updatedDoc, errs := register.NewRegisterDocument(opts)
 	if len(errs) != 0 {

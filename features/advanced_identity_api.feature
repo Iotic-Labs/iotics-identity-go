@@ -85,6 +85,14 @@ Background:
     Then the delegated registered identity is allowed for control on the document
 
   @advanced_api
+  Scenario: Add a generic control delegation proof to a document
+    Given a registered identity with name "#IDA"
+    And a another registered identity with name "#IDB"
+    And a generic delegation proof created by "#IDB"
+    When I add the generic control delegation proof "#DelegFromProof" to the document
+    Then the delegated registered identity is allowed for control on the document
+
+  @advanced_api
   Scenario: Remove a control delegation proof from a register document
     Given a registered identity with name "#IDA"
     And a another registered identity with name "#IDB"
@@ -115,6 +123,14 @@ Background:
     And a another registered identity with name "#IDB"
     And a delegation proof for document of "#IDA" created by "#IDB"
     When I add the authentication delegation proof "#DelegFromProof" to the document
+    Then the other identity is allowed for authentication on the initial identity document
+
+  @advanced_api
+  Scenario: Add an generic authentication delegation proof to a document
+    Given a registered identity with name "#IDA"
+    And a another registered identity with name "#IDB"
+    And a generic delegation proof created by "#IDB"
+    When I add the generic authentication delegation proof "#DelegFromProof" to the document
     Then the other identity is allowed for authentication on the initial identity document
 
   @advanced_api
