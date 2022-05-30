@@ -78,13 +78,13 @@ func ValidateRegisterDocument(resolverClient register.ResolverClient, document *
 	// What it actually does it validate the delegations on the passed document
 
 	for _, v := range document.DelegateControl {
-		err := register.ValidateDelegation(resolverClient, document.ID, &v) //nolint:gosec
+		err := register.ValidateDelegation(resolverClient, document.ID, &v) // nolint:gosec
 		if err != nil {
 			return err
 		}
 	}
 	for _, v := range document.DelegateAuthentication {
-		err := register.ValidateDelegation(resolverClient, document.ID, &v) //nolint:gosec
+		err := register.ValidateDelegation(resolverClient, document.ID, &v) // nolint:gosec
 		if err != nil {
 			return err
 		}
@@ -272,27 +272,16 @@ func RevokeAuthenticationKeyFromDocument(resolverClient register.ResolverClient,
 	return revokeKeyFromDocument(resolverClient, originalDoc, name, identity)
 }
 
-// AddAuthenticationDelegationToDocument Add register authentication delegation proof to a register document.
+// AddAuthenticationDelegationToDocument Add register authentication did delegation proof to a register document.
 func AddAuthenticationDelegationToDocument(resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, name string, controller string, proof string, identity register.RegisteredIdentity) error {
-	var err error
+	return addDelegationToDocument(resolverClient, originalDoc, identity,
+		register.AddAuthenticationDelegation(name, controller, proof, register.DidProof, false))
+}
 
-	if originalDoc == nil {
-		originalDoc, err = GetRegisterDocument(resolverClient, identity.Did())
-		if err != nil {
-			return err
-		}
-	}
-
-	opts := []register.RegisterDocumentOpts{
-		register.AddFromExistingDocument(originalDoc),
-		register.AddAuthenticationDelegation(name, controller, proof, false),
-	}
-	updatedDoc, errs := register.NewRegisterDocument(opts)
-	if len(errs) != 0 {
-		return fmt.Errorf("error while creating new RegisterDocument: %v", errs)
-	}
-
-	return RegisterUpdatedDocument(resolverClient, updatedDoc, identity.KeyPair(), identity.Issuer())
+// AddGenericAuthenticationDelegationToDocument Add register authentication generic delegation proof to a register document.
+func AddGenericAuthenticationDelegationToDocument(resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, name string, controller string, proof string, identity register.RegisteredIdentity) error {
+	return addDelegationToDocument(resolverClient, originalDoc, identity,
+		register.AddAuthenticationDelegation(name, controller, proof, register.GenericProof, false))
 }
 
 // RemoveAuthenticationDelegationFromDocument Remove register authentication delegation proof from a register document.
@@ -305,8 +294,8 @@ func RevokeAuthenticationDelegationFromDocument(resolverClient register.Resolver
 	return revokeKeyFromDocument(resolverClient, originalDoc, name, identity)
 }
 
-// AddControlDelegationToDocument Add register control delegation proof to a register document.
-func AddControlDelegationToDocument(resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, name string, controller string, proof string, identity register.RegisteredIdentity) error {
+func addDelegationToDocument(resolverClient register.ResolverClient, originalDoc *register.RegisterDocument,
+	identity register.RegisteredIdentity, addDelegationOpts register.RegisterDocumentOpts) error {
 	var err error
 
 	if originalDoc == nil {
@@ -318,7 +307,7 @@ func AddControlDelegationToDocument(resolverClient register.ResolverClient, orig
 
 	opts := []register.RegisterDocumentOpts{
 		register.AddFromExistingDocument(originalDoc),
-		register.AddControlDelegation(name, controller, proof, false),
+		addDelegationOpts,
 	}
 	updatedDoc, errs := register.NewRegisterDocument(opts)
 	if len(errs) != 0 {
@@ -326,6 +315,18 @@ func AddControlDelegationToDocument(resolverClient register.ResolverClient, orig
 	}
 
 	return RegisterUpdatedDocument(resolverClient, updatedDoc, identity.KeyPair(), identity.Issuer())
+}
+
+// AddControlDelegationToDocument Add register control did delegation proof to a register document.
+func AddControlDelegationToDocument(resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, name string, controller string, proof string, identity register.RegisteredIdentity) error {
+	return addDelegationToDocument(resolverClient, originalDoc, identity,
+		register.AddControlDelegation(name, controller, proof, register.DidProof, false))
+}
+
+// AddGenericControlDelegationToDocument Add register control generic delegation proof to a register document.
+func AddGenericControlDelegationToDocument(resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, name string, controller string, proof string, identity register.RegisteredIdentity) error {
+	return addDelegationToDocument(resolverClient, originalDoc, identity,
+		register.AddControlDelegation(name, controller, proof, register.GenericProof, false))
 }
 
 // RemoveControlDelegationFromDocument Remove register control delegation proof from a register document.
@@ -348,6 +349,14 @@ type DelegationOpts struct {
 	SubjectDid         string
 	SubjectDocument    *register.RegisterDocument
 	Name               string
+	ProofType          *register.DelegationProofType
+}
+
+func (opts DelegationOpts) getProofType() register.DelegationProofType {
+	if opts.ProofType == nil {
+		return register.DidProof
+	}
+	return *opts.ProofType
 }
 
 func delegate(opts DelegationOpts, IsControl bool) error {
@@ -373,10 +382,19 @@ func delegate(opts DelegationOpts, IsControl bool) error {
 	if err != nil {
 		return err
 	}
-
-	subjectIssuer, dProof, err := CreateDelegationProof(delegatingIssuer, subjectDoc, opts.SubjectKeyPair)
-	if err != nil {
-		return err
+	var subjectIssuer *register.Issuer
+	var dProof *proof.Proof
+	var proofType = opts.getProofType()
+	if proofType == register.GenericProof {
+		subjectIssuer, dProof, err = CreateGenericDelegationProof(subjectDoc, opts.SubjectKeyPair)
+		if err != nil {
+			return err
+		}
+	} else {
+		subjectIssuer, dProof, err = CreateDelegationProof(delegatingIssuer, subjectDoc, opts.SubjectKeyPair)
+		if err != nil {
+			return err
+		}
 	}
 
 	delegFunc := register.AddAuthenticationDelegation
@@ -386,7 +404,7 @@ func delegate(opts DelegationOpts, IsControl bool) error {
 
 	regOpts := []register.RegisterDocumentOpts{
 		register.AddFromExistingDocument(delegatingDoc),
-		delegFunc(opts.Name, subjectIssuer.String(), dProof.Signature, false),
+		delegFunc(opts.Name, subjectIssuer.String(), dProof.Signature, proofType,false),
 	}
 	updatedDoc, errs := register.NewRegisterDocument(regOpts)
 	if len(errs) != 0 {
@@ -457,8 +475,7 @@ func CreateProof(keyPair *crypto.KeyPair, issuer *register.Issuer, content []byt
 	return proof.NewProof(keyPair.PrivateKey, issuer.Did, issuer.Name, content)
 }
 
-// CreateDelegationProof Create a delegation proof.
-func CreateDelegationProof(delegatingIssuer *register.Issuer, subjectDoc *register.RegisterDocument, subjectKeyPair *crypto.KeyPair) (*register.Issuer, *proof.Proof, error) {
+func createProof(subjectDoc *register.RegisterDocument, subjectKeyPair *crypto.KeyPair, content []byte) (*register.Issuer, *proof.Proof, error) {
 	for _, v := range subjectDoc.PublicKeys {
 		if v.PublicKeyBase58 == subjectKeyPair.PublicKeyBase58 {
 			issuer, err := register.NewIssuer(subjectDoc.ID, v.ID)
@@ -466,7 +483,7 @@ func CreateDelegationProof(delegatingIssuer *register.Issuer, subjectDoc *regist
 				return nil, nil, err
 			}
 
-			dProof, err := CreateProof(subjectKeyPair, issuer, []byte(delegatingIssuer.Did))
+			dProof, err := CreateProof(subjectKeyPair, issuer, content)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -474,6 +491,18 @@ func CreateDelegationProof(delegatingIssuer *register.Issuer, subjectDoc *regist
 		}
 	}
 	return nil, nil, fmt.Errorf("unable to find public key in document matching key pair secrets")
+}
+
+// CreateDelegationProof Create a proof that can be used to setup a delegation from a single delegating issuer doc.
+// The signed proof content is the encoded DID Identifier of the delegating issuer doc.
+func CreateDelegationProof(delegatingIssuer *register.Issuer, subjectDoc *register.RegisterDocument, subjectKeyPair *crypto.KeyPair) (*register.Issuer, *proof.Proof, error) {
+	return createProof(subjectDoc, subjectKeyPair, []byte(delegatingIssuer.Did))
+}
+
+// CreateGenericDelegationProof Create a proof that can be used to setup a delegation from several delegating issuers doc.
+// The signed proof content is an empty byte array.
+func CreateGenericDelegationProof(subjectDoc *register.RegisterDocument, subjectKeyPair *crypto.KeyPair) (*register.Issuer, *proof.Proof, error) {
+	return createProof(subjectDoc, subjectKeyPair, []byte(""))
 }
 
 // CreateIdentifier Create a new decentralised identifier.

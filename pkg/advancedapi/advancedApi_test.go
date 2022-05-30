@@ -44,6 +44,15 @@ func Test_can_get_delegation_proof(t *testing.T) {
 	assert.DeepEqual(t, proof.Content, []byte(delegatingIssuer.Did))
 }
 
+func Test_can_get_generic_delegation_proof(t *testing.T) {
+	subjectDoc, _ := test.HelperGetRegisterDocumentFromSecret(test.ValidKeyPairPlop, "#name", identity.User)
+
+	issuer, proof, err := advancedapi.CreateGenericDelegationProof(subjectDoc, test.ValidKeyPairPlop)
+	assert.NilError(t, err)
+	assert.Equal(t, issuer.Did, subjectDoc.ID)
+	assert.DeepEqual(t, proof.Content, []byte(""))
+}
+
 func Test_cannot_get_delegation_proof(t *testing.T) {
 	subjectDoc, subjectIssuer := test.HelperGetRegisterDocumentFromSecret(test.ValidKeyPairPlop, "#name", identity.User)
 	delegatingIssuer, err := register.NewIssuer("did:iotics:iotXarXAbViugciWyuFmwRTbNoB6y8Wievfn", "#user-0")
@@ -286,6 +295,7 @@ func Test_can_add_control_delegation_proof(t *testing.T) {
 	assert.Check(t, doc.DelegateControl[0].ID == "#newDeleg")
 	assert.Check(t, doc.DelegateControl[0].Controller == test.OtherDocIssuer.String())
 	assert.Check(t, doc.DelegateControl[0].Proof == test.OtherProof)
+	assert.Check(t, doc.DelegateControl[0].ProofType == register.DidProof)
 	assert.Check(t, doc.DelegateControl[0].Revoked == false)
 }
 
@@ -612,4 +622,90 @@ func Test_can_create_seed(t *testing.T) {
 
 	_, err = advancedapi.CreateSeed(384)
 	assert.ErrorContains(t, err, "length must be 128 or 256")
+}
+
+func Test_can_not_reuse_did_proof_for_delegation(t *testing.T) {
+	delegationFuncs := map[string]func(name string, controller string, proof string, proofType register.DelegationProofType, revoked bool) register.RegisterDocumentOpts{
+		"controlDeleg": register.AddControlDelegation,
+		"authDeleg":    register.AddAuthenticationDelegation,
+	}
+	for name, delegationFunc := range delegationFuncs {
+		t.Run(name, func(t *testing.T) {
+
+			resolver := test.NewInMemoryResolver()
+			twin1ID, twin1Doc, err := advancedapi.CreateNewIdentityAndRegister(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
+			assert.NilError(t, err)
+			_, twin2Doc, err := advancedapi.CreateNewIdentityAndRegister(resolver, identity.Twin, test.ValidKeyPair3, "#ExistingId", false)
+			assert.NilError(t, err)
+			agentID, agentDoc, err := advancedapi.CreateNewIdentityAndRegister(resolver, identity.User, test.ValidKeyPairPlop2, "#ExistingId", false)
+			assert.NilError(t, err)
+
+			// create agent delegation proof (targeting a single delegating document: twin1)
+			agentIssuer, agentDelegProof, err := advancedapi.CreateDelegationProof(twin1ID.Issuer(), agentDoc, agentID.KeyPair())
+			assert.NilError(t, err)
+
+			// Add proof to twin1 document as a control delegation proof - the document is valid
+			regOpts := []register.RegisterDocumentOpts{
+				register.AddFromExistingDocument(twin1Doc),
+				delegationFunc("#controlDeleg1", agentIssuer.String(), agentDelegProof.Signature, register.DidProof, false),
+			}
+			doc, errs := register.NewRegisterDocument(regOpts)
+			assert.Equal(t, len(errs), 0)
+			err = advancedapi.ValidateRegisterDocument(resolver, doc)
+			assert.NilError(t, err)
+
+			// Reuse the proof on twin2 document as a control delegation proof - the document is invalid
+			regOpts = []register.RegisterDocumentOpts{
+				register.AddFromExistingDocument(twin2Doc),
+				delegationFunc("#controlDeleg2", agentIssuer.String(), agentDelegProof.Signature, register.DidProof,false),
+			}
+			doc, errs = register.NewRegisterDocument(regOpts)
+			assert.Equal(t, len(errs), 0)
+			err = advancedapi.ValidateRegisterDocument(resolver, doc)
+			assert.ErrorContains(t, err, "invalid signature")
+		})
+	}
+}
+
+func Test_can_reuse_subject_reusable_proof_for_delegation(t *testing.T) {
+	delegationFuncs := map[string]func(name string, controller string, proof string, proofType register.DelegationProofType, revoked bool) register.RegisterDocumentOpts{
+		"controlDeleg": register.AddControlDelegation,
+		"authDeleg":    register.AddAuthenticationDelegation,
+	}
+	for name, delegationFunc := range delegationFuncs {
+		t.Run(name, func(t *testing.T) {
+
+			resolver := test.NewInMemoryResolver()
+			_, twin1Doc, err := advancedapi.CreateNewIdentityAndRegister(resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
+			assert.NilError(t, err)
+			_, twin2Doc, err := advancedapi.CreateNewIdentityAndRegister(resolver, identity.Twin, test.ValidKeyPair3, "#ExistingId", false)
+			assert.NilError(t, err)
+			agentID, agentDoc, err := advancedapi.CreateNewIdentityAndRegister(resolver, identity.User, test.ValidKeyPairPlop2, "#ExistingId", false)
+			assert.NilError(t, err)
+
+			// create agent reusable delegation proof
+			agentIssuer, agentDelegProof, err := advancedapi.CreateGenericDelegationProof(agentDoc, agentID.KeyPair())
+			assert.NilError(t, err)
+
+			// Add proof to twin1 document as a control delegation proof - the document is valid
+			regOpts := []register.RegisterDocumentOpts{
+				register.AddFromExistingDocument(twin1Doc),
+				delegationFunc("#controlDeleg1", agentIssuer.String(), agentDelegProof.Signature, register.GenericProof, false),
+			}
+			doc, errs := register.NewRegisterDocument(regOpts)
+			assert.Equal(t, len(errs), 0)
+			err = advancedapi.ValidateRegisterDocument(resolver, doc)
+			assert.NilError(t, err)
+
+			// Reuse the proof on twin2 document as a control delegation proof - the document is valid
+			regOpts = []register.RegisterDocumentOpts{
+				register.AddFromExistingDocument(twin2Doc),
+				delegationFunc("#controlDeleg2", agentIssuer.String(), agentDelegProof.Signature, register.GenericProof, false),
+			}
+			doc, errs = register.NewRegisterDocument(regOpts)
+			assert.Equal(t, len(errs), 0)
+			err = advancedapi.ValidateRegisterDocument(resolver, doc)
+			assert.NilError(t, err)
+		})
+	}
 }

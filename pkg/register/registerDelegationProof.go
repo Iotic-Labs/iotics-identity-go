@@ -9,8 +9,21 @@ import (
 	"github.com/Iotic-Labs/iotics-identity-go/pkg/validation"
 )
 
+// DelegationProofType
+// 	- did:      that means the proof can be used to setup a delegation from single delegating subject.
+//  			The signed proof content is the encoded DID Identifier of the delegating subject.
+// 	- generic:  that means the proof can be used to setup a delegation from several delegating subjects.
+//  			The signed proof content is an empty byte array.
+// In case of conflict, unknown value, the most restrictive type (did) is used
+type DelegationProofType string
+
+const (
+	DidProof     DelegationProofType = "did"
+	GenericProof DelegationProofType = "generic"
+)
+
 // NewRegisterDelegationProof returns a new register delegation proof from the current setting revoke field.
-func NewRegisterDelegationProof(name string, controller string, proof string, revoked bool) (*RegisterDelegationProof, error) {
+func NewRegisterDelegationProof(name string, controller string, proof string, proofType DelegationProofType, revoked bool) (*RegisterDelegationProof, error) {
 	// NOTE: Python method was called build
 	if err := validation.ValidateKeyName(name); err != nil {
 		return nil, err
@@ -19,6 +32,7 @@ func NewRegisterDelegationProof(name string, controller string, proof string, re
 		ID:         name,
 		Controller: controller,
 		Proof:      proof,
+		ProofType:  proofType,
 		Revoked:    revoked,
 	}
 	return result, nil
@@ -28,10 +42,10 @@ func NewRegisterDelegationProof(name string, controller string, proof string, re
 func (r RegisterDelegationProof) Clone() (*RegisterDelegationProof, error) {
 	// NOTE: Python method was called get_new_key
 	// NOTE: ignore error, because we're cloning a valid object
-	return NewRegisterDelegationProof(r.ID, r.Controller, r.Proof, r.Revoked)
+	return NewRegisterDelegationProof(r.ID, r.Controller, r.Proof, r.ProofType, r.Revoked)
 }
 
-// ValidateDelegation Validate register delegation proof against the deleagtion controller register document.
+// ValidateDelegation Validate register delegation proof against the delegation controller register document.
 func ValidateDelegation(resolverClient ResolverClient, registeredID string, registeredProof *RegisterDelegationProof) error {
 	controllerIssuer, err := NewIssuerFromString(registeredProof.Controller)
 	if err != nil {
@@ -43,25 +57,35 @@ func ValidateDelegation(resolverClient ResolverClient, registeredID string, regi
 		return err
 	}
 
-	checkProof := &proof.Proof{
-		IssuerDid:  controllerIssuer.Did,
-		IssuerName: controllerIssuer.Name,
-		Content:    []byte(registeredID),
-		Signature:  registeredProof.Proof,
-	}
-
 	var controllerPublicKey *RegisterPublicKey
 	for _, v := range controllerDoc.PublicKeys {
 		if v.ID == controllerIssuer.Name {
-			controllerPublicKey = &v //nolint:gosec
+			controllerPublicKey = &v // nolint:gosec
 			break
 		}
 	}
 	if controllerPublicKey == nil {
 		return fmt.Errorf("controller public key %s not found", controllerIssuer.Name)
 	}
+	switch registeredProof.ProofType {
+	case GenericProof:
+		return checkProof(controllerIssuer, []byte(""), registeredProof.Proof, controllerPublicKey.PublicKeyBase58)
+	case DidProof, "": // backward compatibility, default to the most restrictive mode (did)
+		return checkProof(controllerIssuer, []byte(registeredID), registeredProof.Proof, controllerPublicKey.PublicKeyBase58)
+	}
 
-	return proof.ValidateProof(checkProof, controllerPublicKey.PublicKeyBase58)
+	return fmt.Errorf("invalid proof type: %s", registeredProof.ProofType)
+}
+
+func checkProof(issuer *Issuer, content []byte, signature string, publicKey string) error {
+
+	checkProof := &proof.Proof{
+		IssuerDid:  issuer.Did,
+		IssuerName: issuer.Name,
+		Content:    content,
+		Signature:  signature,
+	}
+	return proof.ValidateProof(checkProof, publicKey)
 }
 
 func convertRegisterDelegationProofMapToSlice(keys map[string]*RegisterDelegationProof) []RegisterDelegationProof {
@@ -71,6 +95,7 @@ func convertRegisterDelegationProofMapToSlice(keys map[string]*RegisterDelegatio
 			ID:         v.ID,
 			Controller: v.Controller,
 			Proof:      v.Proof,
+			ProofType:  v.ProofType,
 			Revoked:    v.Revoked,
 		})
 	}

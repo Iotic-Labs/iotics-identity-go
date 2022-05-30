@@ -207,6 +207,20 @@ func aDelegationProofCreatedForBy(t gobdd.StepTest, ctx gobdd.Context, createdFo
 	ctx.Set(ctxDelegationProof, pr)
 }
 
+func aGenericDelegationProofCreatedBy(t gobdd.StepTest, ctx gobdd.Context, createdByName string) {
+	registeredTwin, _ := ctx.Get(ctxRegisteredTwin)
+	assert.Assert(t, registeredTwin != nil)
+	otherRegisteredTwin, _ := ctx.Get(ctxOtherRegisteredTwin)
+	assert.Assert(t, otherRegisteredTwin != nil)
+	otherIdentity := otherRegisteredTwin.(register.RegisteredIdentity)
+	doc, err := advancedapi.GetRegisterDocument(resolver, otherIdentity.Did())
+	assert.NilError(t, err)
+	issuer, pr, err := advancedapi.CreateGenericDelegationProof(doc, otherIdentity.KeyPair())
+	assert.NilError(t, err)
+	assert.DeepEqual(t, issuer, otherIdentity.Issuer())
+	ctx.Set(ctxDelegationProof, pr)
+}
+
 func aRegisterIdentityIDAOwningTheDocumentDocAWithAnAuthDelegationProofCreatedByADelegatedRegisteredIdentity(t gobdd.StepTest, ctx gobdd.Context) {
 }
 func aRegisterIdentityIDAOwningTheDocumentDocAAndAControllerRegisteredIdentity(t gobdd.StepTest, ctx gobdd.Context) {
@@ -473,6 +487,19 @@ func iAddTheControlDelegationProofToTheDocument(t gobdd.StepTest, ctx gobdd.Cont
 	ctx.Set(ctxDelegationName, delegationProofName)
 }
 
+func iAddTheGenericControlDelegationProofToTheDocument(t gobdd.StepTest, ctx gobdd.Context, delegationProofName string) {
+	otherIdentity := ctxOtherRegisteredTwin.GetRegisteredIdentity(t, ctx)
+	initialIdentity := ctxRegisteredTwin.GetRegisteredIdentity(t, ctx)
+
+	delegationProof, _ := ctx.Get(ctxDelegationProof)
+	assert.Assert(t, delegationProof != nil)
+	pr := delegationProof.(*proof.Proof)
+
+	advancedapi.AddGenericControlDelegationToDocument(resolver, nil, delegationProofName, otherIdentity.Issuer().String(), pr.Signature, initialIdentity)
+	ctx.Set(ctxDelegationName, delegationProofName)
+}
+
+
 func iRemoveTheControlDelegationProofFromTheDocument(t gobdd.StepTest, ctx gobdd.Context) {
 	delegationName, _ := ctx.GetString(ctxDelegationName)
 	initialIdentity := ctxRegisteredTwin.GetRegisteredIdentity(t, ctx)
@@ -539,6 +566,21 @@ func iAddTheAuthenticationDelegationProofToTheDocument(t gobdd.StepTest, ctx gob
 	initialIdentity := registeredTwin.(register.RegisteredIdentity)
 
 	advancedapi.AddAuthenticationDelegationToDocument(resolver, nil, delegationProofName, otherIdentity.Issuer().String(), pr.Signature, initialIdentity)
+	ctx.Set(ctxDelegationName, delegationProofName)
+}
+
+func iAddTheGenericAuthenticationDelegationProofToTheDocument(t gobdd.StepTest, ctx gobdd.Context, delegationProofName string) {
+	otherRegisteredTwin, _ := ctx.Get(ctxOtherRegisteredTwin)
+	assert.Assert(t, otherRegisteredTwin != nil)
+	otherIdentity := otherRegisteredTwin.(register.RegisteredIdentity)
+	delegationProof, _ := ctx.Get(ctxDelegationProof)
+	assert.Assert(t, delegationProof != nil)
+	pr := delegationProof.(*proof.Proof)
+	registeredTwin, _ := ctx.Get(ctxRegisteredTwin)
+	assert.Assert(t, registeredTwin != nil)
+	initialIdentity := registeredTwin.(register.RegisteredIdentity)
+
+	advancedapi.AddGenericAuthenticationDelegationToDocument(resolver, nil, delegationProofName, otherIdentity.Issuer().String(), pr.Signature, initialIdentity)
 	ctx.Set(ctxDelegationName, delegationProofName)
 }
 
@@ -1132,6 +1174,7 @@ func TestScenarios(t *testing.T) {
 	suite.AddStep(`^a another twin "([^"]+)" owner$`, aAnotherTwinOwner)
 	suite.AddStep(`^a another twin "([^"]+)" authentication public key$`, aAnotherTwinAuthenticationPublicKey)
 	suite.AddStep(`^a delegation proof for document of "([^"]+)" created by "([^"]+)"$`, aDelegationProofCreatedForBy)
+	suite.AddStep(`^a generic delegation proof created by "([^"]+)"$`, aGenericDelegationProofCreatedBy)
 	suite.AddStep(`^a register identity IDA owning the document DocA with an auth delegation proof created by a delegated registered identity$`,
 		aRegisterIdentityIDAOwningTheDocumentDocAWithAnAuthDelegationProofCreatedByADelegatedRegisteredIdentity)
 	suite.AddStep(`^a register identity IDA owning the document DocA and a controller \(registered identity\)$`,
@@ -1174,11 +1217,13 @@ func TestScenarios(t *testing.T) {
 	suite.AddStep(`^one identity delegates control to another with delegation name "([^"]+)"$`, iDADelegatesControlToIDB)
 	suite.AddStep(`^one identity delegates control to another with extra owner with delegation name "([^"]+)"$`, iDADelegatesControlToIDBWithExtraOwner)
 	suite.AddStep(`^I add the control delegation proof "([^"]+)" to the document$`, iAddTheControlDelegationProofToTheDocument)
+	suite.AddStep(`^I add the generic control delegation proof "([^"]+)" to the document$`, iAddTheGenericControlDelegationProofToTheDocument)
 	suite.AddStep(`^I remove the control delegation proof from the document$`, iRemoveTheControlDelegationProofFromTheDocument)
 	suite.AddStep(`^I revoke the control delegation proof$`, iRevokeTheControlDelegationProof)
 	suite.AddStep(`^one identity delegates authentication to another with delegation name "([^"]+)"$`, iDADelegatesAuthenticationToIDB)
 	suite.AddStep(`^one identity delegates authentication to another with extra owner with delegation name "([^"]+)"$`, iDADelegatesAuthenticationToIDBWithExtraOwner)
 	suite.AddStep(`^I add the authentication delegation proof "([^"]+)" to the document$`, iAddTheAuthenticationDelegationProofToTheDocument)
+	suite.AddStep(`^I add the generic authentication delegation proof "([^"]+)" to the document$`, iAddTheGenericAuthenticationDelegationProofToTheDocument)
 	suite.AddStep(`^I remove the authentication delegation proof from the document$`, iRemoveTheAuthenticationDelegationProofFromTheDocument)
 	suite.AddStep(`^I revoke the authentication delegation proof$`, iRevokeTheAuthenticationDelegationProof)
 	suite.AddStep(`^I set the controller on my document$`, iSetTheControllerOnMyDocument)

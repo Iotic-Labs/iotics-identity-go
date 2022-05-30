@@ -57,6 +57,8 @@ var (
 	ValidKeyPairPlop, _         = crypto.GetKeyPair(ValidKeyPairSecretsPlop)
 	ValidKeyPairSecretsPlop2, _ = crypto.NewKeyPairSecrets([]byte("d2397e8b83cf4a7073a26c1a1cdb6666"), "iotics/0/plop/plop1", crypto.SeedMethodBip39, "")
 	ValidKeyPairPlop2, _        = crypto.GetKeyPair(ValidKeyPairSecretsPlop2)
+	ValidKeyPairSecrets3, _ = crypto.NewKeyPairSecrets([]byte("d2397e8b83cf4a7073a26c1a1cdb6683"), "iotics/0/plop/plop3", crypto.SeedMethodBip39, "")
+	ValidKeyPair3, _        = crypto.GetKeyPair(ValidKeyPairSecrets3)
 
 	OtherDocDid, _    = identity.MakeIdentifier(ValidKeyPairPlop.PublicKeyBytes)
 	OtherDocIssuer, _ = register.NewIssuer(OtherDocDid, "#DelegatedDoc")

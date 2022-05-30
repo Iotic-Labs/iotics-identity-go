@@ -44,10 +44,11 @@ type RegisterPublicKey struct {
 
 // RegisterDelegationProof structure on delegation.
 type RegisterDelegationProof struct {
-	ID         string `json:"id"`
-	Controller string `json:"controller"`
-	Proof      string `json:"proof"`
-	Revoked    bool   `json:"revoked,omitempty"`
+	ID         string              `json:"id"`
+	Controller string              `json:"controller"`
+	Proof      string              `json:"proof"`
+	ProofType  DelegationProofType `json:"proofType,omitempty"`
+	Revoked    bool                `json:"revoked,omitempty"`
 }
 
 // RegisterDocument structure for document data.

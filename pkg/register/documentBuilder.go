@@ -229,10 +229,10 @@ func AddAuthenticationKeyObj(obj *RegisterPublicKey) RegisterDocumentOpts {
 
 // AddControlDelegation returns a function which will add control delegation to the RegisterDocument
 // this function is idempotent, so if the same key (with the same name/ID) is added, it overwrites the previous one
-func AddControlDelegation(name string, controller string, proof string, revoked bool) RegisterDocumentOpts {
+func AddControlDelegation(name string, controller string, proof string, proofType DelegationProofType, revoked bool) RegisterDocumentOpts {
 	return func(builder *RegisterDocumentBuilder) error {
 		// NOTE: this is different to the Python version, which is not idempotent but raises an error
-		obj, err := NewRegisterDelegationProof(name, controller, proof, revoked)
+		obj, err := NewRegisterDelegationProof(name, controller, proof, proofType, revoked)
 		if err != nil {
 			return err
 		}
@@ -258,10 +258,10 @@ func AddControlDelegationObj(obj *RegisterDelegationProof) RegisterDocumentOpts 
 
 // AddAuthenticationDelegation returns a function which will add authentication delegation to the RegisterDocument
 // this function is idempotent, so if the same key (with the same name/ID) is added, it overwrites the previous one
-func AddAuthenticationDelegation(name string, controller string, proof string, revoked bool) RegisterDocumentOpts {
+func AddAuthenticationDelegation(name string, controller string, proof string, proofType DelegationProofType, revoked bool) RegisterDocumentOpts {
 	return func(builder *RegisterDocumentBuilder) error {
 		// NOTE: this is different to the Python version, which is not idempotent but raises an error
-		obj, err := NewRegisterDelegationProof(name, controller, proof, revoked)
+		obj, err := NewRegisterDelegationProof(name, controller, proof, proofType, revoked)
 		if err != nil {
 			return err
 		}
