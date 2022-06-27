@@ -3,8 +3,12 @@
 package advancedapi
 
 import (
+	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"time"
+
+	libp2p_crypto "github.com/libp2p/go-libp2p-core/crypto"
 
 	"github.com/Iotic-Labs/iotics-identity-go/pkg/crypto"
 	"github.com/Iotic-Labs/iotics-identity-go/pkg/identity"
@@ -588,4 +592,64 @@ func CreateNewDocument(purpose identity.DidType, keyPair *crypto.KeyPair, name s
 	}
 
 	return registerDocument, issuer, nil
+}
+
+func GetIdentityFromPrivateExponentHex(
+	resolver register.ResolverClient,
+	privateExponentHex string) (register.RegisteredIdentity, error) {
+	// Make the DID identifier
+	keypair, err := GetKeyPairFromPrivateExponentHex(privateExponentHex)
+	if err != nil {
+		return nil, err
+	}
+
+	identifier, err := identity.MakeIdentifier(keypair.PublicKeyBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	// Fetch document and find the key name
+	document, err := resolver.GetDocument(identifier)
+	if err != nil {
+		return nil, err
+	}
+
+	regKey, err := register.GetOwnerRegisterPublicKey(document)
+	if err != nil {
+		return nil, err
+	}
+
+	// Issuer corresponding to the private key above
+	issuer, err := register.NewIssuer(identifier, regKey.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	identity := register.NewRegisteredIdentity(keypair, issuer)
+
+	return identity, nil
+}
+
+func GetPrivateExponentHexFromPrivateKeyBase64(privateKeyBase64 string) (string, error) {
+	// Decode base64 to bytes
+	privateKeyBytes, err := base64.StdEncoding.DecodeString(privateKeyBase64)
+	if err != nil {
+		return "", err
+	}
+
+	// These bytes are in a libp2p (protobuf) format. We'll use the libp2p function to unmarshal them.
+	rawPriv, err := libp2p_crypto.UnmarshalPrivateKey(privateKeyBytes)
+	if err != nil {
+		return "", err
+	}
+
+	// Encode the bytes to hex
+	rawBytes, err := rawPriv.Raw()
+	if err != nil {
+		return "", err
+	}
+
+	privateKeyHex := hex.EncodeToString(rawBytes)
+
+	return privateKeyHex, nil
 }

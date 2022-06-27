@@ -11,5 +11,5 @@ homepage = "https://iotics.com"
 thiserror = "1.0"
 
 [build-dependencies]
-bindgen = "0.59"
+bindgen = "0.60"
 cargo-emit = "0.2"

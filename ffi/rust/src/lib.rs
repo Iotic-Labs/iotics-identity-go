@@ -287,6 +287,92 @@ pub fn create_twin_did_with_control_delegation(
     }
 }
 
+/// Converts a private key base64 into private exponent hex
+///
+/// Params:
+/// - [`private_key_base64`][Config] - The private key in base64 to be converted.
+///
+/// Returns:
+/// - [`Result`][Result::Ok] with [`String`] if conversion to private exponent hex succeeds.
+/// - [`Result`][Result::Err] with [`IdentityLibError`] conversion to private exponent hex fails.
+pub fn get_private_exponent_hex_from_private_key_base64(
+    private_key_base64: &str,
+) -> Result<String, IdentityLibError> {
+    let result = unsafe {
+        let private_key_base64 = CStringRaw::new(private_key_base64)?;
+
+        ffi_wrapper::GetPrivateExponentHexFromPrivateKeyBase64(private_key_base64.as_raw()?)
+    };
+
+    match result.r1.is_null() {
+        true => {
+            let private_exponent_hex = unsafe { CStr::from_ptr(result.r0) }.to_str()?;
+            Ok(private_exponent_hex.to_string())
+        }
+        false => {
+            let error = unsafe { CStr::from_ptr(result.r1) }.to_str()?;
+            Err(IdentityLibError::Message(error.to_string()))
+        }
+    }
+}
+
+/// Delegates control of a twin to an agent by using the private base64 key of the twin.
+///
+/// Params:
+/// - [`resolver_address`][`str`] - The HTTPS address of the resolver where this Identity should reside.
+/// - [`agent_did`][`str`] - The Agent DID.
+/// - [`agent_key_name`][`str`] - The Agent Key Name. As it was defined when the Agent Identity was created.
+/// - [`agent_twin_name`][`str`] - The Agent Name. As it was defined when the Agent Identity was created.
+/// - [`agent_seed`][`str`] - The Agent Seed. As it was defined when the Agent Identity was created.
+/// - [`private_exponent_hex`][`str`] - The Twin private exponent hex.
+/// - [`delegation_name`][`str`] - The name of the control delegation to be created.
+///
+/// Returns:
+/// - [`Result`][Result::Ok] with [`()`] if delegating control succeeds.
+/// - [`Result`][Result::Err] with [`IdentityLibError`] if delegating control fails.
+pub fn twin_delegates_control_to_agent_by_private_exponent_hex(
+    resolver_address: &str,
+    agent_did: &str,
+    agent_key_name: &str,
+    agent_name: &str,
+    agent_seed: &str,
+    private_exponent_hex: &str,
+    delegation_name: &str,
+) -> Result<(), IdentityLibError> {
+    let result = unsafe {
+        let resolver_address = CStringRaw::new(resolver_address)?;
+        let agent_did = CStringRaw::new(agent_did)?;
+        let agent_key_name = CStringRaw::new(agent_key_name)?;
+        let agent_name = CStringRaw::new(agent_name)?;
+        let agent_secret = CStringRaw::new(agent_seed)?;
+        let private_exponent_hex = CStringRaw::new(private_exponent_hex)?;
+        let delegation_name = CStringRaw::new(delegation_name)?;
+
+        ffi_wrapper::TwinDelegatesControlToAgentByPrivateExponentHex(
+            resolver_address.as_raw()?,
+            agent_did.as_raw()?,
+            agent_key_name.as_raw()?,
+            agent_name.as_raw()?,
+            agent_secret.as_raw()?,
+            private_exponent_hex.as_raw()?,
+            delegation_name.as_raw()?,
+        )
+    };
+
+    if !result.is_null() {
+        let error = unsafe { CStr::from_ptr(result) }.to_str()?;
+        let error = error.to_string();
+
+        unsafe {
+            ffi_wrapper::FreeUpCString(result);
+        }
+
+        return Err(IdentityLibError::Message(error));
+    }
+
+    Ok(())
+}
+
 struct CStringRaw {
     raw: Option<*mut i8>,
 }

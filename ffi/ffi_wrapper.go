@@ -12,6 +12,7 @@ import (
 	"time"
 	"unsafe"
 
+	"github.com/Iotic-Labs/iotics-identity-go/pkg/advancedapi"
 	"github.com/Iotic-Labs/iotics-identity-go/pkg/api"
 	"github.com/Iotic-Labs/iotics-identity-go/pkg/crypto"
 	"github.com/Iotic-Labs/iotics-identity-go/pkg/identity"
@@ -310,6 +311,66 @@ func CreateTwinDidWithControlDelegation(
 		return nil, C.CString(fmt.Sprintf("FFI lib error: creating twin DiD Doc failed: %+v", err))
 	}
 	return C.CString(twinIdentity.Did()), nil
+}
+
+//export GetPrivateExponentHexFromPrivateKeyBase64
+func GetPrivateExponentHexFromPrivateKeyBase64(cPrivateKeyBase64 *C.char) (*C.char, *C.char) {
+	// convert `*C.char` to `string`
+	privateKeyBase64 := C.GoString(cPrivateKeyBase64)
+
+	privateExponentHex, err := advancedapi.GetPrivateExponentHexFromPrivateKeyBase64(privateKeyBase64)
+	if err != nil {
+		return nil, C.CString(fmt.Sprintf("FFI lib error: failed to get private exponent hex from private key base64: %+v", err))
+	}
+
+	return C.CString(privateExponentHex), nil
+}
+
+//export TwinDelegatesControlToAgentByPrivateExponentHex
+func TwinDelegatesControlToAgentByPrivateExponentHex(
+	cResolverAddress *C.char,
+	cAgentDid *C.char,
+	cAgentKeyName *C.char,
+	cAgentName *C.char,
+	cAgentSeed *C.char,
+	cPrivateExponentHex *C.char,
+	cDelegationName *C.char) *C.char {
+	// convert `*C.char` to `string`
+	resolverAddress := C.GoString(cResolverAddress)
+	agentDid := C.GoString(cAgentDid)
+	agentKeyName := C.GoString(cAgentKeyName)
+	agentName := C.GoString(cAgentName)
+	agentSeed := C.GoString(cAgentSeed)
+	privateExponentHex := C.GoString(cPrivateExponentHex)
+	delegationName := C.GoString(cDelegationName)
+
+	// Resolver
+	addr, err := url.Parse(resolverAddress)
+	if err != nil {
+		return C.CString(fmt.Sprintf("FFI lib error: parsing resolver address failed: %+v", err))
+	}
+	resolver := register.NewDefaultRestResolverClient(addr)
+
+	// Agent Identity
+	agentIdentity, _, err := getIdentity(api.GetAgentIdentity, agentDid, agentKeyName, agentName, agentSeed)
+	if err != nil {
+		return C.CString(fmt.Sprintf("FFI lib error: failed to get agent registered identity: %+v", err))
+	}
+
+	// Twin Identity
+	twinIdentity, err := advancedapi.GetIdentityFromPrivateExponentHex(resolver, privateExponentHex)
+	if err != nil {
+		return C.CString(fmt.Sprintf("FFI lib error: failed to get twin registered identity: %+v", err))
+	}
+
+	// delegate control
+	err = api.TwinDelegatesControlToAgent(resolver, twinIdentity, agentIdentity, delegationName)
+
+	if err != nil {
+		return C.CString(fmt.Sprintf("FFI lib error: unable to delegate control to agent: %+v", err))
+	}
+
+	return nil
 }
 
 //export FreeUpCString
