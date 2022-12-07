@@ -48,12 +48,12 @@ public final class HttpResolverClient implements ResolverClient {
             if(body == null) {
                 return new Result("invalid response", "application/text", true);
             }
-            JSONObject obj = new JSONObject(body.string());
-            String token = obj.getString("token");
+            String bodyString = body.string();
+            String[] parts = bodyString.split("\"");
+            String token = parts[3];
             Base64.Decoder decoder = Base64.getDecoder();
             String payload = new String(decoder.decode(token.split("\\.")[1]));
-            obj = new JSONObject(payload);
-            return new Result(obj.toString(3), "application/json", false);
+            return new Result(payload, "application/json", false);
         }
 
     }
