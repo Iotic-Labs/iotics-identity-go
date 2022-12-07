@@ -1,4 +1,4 @@
-package com.iotics.sdk.identity.experimental;
+package com.iotics.sdk.identity.resolver;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -11,7 +11,6 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.Base64;
-import java.util.Objects;
 
 public final class HttpResolverClient implements ResolverClient {
     private final URL base;

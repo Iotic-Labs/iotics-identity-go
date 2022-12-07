@@ -1,4 +1,4 @@
-package com.iotics.sdk.identity.experimental;
+package com.iotics.sdk.identity.resolver;
 
 import java.io.IOException;
 import java.util.Objects;
