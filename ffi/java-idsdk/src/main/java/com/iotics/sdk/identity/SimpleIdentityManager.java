@@ -40,6 +40,17 @@ public class SimpleIdentityManager implements IdentityManager {
         return idSdk.CreateTwinIdentityWithControlDelegation(this.agentIdentity, twinKeyName, controlDelegationID);
     }
 
+    public Identity agentIdentity() {
+        return agentIdentity;
+    }
+
+    public Identity userIdentity() {
+        return userIdentity;
+    }
+
+    public String spaceDns() {
+        return spaceDns;
+    }
 
     public static final class Builder {
         private String userSeed;
