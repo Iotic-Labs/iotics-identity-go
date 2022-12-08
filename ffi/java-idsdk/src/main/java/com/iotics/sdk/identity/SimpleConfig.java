@@ -14,7 +14,7 @@ public class SimpleConfig {
     private String seed;
     private String keyName;
 
-    private static SimpleConfig readConf(Path p) throws FileNotFoundException {
+    public static SimpleConfig readConf(Path p) throws FileNotFoundException {
         Gson gson = new Gson();
         Reader reader = Files.newReader(p.toFile(), Charset.forName("UTF-8"));
         return gson.fromJson(reader, SimpleConfig.class);
