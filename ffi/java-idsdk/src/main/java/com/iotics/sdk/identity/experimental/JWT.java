@@ -1,6 +1,8 @@
 package com.iotics.sdk.identity.experimental;
 
-import org.json.JSONObject;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 
 import java.text.SimpleDateFormat;
 import java.util.Base64;
@@ -28,23 +30,31 @@ public class JWT {
     }
 
     public String toNiceString() {
-        JSONObject h = new JSONObject(this.header);
+        Gson gson = new GsonBuilder()
+                .setPrettyPrinting()
+                .create();
+        JsonObject h = gson.fromJson(this.header, JsonObject.class);
 
         try {
-            JSONObject p = new JSONObject(this.payload);
-            long exp = p.getLong("exp");
-            long iat = p.getLong("iat");
+            JsonObject p = gson.fromJson(this.payload, JsonObject.class);
+            long exp = p.get("exp").getAsLong();
+            long iat = p.get("iat").getAsLong();
 
             SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MMM-dd HH:mm:ss");
             simpleDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
 
             String sExp = simpleDateFormat.format(new Date(exp * 1000));
             String sIat = simpleDateFormat.format(new Date(iat * 1000));
-            p.put("exp", sExp).put("iat", sIat);
+            p.remove("exp");
+            p.remove("iat");
+            p.addProperty("exp", sExp);
+            p.addProperty("iat", sIat);
 
-            JSONObject obj = new JSONObject();
-            obj.put("header", h).put("payload", p).put("signature", this.signature);
-            return obj.toString(2);
+            JsonObject obj = gson.fromJson("{}", JsonObject.class);
+            obj.add("header", h);
+            obj.add("payload", p);
+            obj.addProperty("signature", this.signature);
+            return obj.toString();
         } catch (Exception e) {
             throw new RuntimeException("Invalid token", e);
         }
