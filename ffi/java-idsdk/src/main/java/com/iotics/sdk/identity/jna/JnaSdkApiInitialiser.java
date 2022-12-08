@@ -5,18 +5,21 @@ import com.sun.jna.Native;
 import java.io.File;
 
 public class JnaSdkApiInitialiser {
-    private static String LIB_PATH = new File("./lib/lib-iotics-id-sdk.so").getAbsolutePath();
-    private final String libPath;
+    private static String LIB_NAME = "lib-iotics-id-sdk.so";
+    private static String LIB_PATH = new File("./lib/"+LIB_NAME).getAbsolutePath();
 
-    private final SdkApi idProxy;
+    private SdkApi idProxy;
 
     public JnaSdkApiInitialiser() {
-        this(LIB_PATH);
+        try {
+            this.idProxy = Native.loadLibrary(LIB_NAME, SdkApi.class);
+        } catch(UnsatisfiedLinkError e) {
+            this.idProxy = Native.loadLibrary(LIB_PATH, SdkApi.class);
+        }
     }
 
     public JnaSdkApiInitialiser(String libPath) {
-        this.libPath = libPath;
-        this.idProxy = Native.loadLibrary(this.libPath, SdkApi.class);
+        this.idProxy = Native.loadLibrary(libPath, SdkApi.class);
     }
 
     // not thread safe
