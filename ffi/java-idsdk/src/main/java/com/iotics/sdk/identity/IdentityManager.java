@@ -9,6 +9,8 @@ import java.time.Duration;
 public interface IdentityManager {
     String newAuthenticationToken(Duration expiry);
 
+    String newAuthenticationToken(Duration expiry, String audience);
+
     Identity newTwinIdentity(String twinKeyName, String controlDelegationID);
 
     default Identity newTwinIdentity(String twinKeyName) {

@@ -14,10 +14,8 @@ public class SimpleIdentityManager implements IdentityManager {
     private final Identity agentIdentity;
     private final Identity userIdentity;
     private final SimpleIdentity idSdk;
-    private final String spaceDns;
 
     private SimpleIdentityManager(String resolverAddress,
-                                  String spaceDns,
                                   String userSeed, String agentSeed,
                                   String userKeyName, String userKeyID,
                                   String agentKeyName, String agentKeyID,
@@ -27,12 +25,16 @@ public class SimpleIdentityManager implements IdentityManager {
         userIdentity = idSdk.CreateUserIdentity(userKeyName, userKeyID);
         agentIdentity = idSdk.CreateAgentIdentity(agentKeyName, agentKeyID);
         idSdk.UserDelegatesAuthenticationToAgent(agentIdentity, userIdentity, authDelegationID);
-        this.spaceDns = spaceDns;
     }
 
     @Override
     public String newAuthenticationToken(Duration expiry) {
-        return idSdk.CreateAgentAuthToken(this.agentIdentity, this.userIdentity.did(), this.spaceDns, expiry);
+        return newAuthenticationToken(expiry, "undefined");
+    }
+
+    @Override
+    public String newAuthenticationToken(Duration expiry, String audience) {
+        return idSdk.CreateAgentAuthToken(this.agentIdentity, this.userIdentity.did(), audience, expiry);
     }
 
     @Override
@@ -48,10 +50,6 @@ public class SimpleIdentityManager implements IdentityManager {
         return userIdentity;
     }
 
-    public String spaceDns() {
-        return spaceDns;
-    }
-
     public static final class Builder {
         private String userSeed;
         private String agentSeed;
@@ -61,7 +59,6 @@ public class SimpleIdentityManager implements IdentityManager {
         private String agentKeyID;
         private String authDelegationID;
         private String resolverAddress;
-        private String spaceDns;
 
         private Builder() {
             authDelegationID = "#deleg-0";
@@ -113,15 +110,9 @@ public class SimpleIdentityManager implements IdentityManager {
             return this;
         }
 
-        public Builder withSpaceDns(String spaceDns) {
-            this.spaceDns = spaceDns;
-            return this;
-        }
-
         public SimpleIdentityManager build() {
             return new SimpleIdentityManager(
                     resolverAddress,
-                    spaceDns,
                     userSeed, agentSeed,
                     userKeyName, userKeyID,
                     agentKeyName, agentKeyID,
