@@ -12,6 +12,9 @@ import java.util.Objects;
 import static com.iotics.sdk.identity.Validator.getValueOrThrow;
 import static com.iotics.sdk.identity.Validator.throwIfNotNull;
 
+/**
+ * Wrapper class to manage identities via the identity library.
+ */
 public class SimpleIdentity {
     private final SdkApi api;
     private final String userSeed;
