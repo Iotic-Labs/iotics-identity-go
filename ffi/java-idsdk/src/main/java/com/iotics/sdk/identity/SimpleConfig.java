@@ -28,20 +28,27 @@ public class SimpleConfig {
         return gson.fromJson(reader, SimpleConfig.class);
     }
 
-    public static SimpleConfig readConf(Path p, SimpleConfig def) throws FileNotFoundException {
-        if(def == null) {
-            throw new IllegalArgumentException("null default");
-        }
-        Gson gson = new Gson();
-        Reader reader = Files.newReader(p.toFile(), Charset.forName("UTF-8"));
-        SimpleConfig sc = gson.fromJson(reader, SimpleConfig.class);
-        if(sc == null) {
+    public static SimpleConfig readConf(Path p, SimpleConfig def) {
+        try {
+            Gson gson = new Gson();
+            Reader reader = Files.newReader(p.toFile(), Charset.forName("UTF-8"));
+            SimpleConfig sc = gson.fromJson(reader, SimpleConfig.class);
+            if(sc == null) {
+                if(def == null) {
+                    throw new IllegalArgumentException("null default");
+                }
+                return def;
+            }
+            return sc.cloneWithDefaults(def);
+        } catch (FileNotFoundException e) {
+            if(def == null) {
+                throw new IllegalArgumentException("null default");
+            }
             return def;
         }
-        return sc.cloneWithDefaults(def);
     }
 
-    private static SimpleConfig readConfFromHome(String name) throws FileNotFoundException {
+    public static SimpleConfig readConfFromHome(String name) throws FileNotFoundException {
         Path p = Paths.get(System.getProperty("user.home"), ".config", "iotics", name);
         return readConf(p);
     }
