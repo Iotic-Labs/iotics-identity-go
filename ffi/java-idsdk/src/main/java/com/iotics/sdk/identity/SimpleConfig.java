@@ -16,10 +16,7 @@ public class SimpleConfig {
     private String keyName;
 
     public static SimpleConfig fromEnv(String prefix) {
-        SimpleConfig sc = new SimpleConfig();
-        sc.seed = System.getenv(prefix + "SEED");
-        sc.keyName = System.getenv(prefix + "KEYNAME");
-        return sc;
+        return new SimpleConfig(System.getenv(prefix + "SEED"), System.getenv(prefix + "KEYNAME"));
     }
 
     public static SimpleConfig readConf(Path p) throws FileNotFoundException {
