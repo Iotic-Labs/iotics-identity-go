@@ -27,6 +27,15 @@ public class SimpleConfig {
         Reader reader = Files.newReader(p.toFile(), Charset.forName("UTF-8"));
         return gson.fromJson(reader, SimpleConfig.class);
     }
+    public static SimpleConfig readConf(String path, SimpleConfig def) {
+        if (path == null){
+            if(def == null) {
+                throw new IllegalArgumentException("null default");
+            }
+            return def;
+        }
+        return SimpleConfig.readConf(Path.of(path), def);
+    }
 
     public static SimpleConfig readConf(Path p, SimpleConfig def) {
         try {
@@ -51,6 +60,11 @@ public class SimpleConfig {
     public static SimpleConfig readConfFromHome(String name) throws FileNotFoundException {
         Path p = Paths.get(System.getProperty("user.home"), ".config", "iotics", name);
         return readConf(p);
+    }
+
+    public SimpleConfig(String seed, String keyName) {
+        this.seed = seed;
+        this.keyName = keyName;
     }
 
     public String seed() {
