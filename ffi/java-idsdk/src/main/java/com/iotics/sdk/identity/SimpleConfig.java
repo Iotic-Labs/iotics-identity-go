@@ -80,14 +80,15 @@ public class SimpleConfig {
     }
 
     private SimpleConfig cloneWithDefaults(SimpleConfig def) {
-        SimpleConfig sc = new SimpleConfig();
-        sc.seed = this.seed;
+        SimpleConfig sc = new SimpleConfig(this.seed, this.keyName);
         if(sc.seed == null) {
             sc.seed = def.seed;
         }
-        sc.keyName = this.keyName;
         if(sc.keyName == null) {
             sc.keyName = def.keyName;
+        }
+        if(!sc.isValid()) {
+            throw new IllegalArgumentException("invalid configuration");
         }
         return sc;
     }
