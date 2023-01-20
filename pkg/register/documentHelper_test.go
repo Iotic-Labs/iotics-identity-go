@@ -3,6 +3,7 @@
 package register_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/Iotic-Labs/iotics-identity-go/pkg/test"
@@ -57,7 +58,7 @@ func Test_can_get_issuer_from_control_delegation(t *testing.T) {
 	resolver := test.NewInMemoryResolver()
 	userIdentity, _ := test.SetupIdentitiesForAuth(resolver, true, false)
 
-	userDoc, _ := resolver.GetDocument(userIdentity.Did())
+	userDoc, _ := resolver.GetDocument(context.TODO(), userIdentity.Did())
 
 	issuer, err := register.GetIssuerRegisterDelegationProof("#delegCtrl", userDoc, false)
 	assert.NilError(t, err)
@@ -68,7 +69,7 @@ func Test_get_issuer_from_control_delegation_returns_none_if_not_found(t *testin
 	resolver := test.NewInMemoryResolver()
 	userIdentity, _ := test.SetupIdentitiesForAuth(resolver, false, false)
 
-	userDoc, _ := resolver.GetDocument(userIdentity.Did())
+	userDoc, _ := resolver.GetDocument(context.TODO(), userIdentity.Did())
 
 	issuer, err := register.GetIssuerRegisterDelegationProof("#delegCtrl", userDoc, false)
 	assert.ErrorContains(t, err, "delegation now found for issuer")
@@ -79,7 +80,7 @@ func Test_can_get_issuer_from_auth_delegation(t *testing.T) {
 	resolver := test.NewInMemoryResolver()
 	userIdentity, _ := test.SetupIdentitiesForAuth(resolver, false, true)
 
-	userDoc, _ := resolver.GetDocument(userIdentity.Did())
+	userDoc, _ := resolver.GetDocument(context.TODO(), userIdentity.Did())
 
 	issuer, err := register.GetIssuerRegisterDelegationProof("#delegAuth", userDoc, true)
 	assert.NilError(t, err)
@@ -90,7 +91,7 @@ func Test_get_issuer_from_auth_delegation_returns_none_if_not_found(t *testing.T
 	resolver := test.NewInMemoryResolver()
 	userIdentity, _ := test.SetupIdentitiesForAuth(resolver, false, false)
 
-	userDoc, _ := resolver.GetDocument(userIdentity.Did())
+	userDoc, _ := resolver.GetDocument(context.TODO(), userIdentity.Did())
 
 	issuer, err := register.GetIssuerRegisterDelegationProof("#delegAuth", userDoc, true)
 	assert.ErrorContains(t, err, "delegation now found for issuer")
@@ -101,7 +102,7 @@ func Test_get_issuer_from_auth_delegation_returns_none_if_in_auth_keys_but_auth_
 	resolver := test.NewInMemoryResolver()
 	userIdentity, _ := test.SetupIdentitiesForAuth(resolver, false, true)
 
-	userDoc, _ := resolver.GetDocument(userIdentity.Did())
+	userDoc, _ := resolver.GetDocument(context.TODO(), userIdentity.Did())
 
 	issuer, err := register.GetIssuerRegisterDelegationProof("#delegAuth", userDoc, false)
 	assert.ErrorContains(t, err, "delegation now found for issuer")
@@ -152,7 +153,7 @@ func Test_can_get_owner_public_key(t *testing.T) {
 	resolver := test.NewInMemoryResolver()
 	userIdentity, _ := test.SetupIdentitiesForAuth(resolver, false, true)
 
-	userDoc, _ := resolver.GetDocument(userIdentity.Did())
+	userDoc, _ := resolver.GetDocument(context.TODO(), userIdentity.Did())
 
 	issuer, err := register.GetOwnerRegisterPublicKey(userDoc)
 	assert.NilError(t, err)

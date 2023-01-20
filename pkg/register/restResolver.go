@@ -3,11 +3,12 @@
 package register
 
 import (
+	"context"
 	"crypto/ecdsa"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -69,16 +70,25 @@ func GetResolverFromEnv() (string, error) {
 }
 
 // GetDocument fetch a document from the resolver by DID identifier
-func (c *RestResolverClient) GetDocument(documentID string) (*RegisterDocument, error) {
+func (c *RestResolverClient) GetDocument(ctx context.Context, documentID string) (*RegisterDocument, error) {
 	err := validation.ValidateIdentifier(documentID)
 	if err != nil {
 		return nil, err
 	}
 
-	discoverURL := fmt.Sprintf("%s/1.0/discover/%s", c.url.String(), url.QueryEscape(documentID)) // todo: join path?
-	response, err := c.client.Get(discoverURL)
+	discoverURL := fmt.Sprintf("%s/1.0/discover/%s", c.url.String(), url.QueryEscape(documentID))
+
+	reqWithContext, err := http.NewRequestWithContext(ctx, http.MethodGet, discoverURL, nil)
+	if err != nil {
+		return nil, &ResolverError{err: err, errType: ServerError}
+	}
+	response, err := c.client.Do(reqWithContext)
 
 	if err != nil {
+		if IsContextError(err) {
+			return nil, err
+		}
+
 		neterr, ok := err.(net.Error)
 		if ok && neterr.Timeout() {
 			totalResolverErrors.WithLabelValues(MetricErrorTypeTimeout).Inc()
@@ -87,13 +97,14 @@ func (c *RestResolverClient) GetDocument(documentID string) (*RegisterDocument, 
 		}
 		return nil, &ResolverError{err: err, errType: ConnectionError}
 	}
+	defer response.Body.Close()
 
 	if response.StatusCode == http.StatusNotFound {
 		totalResolverErrors.WithLabelValues(MetricErrorTypeNotFound).Inc()
 		return nil, &ResolverError{err: fmt.Errorf("%s: document %s", http.StatusText(http.StatusNotFound), documentID), errType: NotFound}
 	}
 
-	data, err := ioutil.ReadAll(response.Body)
+	data, err := io.ReadAll(response.Body)
 	if err != nil {
 		neterr, ok := err.(net.Error)
 		if ok && neterr.Timeout() {
@@ -130,16 +141,25 @@ func (c *RestResolverClient) GetDocument(documentID string) (*RegisterDocument, 
 }
 
 // RegisterDocument registers a document in the resolver.
-func (c *RestResolverClient) RegisterDocument(document *RegisterDocument, privateKey *ecdsa.PrivateKey, issuer *Issuer) error {
+func (c *RestResolverClient) RegisterDocument(ctx context.Context, document *RegisterDocument, privateKey *ecdsa.PrivateKey, issuer *Issuer) error {
 	token, err := CreateDocumentToken(issuer, c.url.String(), document, privateKey)
 	if err != nil {
 		return err
 	}
 
 	registerURL := fmt.Sprintf("%s/1.0/register", c.url.String())
-	rdr := strings.NewReader(string(token))
-	response, err := c.client.Post(registerURL, "text/plain", rdr) // FIXME content type
+
+	bodyReader := strings.NewReader(string(token))
+	reqWithContext, err := http.NewRequestWithContext(ctx, http.MethodPost, registerURL, bodyReader)
 	if err != nil {
+		return &ResolverError{err: err, errType: ServerError}
+	}
+	response, err := c.client.Do(reqWithContext)
+
+	if err != nil {
+		if IsContextError(err) {
+			return err
+		}
 		neterr, ok := err.(net.Error)
 		if ok && neterr.Timeout() {
 			totalResolverErrors.WithLabelValues(MetricErrorTypeTimeout).Inc()
@@ -148,9 +168,13 @@ func (c *RestResolverClient) RegisterDocument(document *RegisterDocument, privat
 		}
 		return &ResolverError{err: err, errType: ConnectionError}
 	}
+	defer response.Body.Close()
 
-	data, err := ioutil.ReadAll(response.Body)
+	data, err := io.ReadAll(response.Body)
 	if err != nil {
+		if IsContextError(err) {
+			return err
+		}
 		neterr, ok := err.(net.Error)
 		if ok && neterr.Timeout() {
 			totalResolverErrors.WithLabelValues(MetricErrorTypeTimeout).Inc()

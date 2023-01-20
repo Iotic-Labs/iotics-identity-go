@@ -3,6 +3,7 @@
 package register_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -17,7 +18,7 @@ func Test_validate_allowed_for_control_raises_not_allowed_if_not_allowed_for_con
 	resolver := test.NewInMemoryResolver()
 	userIdentity, agentIdentity := test.SetupIdentitiesForAuth(resolver, false, true)
 
-	err := register.ValidateAllowedForControl(resolver, agentIdentity.Issuer(), userIdentity.Did())
+	err := register.ValidateAllowedForControl(context.TODO(), resolver, agentIdentity.Issuer(), userIdentity.Did())
 	assert.ErrorContains(t, err, "not allowed")
 }
 
@@ -25,7 +26,7 @@ func Test_validate_allowed_for_control_raises_not_allowed_if_not_allowed_for_aut
 	resolver := test.NewInMemoryResolver()
 	userIdentity, agentIdentity := test.SetupIdentitiesForAuth(resolver, false, false)
 
-	err := register.ValidateAllowedForAuth(resolver, agentIdentity.Issuer(), userIdentity.Did())
+	err := register.ValidateAllowedForAuth(context.TODO(), resolver, agentIdentity.Issuer(), userIdentity.Did())
 	assert.ErrorContains(t, err, "not allowed")
 }
 
@@ -33,7 +34,7 @@ func Test_can_validate_allowed_for_control_on_owned_doc(t *testing.T) {
 	resolver := test.NewInMemoryResolver()
 	userIdentity, _ := test.SetupIdentitiesForAuth(resolver, false, false)
 
-	err := register.ValidateAllowedForControl(resolver, userIdentity.Issuer(), userIdentity.Did())
+	err := register.ValidateAllowedForControl(context.TODO(), resolver, userIdentity.Issuer(), userIdentity.Did())
 	assert.NilError(t, err)
 }
 
@@ -41,7 +42,7 @@ func Test_can_validate_allowed_for_authentication_on_owned_doc(t *testing.T) {
 	resolver := test.NewInMemoryResolver()
 	userIdentity, _ := test.SetupIdentitiesForAuth(resolver, false, false)
 
-	err := register.ValidateAllowedForAuth(resolver, userIdentity.Issuer(), userIdentity.Did())
+	err := register.ValidateAllowedForAuth(context.TODO(), resolver, userIdentity.Issuer(), userIdentity.Did())
 	assert.NilError(t, err)
 }
 
@@ -49,7 +50,7 @@ func Test_can_validate_allowed_for_control_with_allowed_by_control_delegation(t 
 	resolver := test.NewInMemoryResolver()
 	userIdentity, agentIdentity := test.SetupIdentitiesForAuth(resolver, true, false)
 
-	err := register.ValidateAllowedForControl(resolver, agentIdentity.Issuer(), userIdentity.Did())
+	err := register.ValidateAllowedForControl(context.TODO(), resolver, agentIdentity.Issuer(), userIdentity.Did())
 	assert.NilError(t, err)
 }
 
@@ -57,7 +58,7 @@ func Test_can_validate_allowed_for_control_with_allowed_by_auth_delegation(t *te
 	resolver := test.NewInMemoryResolver()
 	userIdentity, agentIdentity := test.SetupIdentitiesForAuth(resolver, false, true)
 
-	err := register.ValidateAllowedForAuth(resolver, agentIdentity.Issuer(), userIdentity.Did())
+	err := register.ValidateAllowedForAuth(context.TODO(), resolver, agentIdentity.Issuer(), userIdentity.Did())
 	assert.NilError(t, err)
 }
 
@@ -65,10 +66,10 @@ func Test_can_validate_allowed_for_control_with_controller_doc(t *testing.T) {
 	resolver := test.NewInMemoryResolver()
 	userIdentity, agentIdentity := test.SetupIdentitiesForAuth(resolver, false, false)
 
-	err := advancedapi.SetDocumentController(resolver, nil, userIdentity, agentIdentity.Issuer())
+	err := advancedapi.SetDocumentController(context.TODO(), resolver, nil, userIdentity, agentIdentity.Issuer())
 	assert.NilError(t, err)
 
-	err = register.ValidateAllowedForControl(resolver, agentIdentity.Issuer(), userIdentity.Did())
+	err = register.ValidateAllowedForControl(context.TODO(), resolver, agentIdentity.Issuer(), userIdentity.Did())
 	assert.NilError(t, err)
 }
 
@@ -76,10 +77,10 @@ func Test_can_validate_allowed_for_auth_with_controller_doc(t *testing.T) {
 	resolver := test.NewInMemoryResolver()
 	userIdentity, agentIdentity := test.SetupIdentitiesForAuth(resolver, false, false)
 
-	err := advancedapi.SetDocumentController(resolver, nil, userIdentity, agentIdentity.Issuer())
+	err := advancedapi.SetDocumentController(context.TODO(), resolver, nil, userIdentity, agentIdentity.Issuer())
 	assert.NilError(t, err)
 
-	err = register.ValidateAllowedForAuth(resolver, agentIdentity.Issuer(), userIdentity.Did())
+	err = register.ValidateAllowedForAuth(context.TODO(), resolver, agentIdentity.Issuer(), userIdentity.Did())
 	assert.NilError(t, err)
 }
 
@@ -87,7 +88,7 @@ func Test_validate_allowed_for_control_raises_not_allowed_if_resolver_error(t *t
 	resolver := test.NewInMemoryResolver()
 	_, agentIdentity := test.SetupIdentitiesForAuth(resolver, false, false)
 
-	err := register.ValidateAllowedForAuth(resolver, agentIdentity.Issuer(), test.ValidDid)
+	err := register.ValidateAllowedForAuth(context.TODO(), resolver, agentIdentity.Issuer(), test.ValidDid)
 	assert.ErrorContains(t, err, "document not found")
 }
 
@@ -113,7 +114,7 @@ func Test_can_verify_authentication(t *testing.T) {
 	token, err := register.CreateAuthToken(agentIdentity.Issuer(), userIdentity.Did(), "audience", duration, agentIdentity.KeyPair().PrivateKey, 0)
 	assert.NilError(t, err)
 
-	claims, err := register.VerifyAuthentication(resolver, token)
+	claims, err := register.VerifyAuthentication(context.TODO(), resolver, token)
 	assert.NilError(t, err)
 	assert.DeepEqual(t, claims.Issuer, agentIdentity.Issuer())
 	assert.Check(t, claims.Audience == "audience")
@@ -123,7 +124,7 @@ func Test_can_verify_authentication(t *testing.T) {
 
 func Test_verify_authentication_raises_auth_error_if_invalid_token(t *testing.T) {
 	resolver := test.NewInMemoryResolver()
-	_, err := register.VerifyAuthentication(resolver, "invalid token")
+	_, err := register.VerifyAuthentication(context.TODO(), resolver, "invalid token")
 	assert.ErrorContains(t, err, "failed to parse token")
 }
 
@@ -213,6 +214,6 @@ func Test_verify_authentication_raises_auth_error_if_token_not_allowed(t *testin
 	token, err := register.CreateAuthToken(agentIdentity.Issuer(), userIdentity.Did(), "audience", duration, agentIdentity.KeyPair().PrivateKey, 0)
 	assert.NilError(t, err)
 
-	_, err = register.VerifyAuthentication(resolver, token)
+	_, err = register.VerifyAuthentication(context.TODO(), resolver, token)
 	assert.ErrorContains(t, err, "delegation not found")
 }

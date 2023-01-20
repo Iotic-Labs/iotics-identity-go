@@ -3,6 +3,7 @@
 package main_test
 
 import (
+	"context"
 	"encoding/hex"
 	"fmt"
 	"testing"
@@ -99,7 +100,7 @@ func aRegisteredUser(t gobdd.StepTest, ctx gobdd.Context) {
 		Seed:    seed,
 		KeyName: "RegUserKey1",
 	}
-	user, _ := api.CreateUserIdentity(resolver, opts)
+	user, _ := api.CreateUserIdentity(context.TODO(), resolver, opts)
 	ctx.Set(ctxRegisteredUser, user)
 }
 
@@ -109,7 +110,7 @@ func aRegisteredAgent(t gobdd.StepTest, ctx gobdd.Context) {
 		Seed:    seed,
 		KeyName: "RegAgentKey1",
 	}
-	agent, _ := api.CreateAgentIdentity(resolver, opts)
+	agent, _ := api.CreateAgentIdentity(context.TODO(), resolver, opts)
 	ctx.Set(ctxRegisteredAgent, agent)
 }
 
@@ -119,13 +120,13 @@ func aRegisteredTwin(t gobdd.StepTest, ctx gobdd.Context) {
 		Seed:    seed,
 		KeyName: "RegTwinKey1",
 	}
-	twin, _ := api.CreateTwinIdentity(resolver, opts)
+	twin, _ := api.CreateTwinIdentity(context.TODO(), resolver, opts)
 	ctx.Set(ctxRegisteredTwin, twin)
 }
 
 func registerTwinIdentity(t gobdd.StepTest, name string) register.RegisteredIdentity {
 	keyPair := getNewKeyPair(name)
-	registeredTwin, _, err := advancedapi.CreateNewIdentityAndRegister(resolver, identity.Twin, keyPair, name, false)
+	registeredTwin, _, err := advancedapi.CreateNewIdentityAndRegister(context.TODO(), resolver, identity.Twin, keyPair, name, false)
 	assert.NilError(t, err)
 	return registeredTwin
 }
@@ -158,9 +159,9 @@ func aRegisterDocumentWithSeveralOwners(t gobdd.StepTest, ctx gobdd.Context) {
 	o3name := "#Owner3"
 	o3publicKeyBase58 := getNewKeyPair(o3name).PublicKeyBase58
 
-	registeredTwin, _, _ := advancedapi.CreateNewIdentityAndRegister(resolver, identity.Twin, keyPair, name, false)
-	api.AddNewOwner(resolver, o2name, o2publicKeyBase58, registeredTwin)
-	api.AddNewOwner(resolver, o3name, o3publicKeyBase58, registeredTwin)
+	registeredTwin, _, _ := advancedapi.CreateNewIdentityAndRegister(context.TODO(), resolver, identity.Twin, keyPair, name, false)
+	api.AddNewOwner(context.TODO(), resolver, o2name, o2publicKeyBase58, registeredTwin)
+	api.AddNewOwner(context.TODO(), resolver, o3name, o3publicKeyBase58, registeredTwin)
 
 	ctx.Set(ctxAllOwnersPubKeys, []string{keyPair.PublicKeyBase58, o2publicKeyBase58, o3publicKeyBase58})
 	ctx.Set(ctxTwinKeyName, name)
@@ -177,7 +178,7 @@ func aAnotherTwinOwner(t gobdd.StepTest, ctx gobdd.Context, name string) {
 	keyPair := getNewKeyPair(name)
 	registeredTwin, _ := ctx.Get(ctxRegisteredTwin)
 	assert.Assert(t, registeredTwin != nil)
-	api.AddNewOwner(resolver, name, keyPair.PublicKeyBase58, registeredTwin.(register.RegisteredIdentity))
+	api.AddNewOwner(context.TODO(), resolver, name, keyPair.PublicKeyBase58, registeredTwin.(register.RegisteredIdentity))
 	ctx.Set(ctxOtherTwinIdentityName, name)
 	ctx.Set(ctxOtherTwinIdentityPubKey, keyPair.PublicKeyBase58)
 }
@@ -186,7 +187,7 @@ func aAnotherTwinAuthenticationPublicKey(t gobdd.StepTest, ctx gobdd.Context, na
 	keyPair := getNewKeyPair(name)
 	registeredTwin, _ := ctx.Get(ctxRegisteredTwin)
 	assert.Assert(t, registeredTwin != nil)
-	err := advancedapi.AddAuthenticationKeyToDocument(resolver, nil, name, keyPair.PublicKeyBase58, registeredTwin.(register.RegisteredIdentity))
+	err := advancedapi.AddAuthenticationKeyToDocument(context.TODO(), resolver, nil, name, keyPair.PublicKeyBase58, registeredTwin.(register.RegisteredIdentity))
 	assert.NilError(t, err)
 	ctx.Set(ctxOtherTwinIdentityName, name)
 	ctx.Set(ctxOtherTwinIdentityPubKey, keyPair.PublicKeyBase58)
@@ -199,7 +200,7 @@ func aDelegationProofCreatedForBy(t gobdd.StepTest, ctx gobdd.Context, createdFo
 	otherRegisteredTwin, _ := ctx.Get(ctxOtherRegisteredTwin)
 	assert.Assert(t, otherRegisteredTwin != nil)
 	otherIdentity := otherRegisteredTwin.(register.RegisteredIdentity)
-	doc, err := advancedapi.GetRegisterDocument(resolver, otherIdentity.Did())
+	doc, err := advancedapi.GetRegisterDocument(context.TODO(), resolver, otherIdentity.Did())
 	assert.NilError(t, err)
 	issuer, pr, err := advancedapi.CreateDelegationProof(initialIdentity.Issuer(), doc, otherIdentity.KeyPair())
 	assert.NilError(t, err)
@@ -213,7 +214,7 @@ func aGenericDelegationProofCreatedBy(t gobdd.StepTest, ctx gobdd.Context, creat
 	otherRegisteredTwin, _ := ctx.Get(ctxOtherRegisteredTwin)
 	assert.Assert(t, otherRegisteredTwin != nil)
 	otherIdentity := otherRegisteredTwin.(register.RegisteredIdentity)
-	doc, err := advancedapi.GetRegisterDocument(resolver, otherIdentity.Did())
+	doc, err := advancedapi.GetRegisterDocument(context.TODO(), resolver, otherIdentity.Did())
 	assert.NilError(t, err)
 	issuer, pr, err := advancedapi.CreateGenericDelegationProof(doc, otherIdentity.KeyPair())
 	assert.NilError(t, err)
@@ -229,7 +230,7 @@ func aRegisterIdentityIDAOwningTheDocumentDocAAndAControllerRegisteredIdentity(t
 func aAnotherRegisteredIdentityWithNameAndAnExtraOwner(t gobdd.StepTest, ctx gobdd.Context, identityName string, extraOwnerName string) {
 	otherIdentity := registerTwinIdentity(t, identityName)
 	extraOwnerKeyPair := getNewKeyPair(extraOwnerName)
-	api.AddNewOwner(resolver, extraOwnerName, extraOwnerKeyPair.PublicKeyBase58, otherIdentity)
+	api.AddNewOwner(context.TODO(), resolver, extraOwnerName, extraOwnerKeyPair.PublicKeyBase58, otherIdentity)
 	ctx.Set(ctxOtherRegisteredTwin, otherIdentity)
 	ctx.Set(ctxOtherTwinIdentityExtraOwnerName, extraOwnerName)
 	ctx.Set(ctxOtherTwinIdentityExtraOwnerKeyPair, extraOwnerKeyPair)
@@ -278,7 +279,7 @@ func iCreateUserAndAgentWithAuthenticationDelegation(t gobdd.StepTest, ctx gobdd
 		DelegationName: delegationName,
 		OverrideDocs:   false,
 	}
-	userId, agentId, err := api.CreateUserAndAgentWithAuthDelegation(resolver, opts)
+	userId, agentId, err := api.CreateUserAndAgentWithAuthDelegation(context.TODO(), resolver, opts)
 	assert.NilError(t, err)
 	ctx.Set(ctxRegisteredUser, userId)
 	ctx.Set(ctxRegisteredAgent, agentId)
@@ -292,7 +293,7 @@ func iCreateAUser(t gobdd.StepTest, ctx gobdd.Context) {
 		Seed:    userSeed,
 		KeyName: userKeyName,
 	}
-	user, err := api.CreateUserIdentity(resolver, opts)
+	user, err := api.CreateUserIdentity(context.TODO(), resolver, opts)
 	assert.NilError(t, err)
 	ctx.Set(ctxRegisteredUser, user)
 }
@@ -305,7 +306,7 @@ func iCreateAnAgent(t gobdd.StepTest, ctx gobdd.Context) {
 		Seed:    agentSeed,
 		KeyName: agentKeyName,
 	}
-	agent, err := api.CreateAgentIdentity(resolver, opts)
+	agent, err := api.CreateAgentIdentity(context.TODO(), resolver, opts)
 	assert.NilError(t, err)
 	ctx.Set(ctxRegisteredAgent, agent)
 }
@@ -321,7 +322,7 @@ func iCreateATwin(t gobdd.StepTest, ctx gobdd.Context) {
 		Name:    twinIssuerName,
 	}
 
-	twin, err := api.CreateTwinIdentity(resolver, opts)
+	twin, err := api.CreateTwinIdentity(context.TODO(), resolver, opts)
 	assert.NilError(t, err)
 	ctx.Set(ctxRegisteredTwin, twin)
 }
@@ -330,7 +331,7 @@ func iDelegateControl(t gobdd.StepTest, ctx gobdd.Context) {
 	delegationName, _ := ctx.GetString(ctxDelegationName)
 	agent := ctxRegisteredAgent.GetRegisteredIdentity(t, ctx)
 	twin := ctxRegisteredTwin.GetRegisteredIdentity(t, ctx)
-	err := api.DelegateControl(resolver, twin, agent, delegationName)
+	err := api.DelegateControl(context.TODO(), resolver, twin, agent, delegationName)
 	assert.NilError(t, err)
 }
 
@@ -349,13 +350,13 @@ func theUserTakesOwnershipOfTheRegisteredTwin(t gobdd.StepTest, ctx gobdd.Contex
 	user := ctxRegisteredUser.GetRegisteredIdentity(t, ctx)
 	twin := ctxRegisteredTwin.GetRegisteredIdentity(t, ctx)
 	newOwnerKeyName, _ := ctx.GetString(ctxNewOwnerKeyName)
-	err := api.GetOwnershipOfTwinFromRegisteredIdentity(resolver, twin, user, newOwnerKeyName)
+	err := api.GetOwnershipOfTwinFromRegisteredIdentity(context.TODO(), resolver, twin, user, newOwnerKeyName)
 	assert.NilError(t, err)
 }
 
 func iGetTheAssociatedDocument(t gobdd.StepTest, ctx gobdd.Context) {
 	twin := ctxRegisteredTwin.GetRegisteredIdentity(t, ctx)
-	registerDoc, err := advancedapi.GetRegisterDocument(resolver, twin.Did())
+	registerDoc, err := advancedapi.GetRegisterDocument(context.TODO(), resolver, twin.Did())
 
 	assert.NilError(t, err)
 	ctx.Set(ctxRetrievedDoc, registerDoc)
@@ -365,9 +366,9 @@ func iCheckIfTheRegisteredIdentityIsAllowedForControlAndAuthenticationOnTheAssoc
 	registeredTwin, _ := ctx.Get(ctxRegisteredTwin)
 	assert.Assert(t, registeredTwin != nil)
 	initialIdentity := registeredTwin.(register.RegisteredIdentity)
-	err := register.ValidateAllowedForAuth(resolver, initialIdentity.Issuer(), initialIdentity.Did())
+	err := register.ValidateAllowedForAuth(context.TODO(), resolver, initialIdentity.Issuer(), initialIdentity.Did())
 	ctx.Set(ctxAllowedForAuth, err == nil)
-	err = register.ValidateAllowedForControl(resolver, initialIdentity.Issuer(), initialIdentity.Did())
+	err = register.ValidateAllowedForControl(context.TODO(), resolver, initialIdentity.Issuer(), initialIdentity.Did())
 	ctx.Set(ctxAllowedForControl, err == nil)
 
 }
@@ -376,7 +377,7 @@ func iAddTheNewOwnerToTheDocument(t gobdd.StepTest, ctx gobdd.Context) {
 	name, _ := ctx.GetString(ctxOtherTwinIdentityName)
 	publicKeyBase58, _ := ctx.GetString(ctxOtherTwinIdentityPubKey)
 	registeredTwin, _ := ctx.Get(ctxRegisteredTwin)
-	advancedapi.AddPublicKeyToDocument(resolver, nil, name, publicKeyBase58, registeredTwin.(register.RegisteredIdentity))
+	advancedapi.AddPublicKeyToDocument(context.TODO(), resolver, nil, name, publicKeyBase58, registeredTwin.(register.RegisteredIdentity))
 }
 
 func iRemoveTheOtherOwnerFromTheDocument(t gobdd.StepTest, ctx gobdd.Context) {
@@ -385,12 +386,12 @@ func iRemoveTheOtherOwnerFromTheDocument(t gobdd.StepTest, ctx gobdd.Context) {
 	registeredTwin, _ := ctx.Get(ctxRegisteredTwin)
 	initialOwner := registeredTwin.(register.RegisteredIdentity)
 
-	doc, err := advancedapi.GetRegisterDocument(resolver, initialOwner.Did())
+	doc, err := advancedapi.GetRegisterDocument(context.TODO(), resolver, initialOwner.Did())
 	assert.NilError(t, err)
 	otherIssuer, err := advancedapi.GetIssuerByPublicKey(doc, publicKeyBase58ToRemove)
 	assert.NilError(t, err)
 
-	advancedapi.RemovePublicKeyFromDocument(resolver, nil, nameToRemove, initialOwner)
+	advancedapi.RemovePublicKeyFromDocument(context.TODO(), resolver, nil, nameToRemove, initialOwner)
 	ctx.Set(ctxOtherTwinIdentityIssuer, otherIssuer)
 }
 
@@ -400,12 +401,12 @@ func iRevokeTheOtherOwnerKey(t gobdd.StepTest, ctx gobdd.Context) {
 	registeredTwin, _ := ctx.Get(ctxRegisteredTwin)
 	initialOwner := registeredTwin.(register.RegisteredIdentity)
 
-	doc, err := advancedapi.GetRegisterDocument(resolver, initialOwner.Did())
+	doc, err := advancedapi.GetRegisterDocument(context.TODO(), resolver, initialOwner.Did())
 	assert.NilError(t, err)
 	otherIssuer, err := advancedapi.GetIssuerByPublicKey(doc, publicKeyBase58ToRevoke)
 	assert.NilError(t, err)
 
-	advancedapi.RevokePublicKeyFromDocument(resolver, nil, nameToRevoke, initialOwner)
+	advancedapi.RevokePublicKeyFromDocument(context.TODO(), resolver, nil, nameToRevoke, initialOwner)
 	ctx.Set(ctxOtherTwinIdentityIssuer, otherIssuer)
 }
 
@@ -413,21 +414,21 @@ func iAddTheNewAuthenticationKeyToTheDocument(t gobdd.StepTest, ctx gobdd.Contex
 	name, _ := ctx.GetString(ctxOtherTwinIdentityName)
 	publicKeyBase58, _ := ctx.GetString(ctxOtherTwinIdentityPubKey)
 	twin := ctxRegisteredTwin.GetRegisteredIdentity(t, ctx)
-	err := advancedapi.AddAuthenticationKeyToDocument(resolver, nil, name, publicKeyBase58, twin)
+	err := advancedapi.AddAuthenticationKeyToDocument(context.TODO(), resolver, nil, name, publicKeyBase58, twin)
 	assert.NilError(t, err)
 }
 
 func iRemoveTheAuthenticationKeyFromTheDocument(t gobdd.StepTest, ctx gobdd.Context) {
 	nameToRemove, _ := ctx.GetString(ctxOtherTwinIdentityName)
 	initialOwner := ctxRegisteredTwin.GetRegisteredIdentity(t, ctx)
-	err := advancedapi.RemovePublicKeyFromDocument(resolver, nil, nameToRemove, initialOwner)
+	err := advancedapi.RemovePublicKeyFromDocument(context.TODO(), resolver, nil, nameToRemove, initialOwner)
 	assert.NilError(t, err)
 }
 
 func iRevokeTheAuthenticationKeyFromTheDocument(t gobdd.StepTest, ctx gobdd.Context) {
 	nameToRevoke, _ := ctx.GetString(ctxOtherTwinIdentityName)
 	initialOwner := ctxRegisteredTwin.GetRegisteredIdentity(t, ctx)
-	err := advancedapi.RevokePublicKeyFromDocument(resolver, nil, nameToRevoke, initialOwner)
+	err := advancedapi.RevokePublicKeyFromDocument(context.TODO(), resolver, nil, nameToRevoke, initialOwner)
 	assert.NilError(t, err)
 }
 
@@ -447,7 +448,7 @@ func iDADelegatesControlToIDB(t gobdd.StepTest, ctx gobdd.Context, name string) 
 		SubjectDocument:    nil,
 		Name:               name,
 	}
-	advancedapi.DelegateControl(opts)
+	advancedapi.DelegateControl(context.TODO(), opts)
 	ctx.Set(ctxDelegationName, name)
 }
 
@@ -471,7 +472,7 @@ func iDADelegatesControlToIDBWithExtraOwner(t gobdd.StepTest, ctx gobdd.Context,
 		SubjectDocument:    nil,
 		Name:               delegationName,
 	}
-	advancedapi.DelegateControl(opts)
+	advancedapi.DelegateControl(context.TODO(), opts)
 	ctx.Set(ctxDelegationName, delegationName)
 }
 
@@ -483,7 +484,7 @@ func iAddTheControlDelegationProofToTheDocument(t gobdd.StepTest, ctx gobdd.Cont
 	assert.Assert(t, delegationProof != nil)
 	pr := delegationProof.(*proof.Proof)
 
-	advancedapi.AddControlDelegationToDocument(resolver, nil, delegationProofName, otherIdentity.Issuer().String(), pr.Signature, initialIdentity)
+	advancedapi.AddControlDelegationToDocument(context.TODO(), resolver, nil, delegationProofName, otherIdentity.Issuer().String(), pr.Signature, initialIdentity)
 	ctx.Set(ctxDelegationName, delegationProofName)
 }
 
@@ -495,21 +496,20 @@ func iAddTheGenericControlDelegationProofToTheDocument(t gobdd.StepTest, ctx gob
 	assert.Assert(t, delegationProof != nil)
 	pr := delegationProof.(*proof.Proof)
 
-	advancedapi.AddGenericControlDelegationToDocument(resolver, nil, delegationProofName, otherIdentity.Issuer().String(), pr.Signature, initialIdentity)
+	advancedapi.AddGenericControlDelegationToDocument(context.TODO(), resolver, nil, delegationProofName, otherIdentity.Issuer().String(), pr.Signature, initialIdentity)
 	ctx.Set(ctxDelegationName, delegationProofName)
 }
-
 
 func iRemoveTheControlDelegationProofFromTheDocument(t gobdd.StepTest, ctx gobdd.Context) {
 	delegationName, _ := ctx.GetString(ctxDelegationName)
 	initialIdentity := ctxRegisteredTwin.GetRegisteredIdentity(t, ctx)
-	advancedapi.RemoveControlDelegationFromDocument(resolver, nil, delegationName, initialIdentity)
+	advancedapi.RemoveControlDelegationFromDocument(context.TODO(), resolver, nil, delegationName, initialIdentity)
 }
 
 func iRevokeTheControlDelegationProof(t gobdd.StepTest, ctx gobdd.Context) {
 	delegationName, _ := ctx.GetString(ctxDelegationName)
 	initialIdentity := ctxRegisteredTwin.GetRegisteredIdentity(t, ctx)
-	advancedapi.RevokeControlDelegationFromDocument(resolver, nil, delegationName, initialIdentity)
+	advancedapi.RevokeControlDelegationFromDocument(context.TODO(), resolver, nil, delegationName, initialIdentity)
 }
 
 func iDADelegatesAuthenticationToIDB(t gobdd.StepTest, ctx gobdd.Context, delegationName string) {
@@ -526,7 +526,7 @@ func iDADelegatesAuthenticationToIDB(t gobdd.StepTest, ctx gobdd.Context, delega
 		SubjectDocument:    nil,
 		Name:               delegationName,
 	}
-	advancedapi.DelegateAuthentication(opts)
+	advancedapi.DelegateAuthentication(context.TODO(), opts)
 	ctx.Set(ctxDelegationName, delegationName)
 }
 
@@ -550,7 +550,7 @@ func iDADelegatesAuthenticationToIDBWithExtraOwner(t gobdd.StepTest, ctx gobdd.C
 		SubjectDocument:    nil,
 		Name:               delegationName,
 	}
-	advancedapi.DelegateAuthentication(opts)
+	advancedapi.DelegateAuthentication(context.TODO(), opts)
 	ctx.Set(ctxDelegationName, delegationName)
 }
 
@@ -565,7 +565,7 @@ func iAddTheAuthenticationDelegationProofToTheDocument(t gobdd.StepTest, ctx gob
 	assert.Assert(t, registeredTwin != nil)
 	initialIdentity := registeredTwin.(register.RegisteredIdentity)
 
-	advancedapi.AddAuthenticationDelegationToDocument(resolver, nil, delegationProofName, otherIdentity.Issuer().String(), pr.Signature, initialIdentity)
+	advancedapi.AddAuthenticationDelegationToDocument(context.TODO(), resolver, nil, delegationProofName, otherIdentity.Issuer().String(), pr.Signature, initialIdentity)
 	ctx.Set(ctxDelegationName, delegationProofName)
 }
 
@@ -580,20 +580,20 @@ func iAddTheGenericAuthenticationDelegationProofToTheDocument(t gobdd.StepTest, 
 	assert.Assert(t, registeredTwin != nil)
 	initialIdentity := registeredTwin.(register.RegisteredIdentity)
 
-	advancedapi.AddGenericAuthenticationDelegationToDocument(resolver, nil, delegationProofName, otherIdentity.Issuer().String(), pr.Signature, initialIdentity)
+	advancedapi.AddGenericAuthenticationDelegationToDocument(context.TODO(), resolver, nil, delegationProofName, otherIdentity.Issuer().String(), pr.Signature, initialIdentity)
 	ctx.Set(ctxDelegationName, delegationProofName)
 }
 
 func iRemoveTheAuthenticationDelegationProofFromTheDocument(t gobdd.StepTest, ctx gobdd.Context) {
 	delegationName, _ := ctx.GetString(ctxDelegationName)
 	initialIdentity := ctxRegisteredTwin.GetRegisteredIdentity(t, ctx)
-	advancedapi.RemoveAuthenticationDelegationFromDocument(resolver, nil, delegationName, initialIdentity)
+	advancedapi.RemoveAuthenticationDelegationFromDocument(context.TODO(), resolver, nil, delegationName, initialIdentity)
 }
 
 func iRevokeTheAuthenticationDelegationProof(t gobdd.StepTest, ctx gobdd.Context) {
 	delegationName, _ := ctx.GetString(ctxDelegationName)
 	initialIdentity := ctxRegisteredTwin.GetRegisteredIdentity(t, ctx)
-	advancedapi.RevokeAuthenticationDelegationFromDocument(resolver, nil, delegationName, initialIdentity)
+	advancedapi.RevokeAuthenticationDelegationFromDocument(context.TODO(), resolver, nil, delegationName, initialIdentity)
 }
 
 func iSetTheControllerOnMyDocument(t gobdd.StepTest, ctx gobdd.Context) {
@@ -603,7 +603,7 @@ func iSetTheControllerOnMyDocument(t gobdd.StepTest, ctx gobdd.Context) {
 	otherRegisteredTwin, _ := ctx.Get(ctxOtherRegisteredTwin)
 	assert.Assert(t, otherRegisteredTwin != nil)
 	otherIdentity := otherRegisteredTwin.(register.RegisteredIdentity)
-	advancedapi.SetDocumentController(resolver, nil, initialIdentity, otherIdentity.Issuer())
+	advancedapi.SetDocumentController(context.TODO(), resolver, nil, initialIdentity, otherIdentity.Issuer())
 }
 
 func theDelegatedIdentityOwnerUsedForTheProofIsRevoked(t gobdd.StepTest, ctx gobdd.Context) {
@@ -611,7 +611,7 @@ func theDelegatedIdentityOwnerUsedForTheProofIsRevoked(t gobdd.StepTest, ctx gob
 	assert.Assert(t, extraOwnerName != "")
 	otherRegisteredTwin, _ := ctx.Get(ctxOtherRegisteredTwin)
 	otherIdentity := otherRegisteredTwin.(register.RegisteredIdentity)
-	advancedapi.RevokePublicKeyFromDocument(resolver, nil, extraOwnerName, otherIdentity)
+	advancedapi.RevokePublicKeyFromDocument(context.TODO(), resolver, nil, extraOwnerName, otherIdentity)
 }
 
 func theDelegatedIdentityOwnerUsedForTheProofIsRemoved(t gobdd.StepTest, ctx gobdd.Context) {
@@ -619,7 +619,7 @@ func theDelegatedIdentityOwnerUsedForTheProofIsRemoved(t gobdd.StepTest, ctx gob
 	assert.Assert(t, extraOwnerName != "")
 	otherRegisteredTwin, _ := ctx.Get(ctxOtherRegisteredTwin)
 	otherIdentity := otherRegisteredTwin.(register.RegisteredIdentity)
-	advancedapi.RemovePublicKeyFromDocument(resolver, nil, extraOwnerName, otherIdentity)
+	advancedapi.RemovePublicKeyFromDocument(context.TODO(), resolver, nil, extraOwnerName, otherIdentity)
 }
 
 func iCreateTheIdentityOverridingTheDocumentWithANewName(t gobdd.StepTest, ctx gobdd.Context, identityType string) {
@@ -649,7 +649,7 @@ func theEntityTypeOwnsTheDocument(t gobdd.StepTest, ctx gobdd.Context, entityTyp
 func theUserDocumentIsCreatedAndRegistered(t gobdd.StepTest, ctx gobdd.Context) {
 	user := ctxRegisteredUser.GetRegisteredIdentity(t, ctx)
 
-	doc, err := advancedapi.GetRegisterDocument(resolver, user.Did())
+	doc, err := advancedapi.GetRegisterDocument(context.TODO(), resolver, user.Did())
 	assert.NilError(t, err)
 	userSeedValue, _ := ctx.GetString(ctxUserSeed)
 	userKeyName, _ := ctx.GetString(ctxUserKeyName)
@@ -661,7 +661,7 @@ func theUserDocumentIsCreatedAndRegistered(t gobdd.StepTest, ctx gobdd.Context) 
 func theAgentDocumentIsCreatedAndRegistered(t gobdd.StepTest, ctx gobdd.Context) {
 	agent := ctxRegisteredAgent.GetRegisteredIdentity(t, ctx)
 
-	doc, err := advancedapi.GetRegisterDocument(resolver, agent.Did())
+	doc, err := advancedapi.GetRegisterDocument(context.TODO(), resolver, agent.Did())
 	assert.NilError(t, err)
 	agentSeedValue, _ := ctx.GetString(ctxAgentSeed)
 	agentKeyName, _ := ctx.GetString(ctxAgentKeyName)
@@ -673,7 +673,7 @@ func theAgentDocumentIsCreatedAndRegistered(t gobdd.StepTest, ctx gobdd.Context)
 func theTwinDocumentIsCreatedAndRegistered(t gobdd.StepTest, ctx gobdd.Context) {
 	twin := ctxRegisteredTwin.GetRegisteredIdentity(t, ctx)
 
-	doc, err := advancedapi.GetRegisterDocument(resolver, twin.Did())
+	doc, err := advancedapi.GetRegisterDocument(context.TODO(), resolver, twin.Did())
 	assert.NilError(t, err)
 	twinSeedValue, _ := ctx.GetString(ctxTwinSeed)
 	twinKeyName, _ := ctx.GetString(ctxTwinKeyName)
@@ -696,7 +696,7 @@ func theUserAndAgentDocumentsAreRegisteredWithAuthenticationDelegation(t gobdd.S
 
 	// TODO: this could be a separate step/assertion
 	// NOTE: because this is auth delegation, the issuer is agent, subject is user
-	isAllowedFor, err := register.IsAllowFor(resolver, agent.Issuer(), agentDoc, userDoc, true)
+	isAllowedFor, err := register.IsAllowFor(context.TODO(), resolver, agent.Issuer(), agentDoc, userDoc, true)
 	assert.NilError(t, err)
 	assert.Assert(t, isAllowedFor == true)
 }
@@ -706,7 +706,7 @@ func theTwinDocumentHasControlDelegationFromTheAgentIdentity(t gobdd.StepTest, c
 	agent := ctxRegisteredAgent.GetRegisteredIdentity(t, ctx)
 
 	// TODO: this could be a separate step/assertion
-	twinDoc, err := advancedapi.GetRegisterDocument(resolver, twin.Did())
+	twinDoc, err := advancedapi.GetRegisterDocument(context.TODO(), resolver, twin.Did())
 	assert.NilError(t, err)
 	twinSeedValue, _ := ctx.GetString(ctxTwinSeed)
 	twinKeyName, _ := ctx.GetString(ctxTwinKeyName)
@@ -714,7 +714,7 @@ func theTwinDocumentHasControlDelegationFromTheAgentIdentity(t gobdd.StepTest, c
 	assertNewDocAndIdentity(t, ctx, []byte(twinSeedValue), twinKeyName, expectedTwinIssuerName, twinDoc, twin)
 
 	// TODO: this could be a separate step/assertion
-	agentDoc, err := advancedapi.GetRegisterDocument(resolver, agent.Did())
+	agentDoc, err := advancedapi.GetRegisterDocument(context.TODO(), resolver, agent.Did())
 	assert.NilError(t, err)
 	agentSeedValue, _ := ctx.GetString(ctxAgentSeed)
 	agentKeyName, _ := ctx.GetString(ctxAgentKeyName)
@@ -729,14 +729,14 @@ func theTwinDocumentHasControlDelegationFromTheAgentIdentity(t gobdd.StepTest, c
 
 	// TODO: this could be a separate step/assertion
 	// NOTE: because this is control delegation, the issuer is agent, subject is twin
-	isAllowedFor, err := register.IsAllowFor(resolver, agent.Issuer(), agentDoc, twinDoc, true)
+	isAllowedFor, err := register.IsAllowFor(context.TODO(), resolver, agent.Issuer(), agentDoc, twinDoc, true)
 	assert.NilError(t, err)
 	assert.Assert(t, isAllowedFor == true)
 }
 
 func theAuthTokenIsValid(t gobdd.StepTest, ctx gobdd.Context) {
 	token, _ := ctx.GetString(ctxAuthToken)
-	claims, err := register.VerifyAuthentication(resolver, register.JwtToken(token))
+	claims, err := register.VerifyAuthentication(context.TODO(), resolver, register.JwtToken(token))
 	assert.NilError(t, err)
 	assert.Assert(t, claims != nil)
 }
@@ -746,7 +746,7 @@ func theTwinDocumentIsUpdatedWithTheNewOwner(t gobdd.StepTest, ctx gobdd.Context
 	twin := ctxRegisteredTwin.GetRegisteredIdentity(t, ctx)
 	user := ctxRegisteredUser.GetRegisteredIdentity(t, ctx)
 
-	twinDoc, err := advancedapi.GetRegisterDocument(resolver, twin.Did())
+	twinDoc, err := advancedapi.GetRegisterDocument(context.TODO(), resolver, twin.Did())
 	assert.NilError(t, err)
 
 	assert.Assert(t, len(twinDoc.PublicKeys) == 2)
@@ -766,7 +766,7 @@ func theTwinDocumentIsUpdatedWithTheNewOwner(t gobdd.StepTest, ctx gobdd.Context
 	// TODO: this could be a separate step/assertion
 	// NOTE: because this is control delegation, the issuer is twin, subject is twin
 	// can the new owner key control the twin, which is in the twinDoc already
-	isAllowedFor, err := register.IsAllowFor(resolver, newOwnerIssuer, twinDoc, twinDoc, true)
+	isAllowedFor, err := register.IsAllowFor(context.TODO(), resolver, newOwnerIssuer, twinDoc, twinDoc, true)
 	assert.NilError(t, err)
 	assert.Assert(t, isAllowedFor == true)
 }
@@ -863,7 +863,7 @@ func theNewOwnerIsAllowedForAuthenticationAndControlOnTheDocument(t gobdd.StepTe
 	assert.Assert(t, newTwinPublicKeyBase58 != "")
 
 	initialOwner := ctxRegisteredTwin.GetRegisteredIdentity(t, ctx)
-	doc, err := advancedapi.GetRegisterDocument(resolver, initialOwner.Did())
+	doc, err := advancedapi.GetRegisterDocument(context.TODO(), resolver, initialOwner.Did())
 	assert.NilError(t, err)
 	newIssuer, err := advancedapi.GetIssuerByPublicKey(doc, newTwinPublicKeyBase58)
 	assert.NilError(t, err)
@@ -873,10 +873,10 @@ func theNewOwnerIsAllowedForAuthenticationAndControlOnTheDocument(t gobdd.StepTe
 	assert.Assert(t, len(doc.PublicKeys) == 2)
 	assert.Assert(t, docKeysContain(t, doc.PublicKeys, initialOwner.Name(), false))
 	assert.Assert(t, docKeysContain(t, doc.PublicKeys, newTwinName, false))
-	assert.NilError(t, register.ValidateAllowedForAuth(resolver, initialOwner.Issuer(), doc.ID))
-	assert.NilError(t, register.ValidateAllowedForControl(resolver, initialOwner.Issuer(), doc.ID))
-	assert.NilError(t, register.ValidateAllowedForAuth(resolver, newIssuer, doc.ID))
-	assert.NilError(t, register.ValidateAllowedForControl(resolver, newIssuer, doc.ID))
+	assert.NilError(t, register.ValidateAllowedForAuth(context.TODO(), resolver, initialOwner.Issuer(), doc.ID))
+	assert.NilError(t, register.ValidateAllowedForControl(context.TODO(), resolver, initialOwner.Issuer(), doc.ID))
+	assert.NilError(t, register.ValidateAllowedForAuth(context.TODO(), resolver, newIssuer, doc.ID))
+	assert.NilError(t, register.ValidateAllowedForControl(context.TODO(), resolver, newIssuer, doc.ID))
 }
 
 func theRemovedOwnerIsNotAllowedForAuthenticationOrControlOnTheDocument(t gobdd.StepTest, ctx gobdd.Context) {
@@ -886,16 +886,16 @@ func theRemovedOwnerIsNotAllowedForAuthenticationOrControlOnTheDocument(t gobdd.
 	otherIssuer, _ := ctx.Get(ctxOtherTwinIdentityIssuer)
 	removedIssuer := otherIssuer.(*register.Issuer)
 	assert.Assert(t, removedIssuer.Did == initialOwner.Did())
-	doc, err := advancedapi.GetRegisterDocument(resolver, initialOwner.Did())
+	doc, err := advancedapi.GetRegisterDocument(context.TODO(), resolver, initialOwner.Did())
 	assert.NilError(t, err)
 
 	assert.Assert(t, len(doc.PublicKeys) == 1)
 	assert.Assert(t, docKeysContain(t, doc.PublicKeys, initialOwner.Name(), false))
 	assert.Assert(t, docKeysDoNotContain(t, doc.PublicKeys, removedTwinOwnerName))
-	assert.NilError(t, register.ValidateAllowedForAuth(resolver, initialOwner.Issuer(), doc.ID))
-	assert.NilError(t, register.ValidateAllowedForControl(resolver, initialOwner.Issuer(), doc.ID))
-	assert.Assert(t, register.ValidateAllowedForAuth(resolver, removedIssuer, doc.ID) != nil)
-	assert.Assert(t, register.ValidateAllowedForControl(resolver, removedIssuer, doc.ID) != nil)
+	assert.NilError(t, register.ValidateAllowedForAuth(context.TODO(), resolver, initialOwner.Issuer(), doc.ID))
+	assert.NilError(t, register.ValidateAllowedForControl(context.TODO(), resolver, initialOwner.Issuer(), doc.ID))
+	assert.Assert(t, register.ValidateAllowedForAuth(context.TODO(), resolver, removedIssuer, doc.ID) != nil)
+	assert.Assert(t, register.ValidateAllowedForControl(context.TODO(), resolver, removedIssuer, doc.ID) != nil)
 }
 
 func theRevokedOwnerIsNotAllowedForAuthenticationOrControlOnTheDocument(t gobdd.StepTest, ctx gobdd.Context) {
@@ -904,7 +904,7 @@ func theRevokedOwnerIsNotAllowedForAuthenticationOrControlOnTheDocument(t gobdd.
 	revokedTwinPublicKeyBase58, _ := ctx.GetString(ctxOtherTwinIdentityPubKey)
 	assert.Assert(t, revokedTwinPublicKeyBase58 != "")
 	initialOwner := ctxRegisteredTwin.GetRegisteredIdentity(t, ctx)
-	doc, err := advancedapi.GetRegisterDocument(resolver, initialOwner.Did())
+	doc, err := advancedapi.GetRegisterDocument(context.TODO(), resolver, initialOwner.Did())
 	assert.NilError(t, err)
 	revokedIssuer, err := advancedapi.GetIssuerByPublicKey(doc, revokedTwinPublicKeyBase58)
 	assert.NilError(t, err)
@@ -916,15 +916,15 @@ func theRevokedOwnerIsNotAllowedForAuthenticationOrControlOnTheDocument(t gobdd.
 	assert.Assert(t, len(doc.PublicKeys) == 2)
 	assert.Assert(t, docKeysContain(t, doc.PublicKeys, initialOwner.Name(), false))
 	assert.Assert(t, docKeysContain(t, doc.PublicKeys, revokedTwinOwnerName, true))
-	assert.NilError(t, register.ValidateAllowedForAuth(resolver, initialOwner.Issuer(), doc.ID))
-	assert.NilError(t, register.ValidateAllowedForControl(resolver, initialOwner.Issuer(), doc.ID))
-	assert.Assert(t, register.ValidateAllowedForAuth(resolver, revokedIssuer, doc.ID) != nil)
-	assert.Assert(t, register.ValidateAllowedForControl(resolver, revokedIssuer, doc.ID) != nil)
+	assert.NilError(t, register.ValidateAllowedForAuth(context.TODO(), resolver, initialOwner.Issuer(), doc.ID))
+	assert.NilError(t, register.ValidateAllowedForControl(context.TODO(), resolver, initialOwner.Issuer(), doc.ID))
+	assert.Assert(t, register.ValidateAllowedForAuth(context.TODO(), resolver, revokedIssuer, doc.ID) != nil)
+	assert.Assert(t, register.ValidateAllowedForControl(context.TODO(), resolver, revokedIssuer, doc.ID) != nil)
 }
 
 func theAuthenticationKeyOwnerIsAllowedForAuthenticationOnTheDocument(t gobdd.StepTest, ctx gobdd.Context) {
 	initialOwner := ctxRegisteredTwin.GetRegisteredIdentity(t, ctx)
-	doc, err := advancedapi.GetRegisterDocument(resolver, initialOwner.Did())
+	doc, err := advancedapi.GetRegisterDocument(context.TODO(), resolver, initialOwner.Did())
 	assert.NilError(t, err)
 	newAuthKeyTwinName, _ := ctx.GetString(ctxOtherTwinIdentityName)
 	newAuthKeyTwinIssuer, err := register.NewIssuer(doc.ID, newAuthKeyTwinName)
@@ -932,14 +932,14 @@ func theAuthenticationKeyOwnerIsAllowedForAuthenticationOnTheDocument(t gobdd.St
 
 	assert.Assert(t, len(doc.AuthenticationKeys) == 1)
 	assert.Assert(t, docKeysContain(t, doc.AuthenticationKeys, newAuthKeyTwinName, false))
-	assert.NilError(t, register.ValidateAllowedForAuth(resolver, initialOwner.Issuer(), doc.ID))
-	assert.NilError(t, register.ValidateAllowedForAuth(resolver, newAuthKeyTwinIssuer, doc.ID))
-	assert.Assert(t, register.ValidateAllowedForControl(resolver, newAuthKeyTwinIssuer, doc.ID) != nil)
+	assert.NilError(t, register.ValidateAllowedForAuth(context.TODO(), resolver, initialOwner.Issuer(), doc.ID))
+	assert.NilError(t, register.ValidateAllowedForAuth(context.TODO(), resolver, newAuthKeyTwinIssuer, doc.ID))
+	assert.Assert(t, register.ValidateAllowedForControl(context.TODO(), resolver, newAuthKeyTwinIssuer, doc.ID) != nil)
 }
 
 func theRemovedAuthenticationKeyOwnerIsNotAllowedForAuthenticationOnTheDocument(t gobdd.StepTest, ctx gobdd.Context) {
 	initialOwner := ctxRegisteredTwin.GetRegisteredIdentity(t, ctx)
-	doc, err := advancedapi.GetRegisterDocument(resolver, initialOwner.Did())
+	doc, err := advancedapi.GetRegisterDocument(context.TODO(), resolver, initialOwner.Did())
 	assert.NilError(t, err)
 	removedTwinName, _ := ctx.GetString(ctxOtherTwinIdentityName)
 	removedTwinIssuer, err := register.NewIssuer(doc.ID, removedTwinName)
@@ -947,13 +947,13 @@ func theRemovedAuthenticationKeyOwnerIsNotAllowedForAuthenticationOnTheDocument(
 
 	assert.Assert(t, len(doc.AuthenticationKeys) == 0)
 	assert.Assert(t, docKeysDoNotContain(t, doc.AuthenticationKeys, removedTwinName))
-	assert.Assert(t, register.ValidateAllowedForAuth(resolver, removedTwinIssuer, doc.ID) != nil)
-	assert.Assert(t, register.ValidateAllowedForControl(resolver, removedTwinIssuer, doc.ID) != nil)
+	assert.Assert(t, register.ValidateAllowedForAuth(context.TODO(), resolver, removedTwinIssuer, doc.ID) != nil)
+	assert.Assert(t, register.ValidateAllowedForControl(context.TODO(), resolver, removedTwinIssuer, doc.ID) != nil)
 }
 
 func theRevokedAuthenticationKeyOwnerIsNotAllowedForAuthenticationOnTheDocument(t gobdd.StepTest, ctx gobdd.Context) {
 	initialOwner := ctxRegisteredTwin.GetRegisteredIdentity(t, ctx)
-	doc, err := advancedapi.GetRegisterDocument(resolver, initialOwner.Did())
+	doc, err := advancedapi.GetRegisterDocument(context.TODO(), resolver, initialOwner.Did())
 	assert.NilError(t, err)
 	revokedTwinName, _ := ctx.GetString(ctxOtherTwinIdentityName)
 	revokedTwinIssuer, err := register.NewIssuer(doc.ID, revokedTwinName)
@@ -961,74 +961,74 @@ func theRevokedAuthenticationKeyOwnerIsNotAllowedForAuthenticationOnTheDocument(
 
 	assert.Assert(t, len(doc.AuthenticationKeys) == 1)
 	assert.Assert(t, docKeysContain(t, doc.AuthenticationKeys, revokedTwinName, true))
-	assert.Assert(t, register.ValidateAllowedForAuth(resolver, revokedTwinIssuer, doc.ID) != nil)
-	assert.Assert(t, register.ValidateAllowedForControl(resolver, revokedTwinIssuer, doc.ID) != nil)
+	assert.Assert(t, register.ValidateAllowedForAuth(context.TODO(), resolver, revokedTwinIssuer, doc.ID) != nil)
+	assert.Assert(t, register.ValidateAllowedForControl(context.TODO(), resolver, revokedTwinIssuer, doc.ID) != nil)
 }
 
 func theOtherIdentityIsAllowedForControlOnTheInitialIdentityDocument(t gobdd.StepTest, ctx gobdd.Context) {
 	initialIdentity := ctxRegisteredTwin.GetRegisteredIdentity(t, ctx)
-	doc, err := advancedapi.GetRegisterDocument(resolver, initialIdentity.Did())
+	doc, err := advancedapi.GetRegisterDocument(context.TODO(), resolver, initialIdentity.Did())
 	assert.NilError(t, err)
 	delegationName, _ := ctx.GetString(ctxDelegationName)
 	newTwinIdentity := ctxOtherRegisteredTwin.GetRegisteredIdentity(t, ctx)
 
 	assert.Assert(t, len(doc.DelegateControl) == 1)
 	assert.Assert(t, docDelegationProofsContain(t, doc.DelegateControl, delegationName, false))
-	assert.NilError(t, register.ValidateAllowedForControl(resolver, newTwinIdentity.Issuer(), doc.ID))
+	assert.NilError(t, register.ValidateAllowedForControl(context.TODO(), resolver, newTwinIdentity.Issuer(), doc.ID))
 }
 
 func theDelegatedRegisteredIdentityIsAllowedForControlOnTheDocument(t gobdd.StepTest, ctx gobdd.Context) {
 	initialIdentity := ctxRegisteredTwin.GetRegisteredIdentity(t, ctx)
-	doc, err := advancedapi.GetRegisterDocument(resolver, initialIdentity.Did())
+	doc, err := advancedapi.GetRegisterDocument(context.TODO(), resolver, initialIdentity.Did())
 	assert.NilError(t, err)
 	delegationName, _ := ctx.GetString(ctxDelegationName)
 	otherIdentity := ctxOtherRegisteredTwin.GetRegisteredIdentity(t, ctx)
 
 	assert.Assert(t, len(doc.DelegateControl) == 1)
 	assert.Assert(t, docDelegationProofsContain(t, doc.DelegateControl, delegationName, false))
-	assert.NilError(t, register.ValidateAllowedForControl(resolver, otherIdentity.Issuer(), initialIdentity.Did()))
+	assert.NilError(t, register.ValidateAllowedForControl(context.TODO(), resolver, otherIdentity.Issuer(), initialIdentity.Did()))
 }
 
 func theDelegatedRegisteredIdentityIsNotAllowedForControlOnTheDocumentAfterDelegationRemove(t gobdd.StepTest, ctx gobdd.Context) {
 	initialIdentity := ctxRegisteredTwin.GetRegisteredIdentity(t, ctx)
-	doc, err := advancedapi.GetRegisterDocument(resolver, initialIdentity.Did())
+	doc, err := advancedapi.GetRegisterDocument(context.TODO(), resolver, initialIdentity.Did())
 	assert.NilError(t, err)
 	otherIdentity := ctxOtherRegisteredTwin.GetRegisteredIdentity(t, ctx)
 
 	assert.Assert(t, len(doc.DelegateControl) == 0)
-	assert.Assert(t, register.ValidateAllowedForControl(resolver, otherIdentity.Issuer(), initialIdentity.Did()) != nil)
+	assert.Assert(t, register.ValidateAllowedForControl(context.TODO(), resolver, otherIdentity.Issuer(), initialIdentity.Did()) != nil)
 }
 
 func theDelegatedRegisteredIdentityIsNotAllowedForControlOnTheDocumentAfterDelegationRevoke(t gobdd.StepTest, ctx gobdd.Context) {
 	initialIdentity := ctxRegisteredTwin.GetRegisteredIdentity(t, ctx)
-	doc, err := advancedapi.GetRegisterDocument(resolver, initialIdentity.Did())
+	doc, err := advancedapi.GetRegisterDocument(context.TODO(), resolver, initialIdentity.Did())
 	assert.NilError(t, err)
 	delegationName, _ := ctx.GetString(ctxDelegationName)
 	otherIdentity := ctxOtherRegisteredTwin.GetRegisteredIdentity(t, ctx)
 
 	assert.Assert(t, len(doc.DelegateControl) == 1)
 	assert.Assert(t, docDelegationProofsContain(t, doc.DelegateControl, delegationName, true))
-	assert.Assert(t, register.ValidateAllowedForControl(resolver, otherIdentity.Issuer(), initialIdentity.Did()) != nil)
+	assert.Assert(t, register.ValidateAllowedForControl(context.TODO(), resolver, otherIdentity.Issuer(), initialIdentity.Did()) != nil)
 }
 
 func iDBIsAllowedForAuthenticationOnTheDocumentDocA(t gobdd.StepTest, ctx gobdd.Context) {
 	initialIdentity := ctxRegisteredTwin.GetRegisteredIdentity(t, ctx)
-	doc, err := advancedapi.GetRegisterDocument(resolver, initialIdentity.Did())
+	doc, err := advancedapi.GetRegisterDocument(context.TODO(), resolver, initialIdentity.Did())
 	assert.NilError(t, err)
 	delegationName, _ := ctx.GetString(ctxDelegationName)
 	newTwinIdentity := ctxOtherRegisteredTwin.GetRegisteredIdentity(t, ctx)
 
 	assert.Assert(t, len(doc.DelegateAuthentication) == 1)
 	assert.Assert(t, docDelegationProofsContain(t, doc.DelegateAuthentication, delegationName, false))
-	assert.NilError(t, register.ValidateAllowedForAuth(resolver, newTwinIdentity.Issuer(), doc.ID))
+	assert.NilError(t, register.ValidateAllowedForAuth(context.TODO(), resolver, newTwinIdentity.Issuer(), doc.ID))
 }
 
 func theDelegatedRegisteredIdentityIsStillAllowedForAuthenticationOnTheDocument(t gobdd.StepTest, ctx gobdd.Context) {
 	initialIdentity := ctxRegisteredTwin.GetRegisteredIdentity(t, ctx)
-	initialTwinDoc, err := advancedapi.GetRegisterDocument(resolver, initialIdentity.Did())
+	initialTwinDoc, err := advancedapi.GetRegisterDocument(context.TODO(), resolver, initialIdentity.Did())
 	assert.NilError(t, err)
 	otherIdentity := ctxOtherRegisteredTwin.GetRegisteredIdentity(t, ctx)
-	otherTwinDoc, err := advancedapi.GetRegisterDocument(resolver, otherIdentity.Did())
+	otherTwinDoc, err := advancedapi.GetRegisterDocument(context.TODO(), resolver, otherIdentity.Did())
 	assert.NilError(t, err)
 	extraOwnerName, _ := ctx.GetString(ctxOtherTwinIdentityExtraOwnerName)
 	assert.Assert(t, extraOwnerName != "")
@@ -1038,15 +1038,15 @@ func theDelegatedRegisteredIdentityIsStillAllowedForAuthenticationOnTheDocument(
 	assert.Assert(t, len(otherTwinDoc.PublicKeys) == 2)
 	assert.Assert(t, docKeysContain(t, otherTwinDoc.PublicKeys, otherIdentity.Name(), false))
 	assert.Assert(t, docKeysContain(t, otherTwinDoc.PublicKeys, extraOwnerName, true))
-	assert.NilError(t, register.ValidateAllowedForAuth(resolver, extraOwnerIssuer, initialTwinDoc.ID))
+	assert.NilError(t, register.ValidateAllowedForAuth(context.TODO(), resolver, extraOwnerIssuer, initialTwinDoc.ID))
 }
 
 func theDelegatedRegisteredIdentityIsStillAllowedForControlOnTheDocument(t gobdd.StepTest, ctx gobdd.Context) {
 	initialIdentity := ctxRegisteredTwin.GetRegisteredIdentity(t, ctx)
-	initialTwinDoc, err := advancedapi.GetRegisterDocument(resolver, initialIdentity.Did())
+	initialTwinDoc, err := advancedapi.GetRegisterDocument(context.TODO(), resolver, initialIdentity.Did())
 	assert.NilError(t, err)
 	otherIdentity := ctxOtherRegisteredTwin.GetRegisteredIdentity(t, ctx)
-	otherTwinDoc, err := advancedapi.GetRegisterDocument(resolver, otherIdentity.Did())
+	otherTwinDoc, err := advancedapi.GetRegisterDocument(context.TODO(), resolver, otherIdentity.Did())
 	assert.NilError(t, err)
 	extraOwnerName, _ := ctx.GetString(ctxOtherTwinIdentityExtraOwnerName)
 	assert.Assert(t, extraOwnerName != "")
@@ -1056,15 +1056,15 @@ func theDelegatedRegisteredIdentityIsStillAllowedForControlOnTheDocument(t gobdd
 	assert.Assert(t, len(otherTwinDoc.PublicKeys) == 2)
 	assert.Assert(t, docKeysContain(t, otherTwinDoc.PublicKeys, otherIdentity.Name(), false))
 	assert.Assert(t, docKeysContain(t, otherTwinDoc.PublicKeys, extraOwnerName, true))
-	assert.NilError(t, register.ValidateAllowedForControl(resolver, extraOwnerIssuer, initialTwinDoc.ID))
+	assert.NilError(t, register.ValidateAllowedForControl(context.TODO(), resolver, extraOwnerIssuer, initialTwinDoc.ID))
 }
 
 func theDelegatedRegisteredIdentityIsNotAllowedForAuthenticationOnTheDocumentAnymore(t gobdd.StepTest, ctx gobdd.Context) {
 	initialIdentity := ctxRegisteredTwin.GetRegisteredIdentity(t, ctx)
-	initialTwinDoc, err := advancedapi.GetRegisterDocument(resolver, initialIdentity.Did())
+	initialTwinDoc, err := advancedapi.GetRegisterDocument(context.TODO(), resolver, initialIdentity.Did())
 	assert.NilError(t, err)
 	otherIdentity := ctxOtherRegisteredTwin.GetRegisteredIdentity(t, ctx)
-	otherTwinDoc, err := advancedapi.GetRegisterDocument(resolver, otherIdentity.Did())
+	otherTwinDoc, err := advancedapi.GetRegisterDocument(context.TODO(), resolver, otherIdentity.Did())
 	assert.NilError(t, err)
 	extraOwnerName, _ := ctx.GetString(ctxOtherTwinIdentityExtraOwnerName)
 	assert.Assert(t, extraOwnerName != "")
@@ -1073,15 +1073,15 @@ func theDelegatedRegisteredIdentityIsNotAllowedForAuthenticationOnTheDocumentAny
 
 	assert.Assert(t, len(otherTwinDoc.PublicKeys) == 1)
 	assert.Assert(t, docKeysContain(t, otherTwinDoc.PublicKeys, otherIdentity.Name(), false))
-	assert.Assert(t, register.ValidateAllowedForAuth(resolver, extraOwnerIssuer, initialTwinDoc.ID) != nil)
+	assert.Assert(t, register.ValidateAllowedForAuth(context.TODO(), resolver, extraOwnerIssuer, initialTwinDoc.ID) != nil)
 }
 
 func theDelegatedRegisteredIdentityIsNotAllowedForControlOnTheDocumentAnymore(t gobdd.StepTest, ctx gobdd.Context) {
 	initialIdentity := ctxRegisteredTwin.GetRegisteredIdentity(t, ctx)
-	initialTwinDoc, err := advancedapi.GetRegisterDocument(resolver, initialIdentity.Did())
+	initialTwinDoc, err := advancedapi.GetRegisterDocument(context.TODO(), resolver, initialIdentity.Did())
 	assert.NilError(t, err)
 	otherIdentity := ctxOtherRegisteredTwin.GetRegisteredIdentity(t, ctx)
-	otherTwinDoc, err := advancedapi.GetRegisterDocument(resolver, otherIdentity.Did())
+	otherTwinDoc, err := advancedapi.GetRegisterDocument(context.TODO(), resolver, otherIdentity.Did())
 	assert.NilError(t, err)
 	extraOwnerName, _ := ctx.GetString(ctxOtherTwinIdentityExtraOwnerName)
 	assert.Assert(t, extraOwnerName != "")
@@ -1090,39 +1090,39 @@ func theDelegatedRegisteredIdentityIsNotAllowedForControlOnTheDocumentAnymore(t 
 
 	assert.Assert(t, len(otherTwinDoc.PublicKeys) == 1)
 	assert.Assert(t, docKeysContain(t, otherTwinDoc.PublicKeys, otherIdentity.Name(), false))
-	assert.Assert(t, register.ValidateAllowedForControl(resolver, extraOwnerIssuer, initialTwinDoc.ID) != nil)
+	assert.Assert(t, register.ValidateAllowedForControl(context.TODO(), resolver, extraOwnerIssuer, initialTwinDoc.ID) != nil)
 }
 
 func theDelegatedRegisteredIdentityIsNotAllowedForAuthenticationOnTheDocumentAfterDelegationRemove(t gobdd.StepTest, ctx gobdd.Context) {
 	initialIdentity := ctxRegisteredTwin.GetRegisteredIdentity(t, ctx)
-	doc, err := advancedapi.GetRegisterDocument(resolver, initialIdentity.Did())
+	doc, err := advancedapi.GetRegisterDocument(context.TODO(), resolver, initialIdentity.Did())
 	assert.NilError(t, err)
 	otherIdentity := ctxOtherRegisteredTwin.GetRegisteredIdentity(t, ctx)
 
 	assert.Assert(t, len(doc.DelegateAuthentication) == 0)
-	assert.Assert(t, register.ValidateAllowedForAuth(resolver, otherIdentity.Issuer(), initialIdentity.Did()) != nil)
+	assert.Assert(t, register.ValidateAllowedForAuth(context.TODO(), resolver, otherIdentity.Issuer(), initialIdentity.Did()) != nil)
 }
 
 func theDelegatedRegisteredIdentityIsNotAllowedForAuthenticationOnTheDocumentAfterDelegationRevoke(t gobdd.StepTest, ctx gobdd.Context) {
 	initialIdentity := ctxRegisteredTwin.GetRegisteredIdentity(t, ctx)
-	doc, err := advancedapi.GetRegisterDocument(resolver, initialIdentity.Did())
+	doc, err := advancedapi.GetRegisterDocument(context.TODO(), resolver, initialIdentity.Did())
 	assert.NilError(t, err)
 	delegationName, _ := ctx.GetString(ctxDelegationName)
 	otherIdentity := ctxOtherRegisteredTwin.GetRegisteredIdentity(t, ctx)
 
 	assert.Assert(t, len(doc.DelegateAuthentication) == 1)
 	assert.Assert(t, docDelegationProofsContain(t, doc.DelegateAuthentication, delegationName, true))
-	assert.Assert(t, register.ValidateAllowedForAuth(resolver, otherIdentity.Issuer(), initialIdentity.Did()) != nil)
+	assert.Assert(t, register.ValidateAllowedForAuth(context.TODO(), resolver, otherIdentity.Issuer(), initialIdentity.Did()) != nil)
 }
 
 func theControllerIsAllowedForControlAndAuthentication(t gobdd.StepTest, ctx gobdd.Context) {
 	initialIdentity := ctxRegisteredTwin.GetRegisteredIdentity(t, ctx)
-	doc, err := advancedapi.GetRegisterDocument(resolver, initialIdentity.Did())
+	doc, err := advancedapi.GetRegisterDocument(context.TODO(), resolver, initialIdentity.Did())
 	assert.NilError(t, err)
 	otherIdentity := ctxOtherRegisteredTwin.GetRegisteredIdentity(t, ctx)
 
-	assert.NilError(t, register.ValidateAllowedForAuth(resolver, otherIdentity.Issuer(), doc.ID))
-	assert.NilError(t, register.ValidateAllowedForControl(resolver, otherIdentity.Issuer(), doc.ID))
+	assert.NilError(t, register.ValidateAllowedForAuth(context.TODO(), resolver, otherIdentity.Issuer(), doc.ID))
+	assert.NilError(t, register.ValidateAllowedForControl(context.TODO(), resolver, otherIdentity.Issuer(), doc.ID))
 }
 
 func theIdentityTypeDocumentIsUpdatedWithTheNewName(t gobdd.StepTest, ctx gobdd.Context, identityType string) {

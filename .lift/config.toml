@@ -1,0 +1,3 @@
+ignoreFiles = '''
+main_test.go
+'''
