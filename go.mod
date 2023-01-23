@@ -16,7 +16,6 @@ require (
 
 require (
 	github.com/beorn7/perks v1.0.0 // indirect
-	github.com/btcsuite/btcd v0.20.1-beta // indirect
 	github.com/cucumber/gherkin-go/v13 v13.0.0 // indirect
 	github.com/cucumber/messages-go/v12 v12.0.0 // indirect
 	github.com/gofrs/uuid v3.3.0+incompatible // indirect
