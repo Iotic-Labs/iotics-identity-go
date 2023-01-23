@@ -1,3 +1,5 @@
+.DEFAULT_GOAL := compile_task
+
 ifeq ($(OS),Windows_NT)
     OS_FLAG=windows
     ifeq ($(PROCESSOR_ARCHITEW6432),AMD64)
@@ -36,6 +38,6 @@ clean:
 GO_SRC=./ffi_wrapper.go
 
 compile_task:
-	@env GOOS=${OS_FLAG} GOARCH=${ARCH_FLAG} go build -buildmode=c-shared -o lib/lib-iotics-id-sdk.${OS_EXT} ${GO_SRC}
+	@env GOOS=${OS_FLAG} GOARCH=${ARCH_FLAG} go build -x -buildmode=c-shared -o lib/lib-iotics-id-sdk.${OS_EXT} ${GO_SRC}
 
 compile: clean compile_task
