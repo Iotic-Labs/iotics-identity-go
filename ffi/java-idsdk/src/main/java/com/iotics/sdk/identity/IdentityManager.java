@@ -16,4 +16,8 @@ public interface IdentityManager {
     default Identity newTwinIdentity(String twinKeyName) {
         return newTwinIdentity(twinKeyName, "#c-delegation-0");
     }
+
+    Identity agentIdentity();
+
+    Identity userIdentity();
 }
