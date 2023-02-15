@@ -3,6 +3,7 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -18,8 +19,9 @@ const (
 )
 
 // CreateUserAndAgentWithAuthDelegation Create and register a user and an agent identities with user delegating authentication to the agent.
-//func CreateUserAndAgentWithAuthDelegation(resolverClient register.ResolverClient, userSeed []byte, userKeyName string, agentSeed []byte, agentKeyName string, delegationName string, userName string, agentName string, userPassword string, agentPassword string, overrideDocs bool) (userID register.RegisteredIdentity, agentID register.RegisteredIdentity, err error) {
-func CreateUserAndAgentWithAuthDelegation(resolverClient register.ResolverClient, opts *CreateUserAndAgentWithAuthDelegationOpts) (userID register.RegisteredIdentity, agentID register.RegisteredIdentity, err error) {
+func CreateUserAndAgentWithAuthDelegation(
+	ctx context.Context, resolverClient register.ResolverClient, opts *CreateUserAndAgentWithAuthDelegationOpts,
+) (userID register.RegisteredIdentity, agentID register.RegisteredIdentity, err error) {
 	agentPath := crypto.PathForDIDType(opts.AgentKeyName, identity.Agent)
 	agentSecrets, err := crypto.NewDefaultKeyPairSecretsWithPassword(opts.AgentSeed, agentPath, opts.AgentPassword)
 	if err != nil {
@@ -30,7 +32,9 @@ func CreateUserAndAgentWithAuthDelegation(resolverClient register.ResolverClient
 		return nil, nil, err
 	}
 
-	agentID, agentDocument, err := advancedapi.CreateNewIdentityAndRegister(resolverClient, identity.Agent, agentKeyPair, opts.AgentName, false)
+	agentID, agentDocument, err := advancedapi.CreateNewIdentityAndRegister(
+		ctx, resolverClient, identity.Agent, agentKeyPair, opts.AgentName, false,
+	)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -59,7 +63,7 @@ func CreateUserAndAgentWithAuthDelegation(resolverClient register.ResolverClient
 		SubjectDocument:    agentDocument,
 		Name:               opts.DelegationName,
 	}
-	err = advancedapi.DelegateAuthentication(delegOpts)
+	err = advancedapi.DelegateAuthentication(ctx, delegOpts)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -70,13 +74,17 @@ func CreateUserAndAgentWithAuthDelegation(resolverClient register.ResolverClient
 }
 
 // CreateAgentAuthToken Create an agent authentication token.
-func CreateAgentAuthToken(agentID register.RegisteredIdentity, userDid string, duration time.Duration, audience string) (register.JwtToken, error) {
+func CreateAgentAuthToken(
+	agentID register.RegisteredIdentity, userDid string, duration time.Duration, audience string,
+) (register.JwtToken, error) {
 	startOffset := register.DefaultAuthTokenStartOffset
 	return advancedapi.CreateAgentAuthToken(agentID, userDid, duration, audience, startOffset)
 }
 
 // CreateTwinWithControlDelegation Create a twin with control delegation to Agent.
-func CreateTwinWithControlDelegation(resolverClient register.ResolverClient, opts *CreateTwinOpts) (register.RegisteredIdentity, error) {
+func CreateTwinWithControlDelegation(
+	ctx context.Context, resolverClient register.ResolverClient, opts *CreateTwinOpts,
+) (register.RegisteredIdentity, error) {
 	twinPath := crypto.PathForDIDType(opts.KeyName, identity.Twin)
 	twinSecrets, err := crypto.NewKeyPairSecrets(opts.Seed, twinPath, defaultSeedMethod, opts.Password)
 	if err != nil {
@@ -101,7 +109,7 @@ func CreateTwinWithControlDelegation(resolverClient register.ResolverClient, opt
 		SubjectDocument:    opts.AgentDoc,
 		Name:               opts.DelegationName,
 	}
-	err = advancedapi.DelegateControl(delegOpts)
+	err = advancedapi.DelegateControl(ctx, delegOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -113,13 +121,21 @@ func CreateTwinWithControlDelegation(resolverClient register.ResolverClient, opt
 
 // DelegateControl registers a twin identity with twin delegating control to the agent
 // NOTE: this is a duplicate of regularApi - TwinDelegatesControlToAgent
-func DelegateControl(resolverClient register.ResolverClient, twinID register.RegisteredIdentity, agentID register.RegisteredIdentity, delegationName string) error {
-	return TwinDelegatesControlToAgent(resolverClient, twinID, agentID, delegationName)
+func DelegateControl(
+	ctx context.Context, resolverClient register.ResolverClient, twinID register.RegisteredIdentity,
+	agentID register.RegisteredIdentity, delegationName string,
+) error {
+	return TwinDelegatesControlToAgent(ctx, resolverClient, twinID, agentID, delegationName)
 }
 
 // GetOwnershipOfTwinFromRegisteredIdentity Get Ownership of a twin using a registered identity you owned.
-func GetOwnershipOfTwinFromRegisteredIdentity(resolverClient register.ResolverClient, twinID register.RegisteredIdentity, newOwnerID register.RegisteredIdentity, newOwnerKeyName string) error {
-	return advancedapi.AddPublicKeyToDocument(resolverClient, nil, newOwnerKeyName, newOwnerID.KeyPair().PublicKeyBase58, twinID)
+func GetOwnershipOfTwinFromRegisteredIdentity(
+	ctx context.Context, resolverClient register.ResolverClient, twinID register.RegisteredIdentity,
+	newOwnerID register.RegisteredIdentity, newOwnerKeyName string,
+) error {
+	return advancedapi.AddPublicKeyToDocument(
+		ctx, resolverClient, nil, newOwnerKeyName, newOwnerID.KeyPair().PublicKeyBase58, twinID,
+	)
 }
 
 // CreateDefaultSeed Create a new seed (secrets) with the default length.
@@ -133,7 +149,10 @@ func CreateSeed(length int) ([]byte, error) {
 }
 
 // DelegateControlByPrivateExponentHex registers a twin identity with a control delegate to agent
-func DelegateControlByPrivateExponentHex(resolverClient register.ResolverClient, twinIssuer *register.Issuer, twinPrivateExponent string, agentID register.RegisteredIdentity, delegationName string) error {
+func DelegateControlByPrivateExponentHex(
+	ctx context.Context, resolverClient register.ResolverClient, twinIssuer *register.Issuer, twinPrivateExponent string,
+	agentID register.RegisteredIdentity, delegationName string,
+) error {
 	twinKeypair, err := advancedapi.GetKeyPairFromPrivateExponentHex(twinPrivateExponent)
 	if err != nil {
 		return err
@@ -141,11 +160,14 @@ func DelegateControlByPrivateExponentHex(resolverClient register.ResolverClient,
 
 	twinID := register.NewRegisteredIdentity(twinKeypair, twinIssuer)
 
-	return TwinDelegatesControlToAgent(resolverClient, twinID, agentID, delegationName)
+	return TwinDelegatesControlToAgent(ctx, resolverClient, twinID, agentID, delegationName)
 }
 
 // TakeOwnershipOfTwinByPrivateExponentHex Get Ownership of a twin using the private exponent of the twin.
-func TakeOwnershipOfTwinByPrivateExponentHex(resolverClient register.ResolverClient, twinIssuer *register.Issuer, twinPrivateExponent string, newOwnerID register.RegisteredIdentity, newOwnerKeyName string) error {
+func TakeOwnershipOfTwinByPrivateExponentHex(
+	ctx context.Context, resolverClient register.ResolverClient, twinIssuer *register.Issuer, twinPrivateExponent string,
+	newOwnerID register.RegisteredIdentity, newOwnerKeyName string,
+) error {
 	twinKeypair, err := advancedapi.GetKeyPairFromPrivateExponentHex(twinPrivateExponent)
 	if err != nil {
 		return err
@@ -153,17 +175,23 @@ func TakeOwnershipOfTwinByPrivateExponentHex(resolverClient register.ResolverCli
 
 	twinID := register.NewRegisteredIdentity(twinKeypair, twinIssuer)
 
-	return advancedapi.AddPublicKeyToDocument(resolverClient, nil, newOwnerKeyName, newOwnerID.KeyPair().PublicKeyBase58, twinID)
+	return advancedapi.AddPublicKeyToDocument(
+		ctx, resolverClient, nil, newOwnerKeyName, newOwnerID.KeyPair().PublicKeyBase58, twinID,
+	)
 }
 
-// TakeOwnershipOfTwinAndDelegateControlByPrivateExponentHex Get Ownership of a twin using the agent identity and delegate control to that agent using twin private key exponent.
-func TakeOwnershipOfTwinAndDelegateControlByPrivateExponentHex(resolverClient register.ResolverClient, twinIssuer *register.Issuer, twinPrivateExponent string, newOwnerID register.RegisteredIdentity, newOwnerKeyName string, delegationName string) error {
+// TakeOwnershipOfTwinAndDelegateControlByPrivateExponentHex Get Ownership of a twin using the agent identity and delegate
+// control to that agent using twin private key exponent.
+func TakeOwnershipOfTwinAndDelegateControlByPrivateExponentHex(
+	ctx context.Context, resolverClient register.ResolverClient, twinIssuer *register.Issuer, twinPrivateExponent string,
+	newOwnerID register.RegisteredIdentity, newOwnerKeyName string, delegationName string,
+) error {
 	twinKeypair, err := advancedapi.GetKeyPairFromPrivateExponentHex(twinPrivateExponent)
 	if err != nil {
 		return err
 	}
 
-	twinDoc, err := resolverClient.GetDocument(twinIssuer.Did)
+	twinDoc, err := resolverClient.GetDocument(ctx, twinIssuer.Did)
 	if err != nil {
 		return err
 	}
@@ -183,5 +211,5 @@ func TakeOwnershipOfTwinAndDelegateControlByPrivateExponentHex(resolverClient re
 		return fmt.Errorf("error while creating new RegisterDocument: %v", errs)
 	}
 
-	return advancedapi.RegisterUpdatedDocument(resolverClient, updatedDoc, twinKeypair, twinIssuer)
+	return advancedapi.RegisterUpdatedDocument(ctx, resolverClient, updatedDoc, twinKeypair, twinIssuer)
 }

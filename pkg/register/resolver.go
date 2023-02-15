@@ -2,15 +2,19 @@
 
 package register
 
-import "crypto/ecdsa"
+import (
+	"context"
+	"crypto/ecdsa"
+	"errors"
+)
 
 // ResolverClient resolver client interface
 type ResolverClient interface {
 	// GetDocument fetch a document from the resolver by DID identifier
-	GetDocument(documentID string) (*RegisterDocument, error)
+	GetDocument(ctx context.Context, documentID string) (*RegisterDocument, error)
 
 	// RegisterDocument registers a document in the resolver.
-	RegisterDocument(document *RegisterDocument, privateKey *ecdsa.PrivateKey, issuer *Issuer) error
+	RegisterDocument(ctx context.Context, doc *RegisterDocument, privateKey *ecdsa.PrivateKey, issuer *Issuer) error
 }
 
 // ResolverErrType ResolverErrType
@@ -60,4 +64,9 @@ func (r ResolverError) Err() error {
 func IsResolverError(err error) bool {
 	_, ok := err.(*ResolverError)
 	return ok
+}
+
+// IsContextError returns true if the provided error is of type context.Canceled or context.DeadlineExceeded
+func IsContextError(err error) bool {
+	return errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded)
 }

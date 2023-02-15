@@ -3,6 +3,7 @@
 package register
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/Iotic-Labs/iotics-identity-go/pkg/proof"
@@ -46,13 +47,13 @@ func (r RegisterDelegationProof) Clone() (*RegisterDelegationProof, error) {
 }
 
 // ValidateDelegation Validate register delegation proof against the delegation controller register document.
-func ValidateDelegation(resolverClient ResolverClient, registeredID string, registeredProof *RegisterDelegationProof) error {
+func ValidateDelegation(ctx context.Context, resolverClient ResolverClient, registeredID string, registeredProof *RegisterDelegationProof) error {
 	controllerIssuer, err := NewIssuerFromString(registeredProof.Controller)
 	if err != nil {
 		return err
 	}
 
-	controllerDoc, err := resolverClient.GetDocument(controllerIssuer.Did)
+	controllerDoc, err := resolverClient.GetDocument(ctx, controllerIssuer.Did)
 	if err != nil {
 		return err
 	}

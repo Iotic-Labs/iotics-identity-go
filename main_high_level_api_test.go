@@ -3,6 +3,7 @@
 package main_test
 
 import (
+	"context"
 	"encoding/hex"
 	"fmt"
 
@@ -18,7 +19,7 @@ func assertNewDocAndIdentity(t gobdd.StepTest, _ gobdd.Context, seed []byte, key
 	assert.Assert(t, doc != nil)
 	assert.Assert(t, id != nil)
 
-	err := advancedapi.ValidateRegisterDocument(resolver, doc)
+	err := advancedapi.ValidateRegisterDocument(context.TODO(), resolver, doc)
 	assert.NilError(t, err)
 
 	didType, _ := identity.ParseDidType(doc.IoticsDIDType)
