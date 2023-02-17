@@ -6,9 +6,9 @@ import (
 	"encoding/hex"
 	"testing"
 
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/test"
+	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/test"
 
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/crypto"
+	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/crypto"
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"github.com/jbenet/go-base58"
 	"gotest.tools/assert"

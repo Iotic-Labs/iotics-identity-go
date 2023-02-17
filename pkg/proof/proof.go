@@ -12,7 +12,7 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/crypto"
+	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/crypto"
 )
 
 // Proof struct

@@ -5,7 +5,7 @@ package register
 import (
 	"fmt"
 
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/identity"
+	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/identity"
 	"github.com/jbenet/go-base58"
 )
 

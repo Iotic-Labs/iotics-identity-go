@@ -5,10 +5,10 @@ package api
 import (
 	"context"
 
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/advancedapi"
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/crypto"
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/identity"
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/register"
+	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/advancedapi"
+	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/crypto"
+	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/identity"
+	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/register"
 )
 
 func createIdentity(

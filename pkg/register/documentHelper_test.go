@@ -6,9 +6,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/test"
+	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/test"
 
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/register"
+	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/register"
 	"gotest.tools/assert"
 )
 

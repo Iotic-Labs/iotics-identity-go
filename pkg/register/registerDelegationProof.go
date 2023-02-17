@@ -6,8 +6,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/proof"
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/validation"
+	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/proof"
+	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/validation"
 )
 
 // DelegationProofType

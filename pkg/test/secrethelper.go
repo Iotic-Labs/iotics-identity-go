@@ -5,11 +5,11 @@ package test
 import (
 	"context"
 
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/advancedapi"
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/crypto"
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/identity"
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/proof"
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/register"
+	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/advancedapi"
+	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/crypto"
+	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/identity"
+	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/proof"
+	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/register"
 )
 
 func HelperGetRegisterDocumentFromSecret(keypair *crypto.KeyPair, name string, purpose identity.DidType) (*register.RegisterDocument, *register.Issuer) {

@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/crypto"
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/proof"
+	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/crypto"
+	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/proof"
 	"github.com/golang-jwt/jwt"
 )
 

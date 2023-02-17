@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/validation"
+	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/validation"
 	"github.com/golang-jwt/jwt"
 )
 

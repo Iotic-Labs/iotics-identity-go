@@ -1,4 +1,4 @@
-module github.com/Iotic-Labs/iotics-identity-go
+module github.com/Iotic-Labs/iotics-identity-go/v2
 
 go 1.17
 
