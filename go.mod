@@ -1,6 +1,6 @@
-module github.com/Iotic-Labs/iotics-identity-go/v2
+module github.com/Iotic-Labs/iotics-identity-go/v3
 
-go 1.17
+go 1.20
 
 require (
 	github.com/ethereum/go-ethereum v1.10.14

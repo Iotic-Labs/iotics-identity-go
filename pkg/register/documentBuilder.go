@@ -5,7 +5,7 @@ package register
 import (
 	"time"
 
-	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/identity"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/identity"
 )
 
 const defaultVersion = "0.0.1"

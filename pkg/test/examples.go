@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/crypto"
-	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/identity"
-	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/proof"
-	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/register"
-	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/validation"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/crypto"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/identity"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/proof"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/register"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/validation"
 )
 
 const (

@@ -13,10 +13,10 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/api"
-	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/crypto"
-	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/identity"
-	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/register"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/api"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/crypto"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/identity"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/register"
 )
 
 type GetIDFunc = func(opts *api.GetIdentityOpts) (register.RegisteredIdentity, error)
@@ -232,9 +232,10 @@ func IsAllowedFor(
 
 }
 
-//export CreateAgentAuthToken
 // CreateAgentAuthToken creates an Agent Authentication token given the secrets
 // It returns the token string or error string
+//
+//export CreateAgentAuthToken
 func CreateAgentAuthToken(
 
 	cAgentDid *C.char,
