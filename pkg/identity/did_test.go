@@ -7,10 +7,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/test"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/test"
 
-	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/identity"
-	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/validation"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/identity"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/validation"
 	"gotest.tools/assert"
 )
 

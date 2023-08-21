@@ -3,7 +3,7 @@
 package main_test
 
 import (
-	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/register"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/register"
 	"github.com/go-bdd/gobdd"
 	"gotest.tools/assert"
 )

@@ -10,14 +10,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/test"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/test"
 
 	"github.com/jarcoal/httpmock"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"gotest.tools/assert"
 
-	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/register"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/register"
 )
 
 var (

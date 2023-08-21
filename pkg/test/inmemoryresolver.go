@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/advancedapi"
-	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/register"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/advancedapi"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/register"
 )
 
 type counter struct {

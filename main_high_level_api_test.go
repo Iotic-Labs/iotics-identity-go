@@ -7,10 +7,10 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/advancedapi"
-	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/crypto"
-	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/identity"
-	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/register"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/advancedapi"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/crypto"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/identity"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/register"
 	"github.com/go-bdd/gobdd"
 	"gotest.tools/assert"
 )

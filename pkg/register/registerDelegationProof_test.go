@@ -8,9 +8,9 @@ import (
 
 	"gotest.tools/assert"
 
-	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/proof"
-	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/register"
-	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/test"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/proof"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/register"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/test"
 )
 
 func Test_validate_delegation_fails_if_invalid_controller_issuer(t *testing.T) {

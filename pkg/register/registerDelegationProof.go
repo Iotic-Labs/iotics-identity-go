@@ -6,15 +6,16 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/proof"
-	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/validation"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/proof"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/validation"
 )
 
 // DelegationProofType
-// 	- did:      that means the proof can be used to setup a delegation from single delegating subject.
-//  			The signed proof content is the encoded DID Identifier of the delegating subject.
-// 	- generic:  that means the proof can be used to setup a delegation from several delegating subjects.
-//  			The signed proof content is an empty byte array.
+//   - did:      that means the proof can be used to setup a delegation from single delegating subject.
+//     The signed proof content is the encoded DID Identifier of the delegating subject.
+//   - generic:  that means the proof can be used to setup a delegation from several delegating subjects.
+//     The signed proof content is an empty byte array.
+//
 // In case of conflict, unknown value, the most restrictive type (did) is used
 type DelegationProofType string
 

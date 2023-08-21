@@ -5,7 +5,7 @@ package crypto_test
 import (
 	"testing"
 
-	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/crypto"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/crypto"
 	"gotest.tools/assert"
 )
 

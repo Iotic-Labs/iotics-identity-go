@@ -12,8 +12,8 @@ import (
 	"fmt"
 	"strings"
 
-	id "github.com/Iotic-Labs/iotics-identity-go/v2/pkg/identity"
-	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/validation"
+	id "github.com/Iotic-Labs/iotics-identity-go/v3/pkg/identity"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/validation"
 
 	"github.com/tyler-smith/go-bip39"
 )

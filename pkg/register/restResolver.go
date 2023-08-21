@@ -18,7 +18,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Iotic-Labs/iotics-identity-go/v2/pkg/validation"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/validation"
 )
 
 var defaultResolverTimeout = time.Second * 60
