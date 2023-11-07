@@ -1,7 +1,7 @@
 [package]
 name = "iotics-identity"
 version = "0.1.1"
-edition = "2023"
+edition = "2021"
 description = "IOTICS Identity SDK"
 license = "Apache-2.0"
 repository = "https://github.com/Iotic-Labs/iotics-identity-go/tree/main/ffi/rust"
