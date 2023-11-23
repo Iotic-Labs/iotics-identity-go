@@ -29,7 +29,25 @@ const (
 	ServerError
 	// NotFound Resolver did not found error type
 	NotFound
+	// ApplicationError Resolver application error type
+	ApplicationError
+	// TimeoutError Resolver timeout error type
+	TimeoutError
 )
+
+// resolverErrTypeToString map
+var resolverErrTypeToString = map[ResolverErrType]string{
+	ConfError:        "configuration",
+	ConnectionError:  "connection",
+	ServerError:      "server",
+	NotFound:         "notfound",
+	ApplicationError: "application",
+	TimeoutError:     "timeout",
+}
+
+func (e ResolverErrType) String() string {
+	return resolverErrTypeToString[e]
+}
 
 // ResolverError type, implements the error interface
 type ResolverError struct {
