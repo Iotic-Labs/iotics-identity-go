@@ -7,14 +7,11 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strings"
 	"testing"
 
 	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/test"
 
 	"github.com/jarcoal/httpmock"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/testutil"
 	"gotest.tools/assert"
 
 	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/register"
@@ -32,18 +29,44 @@ func init() {
 	httpmock.Activate()
 }
 
-func checkMetrics(t *testing.T, reg *prometheus.Registry, expected string) {
-	names := []string{
-		register.MetricResolverErrors,
-	}
+type TestResolverMetrics struct {
+	// resolver client metrics
+	ResolverClientNotFoundErrors      int
+	ResolverClientServerErrors        int
+	ResolverClientConnections         int
+	ResolverClientConnectionsReleased int
+}
 
-	// Prefix names with namespace and subsystem
-	for i, n := range names {
-		names[i] = fmt.Sprintf("%s_%s_%s", register.MetricNamespace, register.MetricSubsystem, n)
+// NewTestResolverMetrics returns a new TestResolverMetrics instance
+func NewTestResolverMetrics() *TestResolverMetrics {
+	return &TestResolverMetrics{
+		ResolverClientNotFoundErrors:      0,
+		ResolverClientServerErrors:        0,
+		ResolverClientConnections:         0,
+		ResolverClientConnectionsReleased: 0,
 	}
+}
 
-	err := testutil.GatherAndCompare(reg, strings.NewReader(expected), names...)
-	assert.NilError(t, err)
+// RecordError registers a new error to the resolver
+func (t *TestResolverMetrics) RecordError(errType register.ResolverErrType) {
+	switch errType {
+	case register.ServerError:
+		t.ResolverClientServerErrors++
+	case register.NotFound:
+		t.ResolverClientNotFoundErrors++
+	default:
+		panic(fmt.Sprintf("unknown error type %s", errType))
+	}
+}
+
+// RecordConnection registers a new connection to the resolver
+func (t *TestResolverMetrics) RecordConnection() {
+	t.ResolverClientConnections++
+}
+
+// RecordConnectionReleased registers a connection released from the resolver
+func (t *TestResolverMetrics) RecordConnectionReleased() {
+	t.ResolverClientConnectionsReleased++
 }
 
 func Test_Resolver_Successful_Get(t *testing.T) {
@@ -51,17 +74,14 @@ func Test_Resolver_Successful_Get(t *testing.T) {
 	contextValue := "test_value"
 	ctx := context.WithValue(context.TODO(), contextKey, contextValue)
 
-	register.ResetMetrics()
-	reg := prometheus.NewRegistry()
-	register.RegisterMetrics(reg)
-
 	addr, _ := url.Parse("http://localhost:9034")
 
-	// Setup a resolver client
+	metrics := NewTestResolverMetrics()
+	// Setup a resolver client with metrics
 	// Note: Passing in http.DefaultClient since by default, e.g. via NewDefaultRestResolverClient, a new http.Client
 	// instance is used. httpmock however expects to work against the default client, unless using
 	// httpmock.ActivateNonDefault().
-	rslv := register.NewRestResolverClientWithCustomClient(addr, http.DefaultClient)
+	rslv := register.NewMeteredRestResolverClient(addr, http.DefaultClient, metrics)
 
 	// Setup a mock resolver
 	discoverReply := map[string]interface{}{
@@ -79,8 +99,11 @@ func Test_Resolver_Successful_Get(t *testing.T) {
 	_, err := rslv.GetDocument(ctx, ValidID)
 	assert.NilError(t, err)
 
-	expected := ""
-	checkMetrics(t, reg, expected)
+	// Check metrics
+	assert.Equal(t, metrics.ResolverClientConnections, 1)
+	assert.Equal(t, metrics.ResolverClientConnectionsReleased, 1)
+	assert.Equal(t, metrics.ResolverClientNotFoundErrors, 0)
+	assert.Equal(t, metrics.ResolverClientServerErrors, 0)
 }
 
 func Test_Resolver_Notfound_Error(t *testing.T) {
@@ -88,14 +111,11 @@ func Test_Resolver_Notfound_Error(t *testing.T) {
 	contextValue := "test_value"
 	ctx := context.WithValue(context.TODO(), contextKey, contextValue)
 
-	register.ResetMetrics()
-	reg := prometheus.NewRegistry()
-	register.RegisterMetrics(reg)
-
 	addr, _ := url.Parse("http://localhost:9044")
 
-	// Setup a resolver client
-	rslv := register.NewRestResolverClientWithCustomClient(addr, http.DefaultClient)
+	metrics := NewTestResolverMetrics()
+	// Setup a resolver client with metrics
+	rslv := register.NewMeteredRestResolverClient(addr, http.DefaultClient, metrics)
 
 	// Setup a mock resolver
 	discoverReply := map[string]interface{}{
@@ -120,22 +140,19 @@ func Test_Resolver_Notfound_Error(t *testing.T) {
 	assert.ErrorContains(t, re.Err(), fmt.Sprintf("document %s", ValidID))
 	assert.ErrorContains(t, re.Err(), http.StatusText(http.StatusNotFound))
 
-	expected := `# HELP iotics_identity_resolver_errors_total Total resolver client errors by error type
-	# TYPE iotics_identity_resolver_errors_total counter
-	iotics_identity_resolver_errors_total{type="notfound"} 1
-`
-	checkMetrics(t, reg, expected)
+	// Check metrics
+	assert.Equal(t, metrics.ResolverClientConnections, 1)
+	assert.Equal(t, metrics.ResolverClientConnectionsReleased, 1)
+	assert.Equal(t, metrics.ResolverClientNotFoundErrors, 1)
 }
 
 func Test_Resolver_Server_Error(t *testing.T) {
-	register.ResetMetrics()
-	reg := prometheus.NewRegistry()
-	register.RegisterMetrics(reg)
-
 	addr, _ := url.Parse("http://localhost:9044")
 
-	// Setup a resolver client
-	rslv := register.NewRestResolverClientWithCustomClient(addr, http.DefaultClient)
+	metrics := NewTestResolverMetrics()
+
+	// Setup a resolver client with metrics
+	rslv := register.NewMeteredRestResolverClient(addr, http.DefaultClient, metrics)
 
 	errCode := http.StatusBadRequest
 	errMsg := "Something invalid"
@@ -155,22 +172,20 @@ func Test_Resolver_Server_Error(t *testing.T) {
 	assert.ErrorContains(t, re.Err(), errMsg)
 	assert.ErrorContains(t, re.Err(), http.StatusText(errCode))
 
-	expected := `# HELP iotics_identity_resolver_errors_total Total resolver client errors by error type
-	# TYPE iotics_identity_resolver_errors_total counter
-	iotics_identity_resolver_errors_total{type="server"} 1
-`
-	checkMetrics(t, reg, expected)
+	// Check metrics
+	assert.Equal(t, metrics.ResolverClientConnections, 1)
+	assert.Equal(t, metrics.ResolverClientConnectionsReleased, 1)
+	assert.Equal(t, metrics.ResolverClientServerErrors, 1)
+	assert.Equal(t, metrics.ResolverClientNotFoundErrors, 0)
 }
 
 func Test_Resolver_Successful_Register(t *testing.T) {
-	register.ResetMetrics()
-	reg := prometheus.NewRegistry()
-	register.RegisterMetrics(reg)
-
 	addr, _ := url.Parse("http://localhost:9031")
 
-	// Setup a resolver client
-	rslv := register.NewRestResolverClientWithCustomClient(addr, http.DefaultClient)
+	metrics := NewTestResolverMetrics()
+
+	// Setup a resolver client with metrics
+	rslv := register.NewMeteredRestResolverClient(addr, http.DefaultClient, metrics)
 
 	// Setup a mock resolver
 	registerReply := map[string]interface{}{
@@ -184,19 +199,20 @@ func Test_Resolver_Successful_Register(t *testing.T) {
 	err := rslv.RegisterDocument(context.TODO(), document, keypair.PrivateKey, issuer)
 	assert.NilError(t, err)
 
-	expected := ""
-	checkMetrics(t, reg, expected)
+	// Check metrics
+	assert.Equal(t, metrics.ResolverClientConnections, 1)
+	assert.Equal(t, metrics.ResolverClientConnectionsReleased, 1)
+	assert.Equal(t, metrics.ResolverClientNotFoundErrors, 0)
+	assert.Equal(t, metrics.ResolverClientServerErrors, 0)
 }
 
 func Test_Resolver_Failed_Register(t *testing.T) {
-	register.ResetMetrics()
-	reg := prometheus.NewRegistry()
-	register.RegisterMetrics(reg)
-
 	addr, _ := url.Parse("http://localhost:9031")
 
-	// Setup a resolver client
-	rslv := register.NewRestResolverClientWithCustomClient(addr, http.DefaultClient)
+	metrics := NewTestResolverMetrics()
+
+	// Setup a resolver client with metrics
+	rslv := register.NewMeteredRestResolverClient(addr, http.DefaultClient, metrics)
 
 	errCode := http.StatusInternalServerError
 	errMsg := "oh dear"
@@ -217,9 +233,9 @@ func Test_Resolver_Failed_Register(t *testing.T) {
 	assert.ErrorContains(t, re.Err(), errMsg)
 	assert.ErrorContains(t, re.Err(), http.StatusText(errCode))
 
-	expected := `# HELP iotics_identity_resolver_errors_total Total resolver client errors by error type
-	# TYPE iotics_identity_resolver_errors_total counter
-	iotics_identity_resolver_errors_total{type="server"} 1
-`
-	checkMetrics(t, reg, expected)
+	// Check metrics
+	assert.Equal(t, metrics.ResolverClientConnections, 1)
+	assert.Equal(t, metrics.ResolverClientConnectionsReleased, 1)
+	assert.Equal(t, metrics.ResolverClientServerErrors, 1)
+	assert.Equal(t, metrics.ResolverClientNotFoundErrors, 0)
 }

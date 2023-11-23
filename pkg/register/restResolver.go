@@ -14,7 +14,6 @@ import (
 	"net/url"
 	"os"
 
-	// "os/exec"
 	"strings"
 	"time"
 
@@ -23,10 +22,31 @@ import (
 
 var defaultResolverTimeout = time.Second * 60
 
+// ResolverClientMetrics interface
+type ResolverClientMetrics interface {
+	// RecordError records errors encountered during resolver calls
+	// The underlying implementation should be thread safe in order to avoid erroneous metrics
+	// when multiple goroutines are using the same client.
+	// If the underlying metric implementation is, for example, a prometheus counter, it should be thread safe by default.
+	RecordError(errType ResolverErrType)
+	// RecordConnection increments a gauge when a resolver http connection is initiated
+	RecordConnection()
+	// RecordConnectionReleased decrements a gauge when a resolver http connection is released
+	RecordConnectionReleased()
+}
+
+// Noop metrics
+type NoopResolverClientMetrics struct{}
+
+func (NoopResolverClientMetrics) RecordError(errType ResolverErrType) {}
+func (NoopResolverClientMetrics) RecordConnection()                   {}
+func (NoopResolverClientMetrics) RecordConnectionReleased()           {}
+
 // RestResolverClient REST Resolver struct
 type RestResolverClient struct {
 	url    *url.URL
 	client *http.Client
+	meter  ResolverClientMetrics
 }
 
 // NewDefaultRestResolverClient build a new REST Resolver Client with default HTTP timeout
@@ -34,9 +54,9 @@ func NewDefaultRestResolverClient(url *url.URL) ResolverClient {
 	return NewRestResolverClient(url, defaultResolverTimeout)
 }
 
-// NewRestResolverClient build a new REST Resolver Client
+// NewRestResolverClient builds a new REST Resolver Client & noop metrics
 func NewRestResolverClient(url *url.URL, timeout time.Duration) ResolverClient {
-	return NewRestResolverClientWithCustomClient(
+	return NewMeteredRestResolverClient(
 		url,
 		&http.Client{
 			Timeout: timeout,
@@ -48,14 +68,23 @@ func NewRestResolverClient(url *url.URL, timeout time.Duration) ResolverClient {
 				IdleConnTimeout: 5 * time.Second,
 			},
 		},
+		&NoopResolverClientMetrics{},
 	)
 }
 
-// NewRestResolverClientWithCustomClient build a ResolverClient with customer http.Client
-func NewRestResolverClientWithCustomClient(url *url.URL, client *http.Client) ResolverClient {
+// NewMeteredRestResolverClient builds a ResolverClient with custom http.Client & metrics
+func NewMeteredRestResolverClient(url *url.URL, client *http.Client, m ResolverClientMetrics) ResolverClient {
+	var meter ResolverClientMetrics
+	if m == nil {
+		meter = &NoopResolverClientMetrics{}
+	} else {
+		meter = m
+	}
+
 	return &RestResolverClient{
 		url:    url,
 		client: client,
+		meter:  meter,
 	}
 }
 
@@ -82,6 +111,8 @@ func (c *RestResolverClient) GetDocument(ctx context.Context, documentID string)
 	if err != nil {
 		return nil, &ResolverError{err: err, errType: ServerError}
 	}
+	c.meter.RecordConnection()
+	defer c.meter.RecordConnectionReleased()
 	response, err := c.client.Do(reqWithContext)
 
 	if err != nil {
@@ -91,16 +122,17 @@ func (c *RestResolverClient) GetDocument(ctx context.Context, documentID string)
 
 		neterr, ok := err.(net.Error)
 		if ok && neterr.Timeout() {
-			totalResolverErrors.WithLabelValues(MetricErrorTypeTimeout).Inc()
+			c.meter.RecordError(TimeoutError)
 		} else {
-			totalResolverErrors.WithLabelValues(MetricErrorTypeConnection).Inc()
+			c.meter.RecordError(ConnectionError)
 		}
 		return nil, &ResolverError{err: err, errType: ConnectionError}
 	}
+
 	defer response.Body.Close()
 
 	if response.StatusCode == http.StatusNotFound {
-		totalResolverErrors.WithLabelValues(MetricErrorTypeNotFound).Inc()
+		c.meter.RecordError(NotFound)
 		return nil, &ResolverError{err: fmt.Errorf("%s: document %s", http.StatusText(http.StatusNotFound), documentID), errType: NotFound}
 	}
 
@@ -108,23 +140,23 @@ func (c *RestResolverClient) GetDocument(ctx context.Context, documentID string)
 	if err != nil {
 		neterr, ok := err.(net.Error)
 		if ok && neterr.Timeout() {
-			totalResolverErrors.WithLabelValues(MetricErrorTypeTimeout).Inc()
+			c.meter.RecordError(TimeoutError)
 		} else {
-			totalResolverErrors.WithLabelValues(MetricErrorTypeServer).Inc()
+			c.meter.RecordError(ServerError)
 		}
 		return nil, &ResolverError{err: err, errType: ConnectionError}
 	}
 
 	var resp map[string]interface{}
 	if err := json.Unmarshal(data, &resp); err != nil {
-		totalResolverErrors.WithLabelValues(MetricErrorTypeServer).Inc()
+		c.meter.RecordError(ServerError)
 		return nil, &ResolverError{err: err, errType: ServerError}
 	}
 
 	// For certain error cases body of response can contain additional information (resp[error])
 	errMsg := http.StatusText(response.StatusCode)
 	if response.StatusCode != http.StatusOK {
-		totalResolverErrors.WithLabelValues(MetricErrorTypeServer).Inc()
+		c.meter.RecordError(ServerError)
 		if errDetail, found := resp["error"]; found {
 			errMsg += fmt.Sprintf(": %s", errDetail)
 		}
@@ -154,6 +186,9 @@ func (c *RestResolverClient) RegisterDocument(ctx context.Context, document *Reg
 	if err != nil {
 		return &ResolverError{err: err, errType: ServerError}
 	}
+
+	c.meter.RecordConnection()
+	defer c.meter.RecordConnectionReleased()
 	response, err := c.client.Do(reqWithContext)
 
 	if err != nil {
@@ -162,12 +197,13 @@ func (c *RestResolverClient) RegisterDocument(ctx context.Context, document *Reg
 		}
 		neterr, ok := err.(net.Error)
 		if ok && neterr.Timeout() {
-			totalResolverErrors.WithLabelValues(MetricErrorTypeTimeout).Inc()
+			c.meter.RecordError(TimeoutError)
 		} else {
-			totalResolverErrors.WithLabelValues(MetricErrorTypeConnection).Inc()
+			c.meter.RecordError(ConnectionError)
 		}
 		return &ResolverError{err: err, errType: ConnectionError}
 	}
+
 	defer response.Body.Close()
 
 	data, err := io.ReadAll(response.Body)
@@ -177,9 +213,9 @@ func (c *RestResolverClient) RegisterDocument(ctx context.Context, document *Reg
 		}
 		neterr, ok := err.(net.Error)
 		if ok && neterr.Timeout() {
-			totalResolverErrors.WithLabelValues(MetricErrorTypeTimeout).Inc()
+			c.meter.RecordError(TimeoutError)
 		} else {
-			totalResolverErrors.WithLabelValues(MetricErrorTypeServer).Inc()
+			c.meter.RecordError(ServerError)
 		}
 		return &ResolverError{err: err, errType: ConnectionError}
 	}
@@ -196,6 +232,6 @@ func (c *RestResolverClient) RegisterDocument(ctx context.Context, document *Reg
 			errMsg += fmt.Sprintf(": %s", errDetail)
 		}
 	}
-	totalResolverErrors.WithLabelValues(MetricErrorTypeServer).Inc()
+	c.meter.RecordError(ServerError)
 	return &ResolverError{err: errors.New(errMsg), errType: ServerError}
 }
