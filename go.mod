@@ -9,7 +9,7 @@ require (
 	github.com/jarcoal/httpmock v1.0.8
 	github.com/jbenet/go-base58 v0.0.0-20150317085156-6237cf65f3a6
 	github.com/tyler-smith/go-bip39 v1.1.0
-	golang.org/x/crypto v0.1.0
+	golang.org/x/crypto v0.17.0
 	gotest.tools v2.2.0+incompatible
 )
 
@@ -21,5 +21,5 @@ require (
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	golang.org/x/sys v0.1.0 // indirect
+	golang.org/x/sys v0.15.0 // indirect
 )
