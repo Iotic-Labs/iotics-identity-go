@@ -14,12 +14,14 @@ ifeq ($(OS),Windows_NT)
     endif
 	OS_EXT=dll
 else
-	UNAME_OS := $(shell uname -s)
-	ifeq ($(UNAME_OS),Darwin)
-		OS_FLAG=darwin
-	endif
-	ifeq ($(UNAME_OS),Linux)
-		OS_FLAG=linux
+	ifeq ($(strip $(OS_FLAG)),)
+		UNAME_OS := $(shell uname -s)
+		ifeq ($(UNAME_OS),Darwin)
+			OS_FLAG=darwin
+		endif
+		ifeq ($(UNAME_OS),Linux)
+			OS_FLAG=linux
+		endif
 	endif
 
 	UNAME_ARCH := $(shell uname -s)
