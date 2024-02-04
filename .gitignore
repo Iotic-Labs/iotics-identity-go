@@ -1,10 +1,11 @@
 .vscode/settings.json
 ffi/lib
-ffi/dotnet-idsdk/.vscode
 ffi/java-idsdk/.idea
 ffi/java-idsdk/target
 ffi/java-idsdk/**/*.class
 dist/
 .idea/
+ffi/dotnet-idsdk/.vscode
+ffi/dotnet-idsdk/**/.vs
 ffi/dotnet-idsdk/**/obj
 ffi/dotnet-idsdk/**/bin
