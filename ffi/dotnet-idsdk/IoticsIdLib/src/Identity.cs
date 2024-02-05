@@ -192,10 +192,11 @@ public class Identity(string resolverAddress)
         UserIdentity userIdentity,
         string cDelegationName
     ) {
-        string result = Tools.InvokeGoFunction(() => IdLib.UserDelegatesAuthenticationToAgent(ResolverAddress, 
+        string? result = Tools.InvokeGoFunction(() => IdLib.UserDelegatesAuthenticationToAgent(ResolverAddress, 
             agentIdentity.Did, agentIdentity.KeyName, Tools.EnsureHashPrefix(agentIdentity.Id), agentIdentity.Seed,
             userIdentity.Did, userIdentity.KeyName, Tools.EnsureHashPrefix(userIdentity.Id), userIdentity.Seed,
             Tools.EnsureHashPrefix(cDelegationName)));
+        
         if(result != null) {
             throw new DelegationException(result);
         }
@@ -216,7 +217,7 @@ public class Identity(string resolverAddress)
         TwinIdentity twinIdentity,
         string cDelegationName
     ) {
-        string result = Tools.InvokeGoFunction(() => IdLib.TwinDelegatesControlToAgent(ResolverAddress, 
+        string? result = Tools.InvokeGoFunction(() => IdLib.TwinDelegatesControlToAgent(ResolverAddress, 
             agentIdentity.Did, agentIdentity.KeyName, Tools.EnsureHashPrefix(agentIdentity.Id), agentIdentity.Seed,
             twinIdentity.Did, twinIdentity.KeyName, Tools.EnsureHashPrefix(twinIdentity.Id), twinIdentity.Seed,
             Tools.EnsureHashPrefix(cDelegationName)));

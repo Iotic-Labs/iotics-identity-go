@@ -6,14 +6,4 @@
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
-  <ItemGroup>
-    <!-- Reference to the external DLL -->
-    <Reference Include="lib-iotics-id-sdk.win.dll">
-      <HintPath>.\lib-iotics-id-sdk.win.dll</HintPath>
-    </Reference>
-    <!-- Include the external header (H) file in the project -->
-    <None Update="lib-iotics-id-sdk.win.h">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
 </Project>
