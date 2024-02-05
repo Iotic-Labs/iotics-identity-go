@@ -36,7 +36,7 @@ class Tools {
         return value;
     }
     
-    public static string InvokeGoFunction(Func<IntPtr> goFunction)
+    public static string? InvokeGoFunction(Func<IntPtr> goFunction)
     {
         IntPtr result;
 
@@ -49,6 +49,12 @@ class Tools {
         {
             // Handle any unexpected exceptions
             throw new InvalidOperationException($"Exception when invoking method: {ex.Message}");
+        }
+
+        // Handle the case where the Go function returns nil
+        if (result == IntPtr.Zero)
+        {
+            return null;
         }
 
         // Convert r0 to a string and free memory

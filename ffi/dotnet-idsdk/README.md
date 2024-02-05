@@ -1,4 +1,5 @@
-# Build
+# Info
 
-run the build file to compile for windows and ios, target directory in IoticsIdLibrary/ffi
+this is the top level solution directory for the c# wrapper.
 
+in this solution, for now, only a project exists. 

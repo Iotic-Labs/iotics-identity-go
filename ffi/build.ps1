@@ -13,7 +13,7 @@ $env:CGO_ENABLED=1
 # Compile for Windows
 Write-Host "Compiling for Windows..."
 $env:GOOS="windows"
-go build -x -v -buildmode=c-shared -o "$outputDirectory\$programName.win.dll" $sourceFile
+go build -x -v -buildmode=c-shared -o "$outputDirectory\$programName.dll" $sourceFile
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Error: Compilation for Windows failed with exit code $LASTEXITCODE"
