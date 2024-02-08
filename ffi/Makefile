@@ -14,12 +14,16 @@ ifeq ($(OS),Windows_NT)
     endif
 	OS_EXT=dll
 else
-	UNAME_OS := $(shell uname -s)
-	ifeq ($(UNAME_OS),Darwin)
-		OS_FLAG=darwin
-	endif
-	ifeq ($(UNAME_OS),Linux)
-		OS_FLAG=linux
+	ifeq ($(strip $(OS_FLAG)),)
+		UNAME_OS := $(shell uname -s)
+		ifeq ($(UNAME_OS),Darwin)
+			OS_FLAG=darwin
+			OS_EXT=dylib
+		endif
+		ifeq ($(UNAME_OS),Linux)
+			OS_FLAG=linux
+			OS_EXT=so
+		endif
 	endif
 
 	UNAME_ARCH := $(shell uname -m)
@@ -35,7 +39,6 @@ else
 	ifeq ($(UNAME_ARCH),x86_64)
 		ARCH_FLAG=amd64
 	endif
-	OS_EXT=so
 endif
 
 clean:
