@@ -24,11 +24,17 @@ else
 		endif
 	endif
 
-	UNAME_ARCH := $(shell uname -s)
+	UNAME_ARCH := $(shell uname -m)
 	ifeq ($(UNAME_ARCH),i386)
 		ARCH_FLAG=386
 	endif
 	ifeq ($(UNAME_ARCH),amd64)
+		ARCH_FLAG=amd64
+	endif
+	ifeq ($(UNAME_ARCH),arm64)
+		ARCH_FLAG=arm64
+	endif
+	ifeq ($(UNAME_ARCH),x86_64)
 		ARCH_FLAG=amd64
 	endif
 	OS_EXT=so
