@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/advancedapi"
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/test"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/advancedapi"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/test"
 
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/register"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/register"
 
 	"gotest.tools/assert"
 )

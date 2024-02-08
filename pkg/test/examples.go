@@ -4,12 +4,13 @@ package test
 
 import (
 	"fmt"
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/crypto"
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/identity"
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/proof"
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/register"
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/validation"
 	"strings"
+
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/crypto"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/identity"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/proof"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/register"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/validation"
 )
 
 const (
@@ -57,8 +58,8 @@ var (
 	ValidKeyPairPlop, _         = crypto.GetKeyPair(ValidKeyPairSecretsPlop)
 	ValidKeyPairSecretsPlop2, _ = crypto.NewKeyPairSecrets([]byte("d2397e8b83cf4a7073a26c1a1cdb6666"), "iotics/0/plop/plop1", crypto.SeedMethodBip39, "")
 	ValidKeyPairPlop2, _        = crypto.GetKeyPair(ValidKeyPairSecretsPlop2)
-	ValidKeyPairSecrets3, _ = crypto.NewKeyPairSecrets([]byte("d2397e8b83cf4a7073a26c1a1cdb6683"), "iotics/0/plop/plop3", crypto.SeedMethodBip39, "")
-	ValidKeyPair3, _        = crypto.GetKeyPair(ValidKeyPairSecrets3)
+	ValidKeyPairSecrets3, _     = crypto.NewKeyPairSecrets([]byte("d2397e8b83cf4a7073a26c1a1cdb6683"), "iotics/0/plop/plop3", crypto.SeedMethodBip39, "")
+	ValidKeyPair3, _            = crypto.GetKeyPair(ValidKeyPairSecrets3)
 
 	OtherDocDid, _    = identity.MakeIdentifier(ValidKeyPairPlop.PublicKeyBytes)
 	OtherDocIssuer, _ = register.NewIssuer(OtherDocDid, "#DelegatedDoc")

@@ -3,36 +3,45 @@
 package advancedapi
 
 import (
+	"context"
 	"fmt"
 	"time"
 
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/crypto"
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/identity"
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/proof"
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/register"
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/validation"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/crypto"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/identity"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/proof"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/register"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/validation"
 	"github.com/jbenet/go-base58"
 )
 
 // RegisterUpdatedDocument Register a new version of a register document against the resolver.
-func RegisterUpdatedDocument(resolverClient register.ResolverClient, doc *register.RegisterDocument, keypair *crypto.KeyPair, issuer *register.Issuer) error {
-	return resolverClient.RegisterDocument(doc, keypair.PrivateKey, issuer)
+func RegisterUpdatedDocument(
+	ctx context.Context, resolverClient register.ResolverClient, doc *register.RegisterDocument,
+	keypair *crypto.KeyPair, issuer *register.Issuer,
+) error {
+	return resolverClient.RegisterDocument(ctx, doc, keypair.PrivateKey, issuer)
 }
 
 // GetRegisterDocument Get a register document from the resolver.
-func GetRegisterDocument(resolverClient register.ResolverClient, did string) (*register.RegisterDocument, error) {
-	return resolverClient.GetDocument(did)
+func GetRegisterDocument(
+	ctx context.Context, resolverClient register.ResolverClient, did string,
+) (*register.RegisterDocument, error) {
+	return resolverClient.GetDocument(ctx, did)
 }
 
 // CreateNewDocumentAndRegister Create and register a new document against the resolver.
-func CreateNewDocumentAndRegister(resolverClient register.ResolverClient, keyPair *crypto.KeyPair, purpose identity.DidType, name string, override bool) (*register.RegisterDocument, error) {
+func CreateNewDocumentAndRegister(
+	ctx context.Context, resolverClient register.ResolverClient, keyPair *crypto.KeyPair, purpose identity.DidType,
+	name string, override bool,
+) (*register.RegisterDocument, error) {
 	registerDocument, issuer, err := CreateNewDocument(purpose, keyPair, name)
 	if err != nil {
 		return nil, err
 	}
 
 	if !override {
-		getDoc, err := GetRegisterDocument(resolverClient, issuer.Did)
+		getDoc, err := GetRegisterDocument(ctx, resolverClient, issuer.Did)
 		if err != nil {
 			rerr, ok := err.(*register.ResolverError)
 			if ok && rerr.ErrorType() == register.NotFound {
@@ -47,7 +56,7 @@ func CreateNewDocumentAndRegister(resolverClient register.ResolverClient, keyPai
 		}
 	}
 
-	err = RegisterUpdatedDocument(resolverClient, registerDocument, keyPair, issuer)
+	err = RegisterUpdatedDocument(ctx, resolverClient, registerDocument, keyPair, issuer)
 	if err != nil {
 		return nil, err
 	}
@@ -56,8 +65,11 @@ func CreateNewDocumentAndRegister(resolverClient register.ResolverClient, keyPai
 }
 
 // CreateNewIdentityAndRegister Create and register a new registered identity and its associated register document against the resolver.
-func CreateNewIdentityAndRegister(resolverClient register.ResolverClient, purpose identity.DidType, keyPair *crypto.KeyPair, name string, override bool) (register.RegisteredIdentity, *register.RegisterDocument, error) {
-	doc, err := CreateNewDocumentAndRegister(resolverClient, keyPair, purpose, name, override)
+func CreateNewIdentityAndRegister(
+	ctx context.Context, resolverClient register.ResolverClient, purpose identity.DidType, keyPair *crypto.KeyPair,
+	name string, override bool,
+) (register.RegisteredIdentity, *register.RegisterDocument, error) {
+	doc, err := CreateNewDocumentAndRegister(ctx, resolverClient, keyPair, purpose, name, override)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -72,19 +84,21 @@ func CreateNewIdentityAndRegister(resolverClient register.ResolverClient, purpos
 }
 
 // ValidateRegisterDocument Validate a register document against the resolver.
-func ValidateRegisterDocument(resolverClient register.ResolverClient, document *register.RegisterDocument) error {
+func ValidateRegisterDocument(
+	ctx context.Context, resolverClient register.ResolverClient, document *register.RegisterDocument,
+) error {
 	// Note: This function matches the python implementation
 	// Validate a register document against the resolver if one of the register document delegation proof is invalid
 	// What it actually does it validate the delegations on the passed document
 
-	for _, v := range document.DelegateControl {
-		err := register.ValidateDelegation(resolverClient, document.ID, &v) // nolint:gosec
+	for i := range document.DelegateControl {
+		err := register.ValidateDelegation(ctx, resolverClient, document.ID, &document.DelegateControl[i])
 		if err != nil {
 			return err
 		}
 	}
-	for _, v := range document.DelegateAuthentication {
-		err := register.ValidateDelegation(resolverClient, document.ID, &v) // nolint:gosec
+	for i := range document.DelegateAuthentication {
+		err := register.ValidateDelegation(ctx, resolverClient, document.ID, &document.DelegateAuthentication[i])
 		if err != nil {
 			return err
 		}
@@ -94,11 +108,14 @@ func ValidateRegisterDocument(resolverClient register.ResolverClient, document *
 }
 
 // SetDocumentController Set register document controller issuer.
-func SetDocumentController(resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, identity register.RegisteredIdentity, controller *register.Issuer) error {
+func SetDocumentController(
+	ctx context.Context, resolverClient register.ResolverClient, originalDoc *register.RegisterDocument,
+	identity register.RegisteredIdentity, controller *register.Issuer,
+) error {
 	var err error
 
 	if originalDoc == nil {
-		originalDoc, err = GetRegisterDocument(resolverClient, identity.Did())
+		originalDoc, err = GetRegisterDocument(ctx, resolverClient, identity.Did())
 		if err != nil {
 			return err
 		}
@@ -113,15 +130,18 @@ func SetDocumentController(resolverClient register.ResolverClient, originalDoc *
 		return fmt.Errorf("error while creating new RegisterDocument: %v", errs)
 	}
 
-	return RegisterUpdatedDocument(resolverClient, updatedDoc, identity.KeyPair(), identity.Issuer())
+	return RegisterUpdatedDocument(ctx, resolverClient, updatedDoc, identity.KeyPair(), identity.Issuer())
 }
 
 // SetDocumentCreator Set register document creator.
-func SetDocumentCreator(resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, identity register.RegisteredIdentity, creator *register.Issuer) error {
+func SetDocumentCreator(
+	ctx context.Context, resolverClient register.ResolverClient, originalDoc *register.RegisterDocument,
+	identity register.RegisteredIdentity, creator *register.Issuer,
+) error {
 	var err error
 
 	if originalDoc == nil {
-		originalDoc, err = GetRegisterDocument(resolverClient, identity.Did())
+		originalDoc, err = GetRegisterDocument(ctx, resolverClient, identity.Did())
 		if err != nil {
 			return err
 		}
@@ -136,15 +156,18 @@ func SetDocumentCreator(resolverClient register.ResolverClient, originalDoc *reg
 		return fmt.Errorf("error while creating new RegisterDocument: %v", errs)
 	}
 
-	return RegisterUpdatedDocument(resolverClient, updatedDoc, identity.KeyPair(), identity.Issuer())
+	return RegisterUpdatedDocument(ctx, resolverClient, updatedDoc, identity.KeyPair(), identity.Issuer())
 }
 
 // SetDocumentRevoked Set register document revoke field.
-func SetDocumentRevoked(resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, identity register.RegisteredIdentity, revoked bool) error {
+func SetDocumentRevoked(
+	ctx context.Context, resolverClient register.ResolverClient, originalDoc *register.RegisterDocument,
+	identity register.RegisteredIdentity, revoked bool,
+) error {
 	var err error
 
 	if originalDoc == nil {
-		originalDoc, err = GetRegisterDocument(resolverClient, identity.Did())
+		originalDoc, err = GetRegisterDocument(ctx, resolverClient, identity.Did())
 		if err != nil {
 			return err
 		}
@@ -159,15 +182,18 @@ func SetDocumentRevoked(resolverClient register.ResolverClient, originalDoc *reg
 		return fmt.Errorf("error while creating new RegisterDocument: %v", errs)
 	}
 
-	return RegisterUpdatedDocument(resolverClient, updatedDoc, identity.KeyPair(), identity.Issuer())
+	return RegisterUpdatedDocument(ctx, resolverClient, updatedDoc, identity.KeyPair(), identity.Issuer())
 }
 
 // AddPublicKeyToDocument Add a new register public key to a register document.
-func AddPublicKeyToDocument(resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, name string, publicBase58 string, identity register.RegisteredIdentity) error {
+func AddPublicKeyToDocument(
+	ctx context.Context, resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, name string,
+	publicBase58 string, identity register.RegisteredIdentity,
+) error {
 	var err error
 
 	if originalDoc == nil {
-		originalDoc, err = GetRegisterDocument(resolverClient, identity.Did())
+		originalDoc, err = GetRegisterDocument(ctx, resolverClient, identity.Did())
 		if err != nil {
 			return err
 		}
@@ -182,14 +208,17 @@ func AddPublicKeyToDocument(resolverClient register.ResolverClient, originalDoc 
 		return fmt.Errorf("error while creating new RegisterDocument: %v", errs)
 	}
 
-	return RegisterUpdatedDocument(resolverClient, updatedDoc, identity.KeyPair(), identity.Issuer())
+	return RegisterUpdatedDocument(ctx, resolverClient, updatedDoc, identity.KeyPair(), identity.Issuer())
 }
 
-func removeKeyFromDocument(resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, name string, identity register.RegisteredIdentity) error {
+func removeKeyFromDocument(
+	ctx context.Context, resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, name string,
+	identity register.RegisteredIdentity,
+) error {
 	var err error
 
 	if originalDoc == nil {
-		originalDoc, err = GetRegisterDocument(resolverClient, identity.Did())
+		originalDoc, err = GetRegisterDocument(ctx, resolverClient, identity.Did())
 		if err != nil {
 			return err
 		}
@@ -204,14 +233,17 @@ func removeKeyFromDocument(resolverClient register.ResolverClient, originalDoc *
 		return fmt.Errorf("error while creating new RegisterDocument: %v", errs)
 	}
 
-	return RegisterUpdatedDocument(resolverClient, updatedDoc, identity.KeyPair(), identity.Issuer())
+	return RegisterUpdatedDocument(ctx, resolverClient, updatedDoc, identity.KeyPair(), identity.Issuer())
 }
 
-func revokeKeyFromDocument(resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, name string, identity register.RegisteredIdentity) error {
+func revokeKeyFromDocument(
+	ctx context.Context, resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, name string,
+	identity register.RegisteredIdentity,
+) error {
 	var err error
 
 	if originalDoc == nil {
-		originalDoc, err = GetRegisterDocument(resolverClient, identity.Did())
+		originalDoc, err = GetRegisterDocument(ctx, resolverClient, identity.Did())
 		if err != nil {
 			return err
 		}
@@ -226,25 +258,34 @@ func revokeKeyFromDocument(resolverClient register.ResolverClient, originalDoc *
 		return fmt.Errorf("error while creating new RegisterDocument: %v", errs)
 	}
 
-	return RegisterUpdatedDocument(resolverClient, updatedDoc, identity.KeyPair(), identity.Issuer())
+	return RegisterUpdatedDocument(ctx, resolverClient, updatedDoc, identity.KeyPair(), identity.Issuer())
 }
 
 // RemovePublicKeyFromDocument Remove a register public key from a register document.
-func RemovePublicKeyFromDocument(resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, name string, identity register.RegisteredIdentity) error {
-	return removeKeyFromDocument(resolverClient, originalDoc, name, identity)
+func RemovePublicKeyFromDocument(
+	ctx context.Context, resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, name string,
+	identity register.RegisteredIdentity,
+) error {
+	return removeKeyFromDocument(ctx, resolverClient, originalDoc, name, identity)
 }
 
 // RevokePublicKeyFromDocument Set register public key revoke field.
-func RevokePublicKeyFromDocument(resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, name string, identity register.RegisteredIdentity) error {
-	return revokeKeyFromDocument(resolverClient, originalDoc, name, identity)
+func RevokePublicKeyFromDocument(
+	ctx context.Context, resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, name string,
+	identity register.RegisteredIdentity,
+) error {
+	return revokeKeyFromDocument(ctx, resolverClient, originalDoc, name, identity)
 }
 
 // AddAuthenticationKeyToDocument Add a new register authentication public key to a register document.
-func AddAuthenticationKeyToDocument(resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, name string, publicBase58 string, identity register.RegisteredIdentity) error {
+func AddAuthenticationKeyToDocument(
+	ctx context.Context, resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, name string,
+	publicBase58 string, identity register.RegisteredIdentity,
+) error {
 	var err error
 
 	if originalDoc == nil {
-		originalDoc, err = GetRegisterDocument(resolverClient, identity.Did())
+		originalDoc, err = GetRegisterDocument(ctx, resolverClient, identity.Did())
 		if err != nil {
 			return err
 		}
@@ -259,47 +300,67 @@ func AddAuthenticationKeyToDocument(resolverClient register.ResolverClient, orig
 		return fmt.Errorf("error while creating new RegisterDocument: %v", errs)
 	}
 
-	return RegisterUpdatedDocument(resolverClient, updatedDoc, identity.KeyPair(), identity.Issuer())
+	return RegisterUpdatedDocument(ctx, resolverClient, updatedDoc, identity.KeyPair(), identity.Issuer())
 }
 
 // RemoveAuthenticationKeyFromDocument Remove a register authentication public key from a register document.
-func RemoveAuthenticationKeyFromDocument(resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, name string, identity register.RegisteredIdentity) error {
-	return removeKeyFromDocument(resolverClient, originalDoc, name, identity)
+func RemoveAuthenticationKeyFromDocument(
+	ctx context.Context, resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, name string,
+	identity register.RegisteredIdentity,
+) error {
+	return removeKeyFromDocument(ctx, resolverClient, originalDoc, name, identity)
 }
 
 // RevokeAuthenticationKeyFromDocument Set register authentication public key revoke field.
-func RevokeAuthenticationKeyFromDocument(resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, name string, identity register.RegisteredIdentity) error {
-	return revokeKeyFromDocument(resolverClient, originalDoc, name, identity)
+func RevokeAuthenticationKeyFromDocument(
+	ctx context.Context, resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, name string,
+	identity register.RegisteredIdentity,
+) error {
+	return revokeKeyFromDocument(ctx, resolverClient, originalDoc, name, identity)
 }
 
 // AddAuthenticationDelegationToDocument Add register authentication did delegation proof to a register document.
-func AddAuthenticationDelegationToDocument(resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, name string, controller string, proof string, identity register.RegisteredIdentity) error {
-	return addDelegationToDocument(resolverClient, originalDoc, identity,
+func AddAuthenticationDelegationToDocument(
+	ctx context.Context, resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, name string,
+	controller string, proof string, identity register.RegisteredIdentity,
+) error {
+	return addDelegationToDocument(ctx, resolverClient, originalDoc, identity,
 		register.AddAuthenticationDelegation(name, controller, proof, register.DidProof, false))
 }
 
 // AddGenericAuthenticationDelegationToDocument Add register authentication generic delegation proof to a register document.
-func AddGenericAuthenticationDelegationToDocument(resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, name string, controller string, proof string, identity register.RegisteredIdentity) error {
-	return addDelegationToDocument(resolverClient, originalDoc, identity,
+func AddGenericAuthenticationDelegationToDocument(
+	ctx context.Context, resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, name string,
+	controller string, proof string, identity register.RegisteredIdentity,
+) error {
+	return addDelegationToDocument(ctx, resolverClient, originalDoc, identity,
 		register.AddAuthenticationDelegation(name, controller, proof, register.GenericProof, false))
 }
 
 // RemoveAuthenticationDelegationFromDocument Remove register authentication delegation proof from a register document.
-func RemoveAuthenticationDelegationFromDocument(resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, name string, identity register.RegisteredIdentity) error {
-	return removeKeyFromDocument(resolverClient, originalDoc, name, identity)
+func RemoveAuthenticationDelegationFromDocument(
+	ctx context.Context, resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, name string,
+	identity register.RegisteredIdentity,
+) error {
+	return removeKeyFromDocument(ctx, resolverClient, originalDoc, name, identity)
 }
 
 // RevokeAuthenticationDelegationFromDocument Set register authentication delegation proof revoke field.
-func RevokeAuthenticationDelegationFromDocument(resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, name string, identity register.RegisteredIdentity) error {
-	return revokeKeyFromDocument(resolverClient, originalDoc, name, identity)
+func RevokeAuthenticationDelegationFromDocument(
+	ctx context.Context, resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, name string,
+	identity register.RegisteredIdentity,
+) error {
+	return revokeKeyFromDocument(ctx, resolverClient, originalDoc, name, identity)
 }
 
-func addDelegationToDocument(resolverClient register.ResolverClient, originalDoc *register.RegisterDocument,
-	identity register.RegisteredIdentity, addDelegationOpts register.RegisterDocumentOpts) error {
+func addDelegationToDocument(
+	ctx context.Context, resolverClient register.ResolverClient, originalDoc *register.RegisterDocument,
+	identity register.RegisteredIdentity, addDelegationOpts register.RegisterDocumentOpts,
+) error {
 	var err error
 
 	if originalDoc == nil {
-		originalDoc, err = GetRegisterDocument(resolverClient, identity.Did())
+		originalDoc, err = GetRegisterDocument(ctx, resolverClient, identity.Did())
 		if err != nil {
 			return err
 		}
@@ -314,29 +375,41 @@ func addDelegationToDocument(resolverClient register.ResolverClient, originalDoc
 		return fmt.Errorf("error while creating new RegisterDocument: %v", errs)
 	}
 
-	return RegisterUpdatedDocument(resolverClient, updatedDoc, identity.KeyPair(), identity.Issuer())
+	return RegisterUpdatedDocument(ctx, resolverClient, updatedDoc, identity.KeyPair(), identity.Issuer())
 }
 
 // AddControlDelegationToDocument Add register control did delegation proof to a register document.
-func AddControlDelegationToDocument(resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, name string, controller string, proof string, identity register.RegisteredIdentity) error {
-	return addDelegationToDocument(resolverClient, originalDoc, identity,
+func AddControlDelegationToDocument(
+	ctx context.Context, resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, name string,
+	controller string, proof string, identity register.RegisteredIdentity,
+) error {
+	return addDelegationToDocument(ctx, resolverClient, originalDoc, identity,
 		register.AddControlDelegation(name, controller, proof, register.DidProof, false))
 }
 
 // AddGenericControlDelegationToDocument Add register control generic delegation proof to a register document.
-func AddGenericControlDelegationToDocument(resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, name string, controller string, proof string, identity register.RegisteredIdentity) error {
-	return addDelegationToDocument(resolverClient, originalDoc, identity,
+func AddGenericControlDelegationToDocument(
+	ctx context.Context, resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, name string,
+	controller string, proof string, identity register.RegisteredIdentity,
+) error {
+	return addDelegationToDocument(ctx, resolverClient, originalDoc, identity,
 		register.AddControlDelegation(name, controller, proof, register.GenericProof, false))
 }
 
 // RemoveControlDelegationFromDocument Remove register control delegation proof from a register document.
-func RemoveControlDelegationFromDocument(resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, name string, identity register.RegisteredIdentity) error {
-	return removeKeyFromDocument(resolverClient, originalDoc, name, identity)
+func RemoveControlDelegationFromDocument(
+	ctx context.Context, resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, name string,
+	identity register.RegisteredIdentity,
+) error {
+	return removeKeyFromDocument(ctx, resolverClient, originalDoc, name, identity)
 }
 
 // RevokeControlDelegationFromDocument Set register control delegation proof revoke field.
-func RevokeControlDelegationFromDocument(resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, name string, identity register.RegisteredIdentity) error {
-	return revokeKeyFromDocument(resolverClient, originalDoc, name, identity)
+func RevokeControlDelegationFromDocument(
+	ctx context.Context, resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, name string,
+	identity register.RegisteredIdentity,
+) error {
+	return revokeKeyFromDocument(ctx, resolverClient, originalDoc, name, identity)
 }
 
 // DelegationOpts Options for delegation
@@ -359,12 +432,12 @@ func (opts DelegationOpts) getProofType() register.DelegationProofType {
 	return *opts.ProofType
 }
 
-func delegate(opts DelegationOpts, IsControl bool) error {
+func delegate(ctx context.Context, opts DelegationOpts, IsControl bool) error {
 	var err error
 
 	delegatingDoc := opts.DelegatingDocument
 	if delegatingDoc == nil {
-		delegatingDoc, err = GetRegisterDocument(opts.ResolverClient, opts.DelegatingDid)
+		delegatingDoc, err = GetRegisterDocument(ctx, opts.ResolverClient, opts.DelegatingDid)
 		if err != nil {
 			return err
 		}
@@ -372,7 +445,7 @@ func delegate(opts DelegationOpts, IsControl bool) error {
 
 	subjectDoc := opts.SubjectDocument
 	if subjectDoc == nil {
-		subjectDoc, err = GetRegisterDocument(opts.ResolverClient, opts.SubjectDid)
+		subjectDoc, err = GetRegisterDocument(ctx, opts.ResolverClient, opts.SubjectDid)
 		if err != nil {
 			return err
 		}
@@ -404,26 +477,26 @@ func delegate(opts DelegationOpts, IsControl bool) error {
 
 	regOpts := []register.RegisterDocumentOpts{
 		register.AddFromExistingDocument(delegatingDoc),
-		delegFunc(opts.Name, subjectIssuer.String(), dProof.Signature, proofType,false),
+		delegFunc(opts.Name, subjectIssuer.String(), dProof.Signature, proofType, false),
 	}
 	updatedDoc, errs := register.NewRegisterDocument(regOpts)
 	if len(errs) != 0 {
 		return fmt.Errorf("error while creating new RegisterDocument: %v", errs)
 	}
 
-	return RegisterUpdatedDocument(opts.ResolverClient, updatedDoc, opts.DelegatingKeyPair, delegatingIssuer)
+	return RegisterUpdatedDocument(ctx, opts.ResolverClient, updatedDoc, opts.DelegatingKeyPair, delegatingIssuer)
 }
 
 // DelegateAuthentication Delegate authentication between delegating registered identity and delegated registered identity.
-func DelegateAuthentication(opts DelegationOpts) error {
-	return delegate(opts, false)
+func DelegateAuthentication(ctx context.Context, opts DelegationOpts) error {
+	return delegate(ctx, opts, false)
 }
 
 // DelegateControl Delegate control between delegating registered identity and delegated registered identity.
 // - delegating is user or twin
 // - subject is always agent
-func DelegateControl(opts DelegationOpts) error {
-	return delegate(opts, true)
+func DelegateControl(ctx context.Context, opts DelegationOpts) error {
+	return delegate(ctx, opts, true)
 }
 
 // ////////////////////// // Local functions
@@ -461,12 +534,16 @@ func GetIssuerByPublicKey(document *register.RegisterDocument, publicBase58 stri
 }
 
 // CreateAgentAuthToken Create an agent authentication token.
-func CreateAgentAuthToken(agentID register.RegisteredIdentity, userDid string, duration time.Duration, audience string, startOffset int) (register.JwtToken, error) {
+func CreateAgentAuthToken(
+	agentID register.RegisteredIdentity, userDid string, duration time.Duration, audience string, startOffset int,
+) (register.JwtToken, error) {
 	return register.CreateAuthToken(agentID.Issuer(), userDid, audience, duration, agentID.KeyPair().PrivateKey, startOffset)
 }
 
 // CreateTwinAuthToken Create a twin authentication token.
-func CreateTwinAuthToken(twinIdentity register.RegisteredIdentity, duration time.Duration, audience string, startOffset int) (register.JwtToken, error) {
+func CreateTwinAuthToken(
+	twinIdentity register.RegisteredIdentity, duration time.Duration, audience string, startOffset int,
+) (register.JwtToken, error) {
 	return register.CreateAuthToken(twinIdentity.Issuer(), twinIdentity.Issuer().Did, audience, duration, twinIdentity.KeyPair().PrivateKey, startOffset)
 }
 
@@ -475,7 +552,9 @@ func CreateProof(keyPair *crypto.KeyPair, issuer *register.Issuer, content []byt
 	return proof.NewProof(keyPair.PrivateKey, issuer.Did, issuer.Name, content)
 }
 
-func createProof(subjectDoc *register.RegisterDocument, subjectKeyPair *crypto.KeyPair, content []byte) (*register.Issuer, *proof.Proof, error) {
+func createProof(
+	subjectDoc *register.RegisterDocument, subjectKeyPair *crypto.KeyPair, content []byte,
+) (*register.Issuer, *proof.Proof, error) {
 	for _, v := range subjectDoc.PublicKeys {
 		if v.PublicKeyBase58 == subjectKeyPair.PublicKeyBase58 {
 			issuer, err := register.NewIssuer(subjectDoc.ID, v.ID)
@@ -495,13 +574,17 @@ func createProof(subjectDoc *register.RegisterDocument, subjectKeyPair *crypto.K
 
 // CreateDelegationProof Create a proof that can be used to setup a delegation from a single delegating issuer doc.
 // The signed proof content is the encoded DID Identifier of the delegating issuer doc.
-func CreateDelegationProof(delegatingIssuer *register.Issuer, subjectDoc *register.RegisterDocument, subjectKeyPair *crypto.KeyPair) (*register.Issuer, *proof.Proof, error) {
+func CreateDelegationProof(
+	delegatingIssuer *register.Issuer, subjectDoc *register.RegisterDocument, subjectKeyPair *crypto.KeyPair,
+) (*register.Issuer, *proof.Proof, error) {
 	return createProof(subjectDoc, subjectKeyPair, []byte(delegatingIssuer.Did))
 }
 
 // CreateGenericDelegationProof Create a proof that can be used to setup a delegation from several delegating issuers doc.
 // The signed proof content is an empty byte array.
-func CreateGenericDelegationProof(subjectDoc *register.RegisterDocument, subjectKeyPair *crypto.KeyPair) (*register.Issuer, *proof.Proof, error) {
+func CreateGenericDelegationProof(
+	subjectDoc *register.RegisterDocument, subjectKeyPair *crypto.KeyPair,
+) (*register.Issuer, *proof.Proof, error) {
 	return createProof(subjectDoc, subjectKeyPair, []byte(""))
 }
 
@@ -567,7 +650,9 @@ func NewIssuerByKeypair(purpose identity.DidType, keyPair *crypto.KeyPair, name 
 }
 
 // CreateNewDocument return a new RegisterDocument and Issuer, the local offline part of CreateNewDocumentAndRegister.
-func CreateNewDocument(purpose identity.DidType, keyPair *crypto.KeyPair, name string) (*register.RegisterDocument, *register.Issuer, error) {
+func CreateNewDocument(
+	purpose identity.DidType, keyPair *crypto.KeyPair, name string,
+) (*register.RegisterDocument, *register.Issuer, error) {
 	issuer, err := NewIssuerByKeypair(purpose, keyPair, name)
 	if err != nil {
 		return nil, nil, err

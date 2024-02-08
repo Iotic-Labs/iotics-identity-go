@@ -3,7 +3,7 @@
 package register
 
 import (
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/crypto"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/crypto"
 )
 
 // RegisteredIdentity interface.
@@ -14,7 +14,6 @@ type RegisteredIdentity interface {
 	Issuer() *Issuer
 }
 
-//
 type defaultRegisteredIdentity struct {
 	keyPair *crypto.KeyPair
 	issuer  *Issuer

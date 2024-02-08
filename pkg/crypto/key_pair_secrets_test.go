@@ -6,13 +6,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/test"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/test"
 
-	id "github.com/Iotic-Labs/iotics-identity-go/pkg/identity"
+	id "github.com/Iotic-Labs/iotics-identity-go/v3/pkg/identity"
 
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/crypto"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/crypto"
 	"github.com/tyler-smith/go-bip39"
 	"github.com/tyler-smith/go-bip39/wordlists"
 	"gotest.tools/assert"

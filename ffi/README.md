@@ -12,7 +12,7 @@ Alternatively you can build your version using:
 
 `env GOOS=<os> GOARCH=<arch> go build -buildmode=c-shared -o lib/lib-iotics-id-sdk.so ./ffi_wrapper.go`
 
-## Verifying goreleaser localy
+## Verifying goreleaser locally
 
 ```bash
 # verify build (optional)

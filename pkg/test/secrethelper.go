@@ -3,11 +3,13 @@
 package test
 
 import (
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/advancedapi"
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/crypto"
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/identity"
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/proof"
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/register"
+	"context"
+
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/advancedapi"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/crypto"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/identity"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/proof"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/register"
 )
 
 func HelperGetRegisterDocumentFromSecret(keypair *crypto.KeyPair, name string, purpose identity.DidType) (*register.RegisterDocument, *register.Issuer) {
@@ -42,13 +44,14 @@ func HelperGetRegisterDocument() (*register.RegisterDocument, *register.Issuer, 
 }
 
 func SetupIdentitiesForAuth(resolver register.ResolverClient, control bool, auth bool) (register.RegisteredIdentity, register.RegisteredIdentity) {
+	ctx := context.TODO()
 	userSecret, _ := crypto.NewDefaultKeyPairSecrets(ValidBip39Seed32B, "iotics/0/user/00")
 	userKeypair, _ := crypto.GetKeyPair(userSecret)
-	userIdentity, _, _ := advancedapi.CreateNewIdentityAndRegister(resolver, identity.User, userKeypair, "#user", true)
+	userIdentity, _, _ := advancedapi.CreateNewIdentityAndRegister(ctx, resolver, identity.User, userKeypair, "#user", true)
 
 	agentSecret, _ := crypto.NewDefaultKeyPairSecrets(ValidBip39Seed32B, "iotics/0/agent/00")
 	agentKeypair, _ := crypto.GetKeyPair(agentSecret)
-	agentIdentity, _, _ := advancedapi.CreateNewIdentityAndRegister(resolver, identity.Agent, agentKeypair, "#agent", true)
+	agentIdentity, _, _ := advancedapi.CreateNewIdentityAndRegister(ctx, resolver, identity.Agent, agentKeypair, "#agent", true)
 
 	opts := advancedapi.DelegationOpts{
 		ResolverClient:    resolver,
@@ -59,10 +62,10 @@ func SetupIdentitiesForAuth(resolver register.ResolverClient, control bool, auth
 	}
 	if control {
 		opts.Name = "#delegCtrl"
-		_ = advancedapi.DelegateControl(opts)
+		_ = advancedapi.DelegateControl(ctx, opts)
 	} else if auth {
 		opts.Name = "#delegAuth"
-		_ = advancedapi.DelegateAuthentication(opts)
+		_ = advancedapi.DelegateAuthentication(ctx, opts)
 	}
 
 	return userIdentity, agentIdentity

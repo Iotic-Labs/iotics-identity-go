@@ -2,15 +2,19 @@
 
 package register
 
-import "crypto/ecdsa"
+import (
+	"context"
+	"crypto/ecdsa"
+	"errors"
+)
 
 // ResolverClient resolver client interface
 type ResolverClient interface {
 	// GetDocument fetch a document from the resolver by DID identifier
-	GetDocument(documentID string) (*RegisterDocument, error)
+	GetDocument(ctx context.Context, documentID string) (*RegisterDocument, error)
 
 	// RegisterDocument registers a document in the resolver.
-	RegisterDocument(document *RegisterDocument, privateKey *ecdsa.PrivateKey, issuer *Issuer) error
+	RegisterDocument(ctx context.Context, doc *RegisterDocument, privateKey *ecdsa.PrivateKey, issuer *Issuer) error
 }
 
 // ResolverErrType ResolverErrType
@@ -25,7 +29,25 @@ const (
 	ServerError
 	// NotFound Resolver did not found error type
 	NotFound
+	// ApplicationError Resolver application error type
+	ApplicationError
+	// TimeoutError Resolver timeout error type
+	TimeoutError
 )
+
+// resolverErrTypeToString map
+var resolverErrTypeToString = map[ResolverErrType]string{
+	ConfError:        "configuration",
+	ConnectionError:  "connection",
+	ServerError:      "server",
+	NotFound:         "notfound",
+	ApplicationError: "application",
+	TimeoutError:     "timeout",
+}
+
+func (e ResolverErrType) String() string {
+	return resolverErrTypeToString[e]
+}
 
 // ResolverError type, implements the error interface
 type ResolverError struct {
@@ -60,4 +82,9 @@ func (r ResolverError) Err() error {
 func IsResolverError(err error) bool {
 	_, ok := err.(*ResolverError)
 	return ok
+}
+
+// IsContextError returns true if the provided error is of type context.Canceled or context.DeadlineExceeded
+func IsContextError(err error) bool {
+	return errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded)
 }

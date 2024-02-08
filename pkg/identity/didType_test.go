@@ -5,7 +5,7 @@ package identity_test
 import (
 	"testing"
 
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/identity"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/identity"
 	"gotest.tools/assert"
 )
 

@@ -6,8 +6,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/identity"
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/validation"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/identity"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/validation"
 	"github.com/jbenet/go-base58"
 )
 

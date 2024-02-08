@@ -3,17 +3,19 @@
 package register
 
 import (
+	"context"
 	"fmt"
 
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/proof"
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/validation"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/proof"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/validation"
 )
 
 // DelegationProofType
-// 	- did:      that means the proof can be used to setup a delegation from single delegating subject.
-//  			The signed proof content is the encoded DID Identifier of the delegating subject.
-// 	- generic:  that means the proof can be used to setup a delegation from several delegating subjects.
-//  			The signed proof content is an empty byte array.
+//   - did:      that means the proof can be used to setup a delegation from single delegating subject.
+//     The signed proof content is the encoded DID Identifier of the delegating subject.
+//   - generic:  that means the proof can be used to setup a delegation from several delegating subjects.
+//     The signed proof content is an empty byte array.
+//
 // In case of conflict, unknown value, the most restrictive type (did) is used
 type DelegationProofType string
 
@@ -46,13 +48,13 @@ func (r RegisterDelegationProof) Clone() (*RegisterDelegationProof, error) {
 }
 
 // ValidateDelegation Validate register delegation proof against the delegation controller register document.
-func ValidateDelegation(resolverClient ResolverClient, registeredID string, registeredProof *RegisterDelegationProof) error {
+func ValidateDelegation(ctx context.Context, resolverClient ResolverClient, registeredID string, registeredProof *RegisterDelegationProof) error {
 	controllerIssuer, err := NewIssuerFromString(registeredProof.Controller)
 	if err != nil {
 		return err
 	}
 
-	controllerDoc, err := resolverClient.GetDocument(controllerIssuer.Did)
+	controllerDoc, err := resolverClient.GetDocument(ctx, controllerIssuer.Did)
 	if err != nil {
 		return err
 	}

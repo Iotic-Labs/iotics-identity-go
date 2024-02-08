@@ -2,7 +2,7 @@
 
 package register
 
-import "github.com/Iotic-Labs/iotics-identity-go/pkg/validation"
+import "github.com/Iotic-Labs/iotics-identity-go/v3/pkg/validation"
 
 // NOTE: the RegisterPublicKey type is defined in document.go so that the struct definitions are in one place
 // NOTE: also note that Revoked property would conflict with the RegisterKey interface Revoked() func

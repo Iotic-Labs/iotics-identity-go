@@ -3,13 +3,14 @@
 package main_test
 
 import (
+	"context"
 	"encoding/hex"
 	"fmt"
 
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/advancedapi"
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/crypto"
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/identity"
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/register"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/advancedapi"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/crypto"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/identity"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/register"
 	"github.com/go-bdd/gobdd"
 	"gotest.tools/assert"
 )
@@ -18,7 +19,7 @@ func assertNewDocAndIdentity(t gobdd.StepTest, _ gobdd.Context, seed []byte, key
 	assert.Assert(t, doc != nil)
 	assert.Assert(t, id != nil)
 
-	err := advancedapi.ValidateRegisterDocument(resolver, doc)
+	err := advancedapi.ValidateRegisterDocument(context.TODO(), resolver, doc)
 	assert.NilError(t, err)
 
 	didType, _ := identity.ParseDidType(doc.IoticsDIDType)

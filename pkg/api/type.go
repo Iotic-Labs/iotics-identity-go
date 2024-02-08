@@ -3,8 +3,8 @@
 package api
 
 import (
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/crypto"
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/register"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/crypto"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/register"
 )
 
 // CreateUserAndAgentWithAuthDelegationOpts Create user and agent options for high level API

@@ -3,13 +3,14 @@
 package test
 
 import (
+	"context"
 	"crypto/ecdsa"
 	"errors"
 	"fmt"
 	"sync"
 
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/advancedapi"
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/register"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/advancedapi"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/register"
 )
 
 type counter struct {
@@ -25,8 +26,8 @@ func (s *counter) Value() int {
 }
 
 type InMemoryResolver struct {
-	documents map[string]*register.RegisterDocument
-	lock      *sync.RWMutex
+	documents     map[string]*register.RegisterDocument
+	lock          *sync.RWMutex
 	CountDiscover *counter
 	CountRegister *counter
 }
@@ -37,14 +38,14 @@ func NewInMemoryResolver(docs ...*register.RegisterDocument) *InMemoryResolver {
 		documents[v.ID] = v
 	}
 	return &InMemoryResolver{
-		documents: documents,
-		lock:      &sync.RWMutex{},
+		documents:     documents,
+		lock:          &sync.RWMutex{},
 		CountDiscover: &counter{0},
 		CountRegister: &counter{0},
 	}
 }
 
-func (c InMemoryResolver) GetDocument(documentID string) (*register.RegisterDocument, error) {
+func (c InMemoryResolver) GetDocument(ctx context.Context, documentID string) (*register.RegisterDocument, error) {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 
@@ -58,7 +59,7 @@ func (c InMemoryResolver) GetDocument(documentID string) (*register.RegisterDocu
 	return nil, register.NewResolverError(fmt.Errorf("document not found"), register.NotFound)
 }
 
-func (c InMemoryResolver) RegisterDocument(document *register.RegisterDocument, _ *ecdsa.PrivateKey, _ *register.Issuer) error {
+func (c InMemoryResolver) RegisterDocument(ctx context.Context, document *register.RegisterDocument, _ *ecdsa.PrivateKey, _ *register.Issuer) error {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 

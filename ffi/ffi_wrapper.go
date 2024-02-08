@@ -5,6 +5,7 @@ package main
 // #include <stdlib.h>
 import "C"
 import (
+	"context"
 	"encoding/hex"
 	"fmt"
 	"net/url"
@@ -12,10 +13,10 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/api"
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/crypto"
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/identity"
-	"github.com/Iotic-Labs/iotics-identity-go/pkg/register"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/api"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/crypto"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/identity"
+	"github.com/Iotic-Labs/iotics-identity-go/v3/pkg/register"
 )
 
 type GetIDFunc = func(opts *api.GetIdentityOpts) (register.RegisteredIdentity, error)
@@ -93,6 +94,8 @@ func UserDelegatesAuthenticationToAgent(
 	cDelegationName *C.char,
 ) *C.char {
 
+	ctx := context.TODO()
+
 	resolverAddress := C.GoString(cResolverAddress)
 	delegationName := C.GoString(cDelegationName)
 
@@ -125,7 +128,7 @@ func UserDelegatesAuthenticationToAgent(
 		return C.CString(fmt.Sprintf("FFI lib error: failed to get agent registered identity: %+v", err))
 	}
 
-	err = api.UserDelegatesAuthenticationToAgent(resolver, userIdentity, agentIdentity, delegationName)
+	err = api.UserDelegatesAuthenticationToAgent(ctx, resolver, userIdentity, agentIdentity, delegationName)
 
 	if err != nil {
 		return C.CString(fmt.Sprintf("FFI lib error: unable to delegate control to agent: %+v", err))
@@ -146,6 +149,8 @@ func TwinDelegatesControlToAgent(cResolverAddress *C.char,
 	cTwinSeed *C.char,
 
 	cDelegationName *C.char) *C.char {
+
+	ctx := context.TODO()
 
 	resolverAddress := C.GoString(cResolverAddress)
 	delegationName := C.GoString(cDelegationName)
@@ -179,7 +184,7 @@ func TwinDelegatesControlToAgent(cResolverAddress *C.char,
 		return C.CString(fmt.Sprintf("FFI lib error: failed to get agent registered identity: %+v", err))
 	}
 
-	err = api.TwinDelegatesControlToAgent(resolver, twinIdentity, agentIdentity, delegationName)
+	err = api.TwinDelegatesControlToAgent(ctx, resolver, twinIdentity, agentIdentity, delegationName)
 
 	if err != nil {
 		return C.CString(fmt.Sprintf("FFI lib error: unable to delegate control to agent: %+v", err))
@@ -192,10 +197,12 @@ func IsAllowedFor(
 	cResolverAddress *C.char,
 	cToken *C.char,
 ) (*C.char, *C.char) {
+	ctx := context.TODO()
+
 	resolverAddress := C.GoString(cResolverAddress)
 	rAdd, err := url.Parse(resolverAddress)
 	if err != nil {
-		return nil, C.CString(fmt.Sprintf("FFI lib error: resolver address invalid"))
+		return nil, C.CString("FFI lib error: resolver address invalid")
 	}
 	resolver := register.NewDefaultRestResolverClient(rAdd)
 
@@ -207,17 +214,17 @@ func IsAllowedFor(
 	}
 	userDid := claims.Subject
 	agentDid := claims.Issuer.Did
-	agentDoc, err := resolver.GetDocument(agentDid)
+	agentDoc, err := resolver.GetDocument(ctx, agentDid)
 	if err != nil {
 		return nil, C.CString(fmt.Sprintf("FFI lib error: unable to fetch agent document: %v", err))
 	}
-	userDoc, err := resolver.GetDocument(userDid)
+	userDoc, err := resolver.GetDocument(ctx, userDid)
 
 	if err != nil {
 		return nil, C.CString(fmt.Sprintf("FFI lib error: unable to fetch user document: %v", err))
 	}
 
-	allowed, err := register.IsAllowFor(resolver, claims.Issuer, agentDoc, userDoc, true)
+	allowed, err := register.IsAllowFor(ctx, resolver, claims.Issuer, agentDoc, userDoc, true)
 	if err != nil {
 		return nil, C.CString(fmt.Sprintf("FFI lib error: unable to determine result: %v", err))
 	}
@@ -225,9 +232,10 @@ func IsAllowedFor(
 
 }
 
-//export CreateAgentAuthToken
 // CreateAgentAuthToken creates an Agent Authentication token given the secrets
 // It returns the token string or error string
+//
+//export CreateAgentAuthToken
 func CreateAgentAuthToken(
 
 	cAgentDid *C.char,
@@ -280,6 +288,8 @@ func CreateTwinDidWithControlDelegation(
 	cTwinKeyName *C.char,
 	cTwinName *C.char) (*C.char, *C.char) {
 
+	ctx := context.TODO()
+
 	// validation
 	resolverAddress := C.GoString(cResolverAddress)
 	agentDid := C.GoString(cAgentDid)
@@ -305,7 +315,7 @@ func CreateTwinDidWithControlDelegation(
 		AgentID:        agent,
 		DelegationName: "#TwinToAgentControlDeleg",
 	}
-	twinIdentity, err := api.CreateTwinWithControlDelegation(resolver, opts)
+	twinIdentity, err := api.CreateTwinWithControlDelegation(ctx, resolver, opts)
 	if err != nil {
 		return nil, C.CString(fmt.Sprintf("FFI lib error: creating twin DiD Doc failed: %+v", err))
 	}
@@ -325,6 +335,8 @@ func createIdentity(
 	cSeed *C.char,
 	override bool,
 ) (*C.char, *C.char) {
+	ctx := context.TODO()
+
 	resolverAddress := C.GoString(cResolverAddress)
 	keyName := C.GoString(cKeyName)
 	name := C.GoString(cName)
@@ -351,9 +363,9 @@ func createIdentity(
 	resolver := register.NewDefaultRestResolverClient(addr)
 	var id register.RegisteredIdentity
 	if isUser {
-		id, err = api.CreateUserIdentity(resolver, opts)
+		id, err = api.CreateUserIdentity(ctx, resolver, opts)
 	} else {
-		id, err = api.CreateAgentIdentity(resolver, opts)
+		id, err = api.CreateAgentIdentity(ctx, resolver, opts)
 	}
 
 	if err != nil {

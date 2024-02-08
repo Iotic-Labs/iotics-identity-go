@@ -3,13 +3,14 @@
 package register
 
 import (
+	"context"
 	"fmt"
 )
 
 // IsAllowFor Check if the issuer is allowed for control (authentication if include_auth = True) on the subject register.
 // Returns both whether control is allowed as well as the associated error. (This can be used to e.g. treat certain errors
 // differently such as ResolverError - or can instead be ignored).
-func IsAllowFor(resolverClient ResolverClient, issuer *Issuer, issuerDoc *RegisterDocument, subjectDoc *RegisterDocument, includeAuth bool) (bool, error) {
+func IsAllowFor(ctx context.Context, resolverClient ResolverClient, issuer *Issuer, issuerDoc *RegisterDocument, subjectDoc *RegisterDocument, includeAuth bool) (bool, error) {
 	if issuerDoc.Revoked || subjectDoc.Revoked {
 		return false, fmt.Errorf("issuer or subject document revoked")
 	}
@@ -26,39 +27,41 @@ func IsAllowFor(resolverClient ResolverClient, issuer *Issuer, issuerDoc *Regist
 		return false, err
 	}
 	if !delegationProof.Revoked {
-		err := ValidateDelegation(resolverClient, subjectDoc.ID, delegationProof)
+		err := ValidateDelegation(ctx, resolverClient, subjectDoc.ID, delegationProof)
 		return err == nil, err
 	}
 	return false, fmt.Errorf("delegation proof revoked")
 }
 
-func checkAllowOnDocOrController(resolverClient ResolverClient, issuer *Issuer, subjectID string, includeAuth bool) error {
-	issuerDoc, err := resolverClient.GetDocument(issuer.Did)
+func checkAllowOnDocOrController(ctx context.Context, resolverClient ResolverClient, issuer *Issuer, subjectID string, includeAuth bool) error {
+	issuerDoc, err := resolverClient.GetDocument(ctx, issuer.Did)
 	if err != nil {
 		return err
 	}
 
-	subjectDoc, err := resolverClient.GetDocument(subjectID)
+	subjectDoc, err := resolverClient.GetDocument(ctx, subjectID)
 	if err != nil {
 		return err
 	}
 
-	if allowed, err := IsAllowFor(resolverClient, issuer, issuerDoc, subjectDoc, includeAuth); allowed {
+	if allowed, err := IsAllowFor(ctx, resolverClient, issuer, issuerDoc, subjectDoc, includeAuth); allowed {
 		return nil
-	} else if IsResolverError(err) {
-		// Don't continue only if failed to talk to resolver.
+	} else if IsResolverError(err) || IsContextError(err) {
+		// Don't continue if:
+		// - failed to talk to resolver;
+		// - context error (e.g. timeout).
 		return err
 	}
 
 	if subjectDoc.Controller != "" {
-		controllerDoc, err := resolverClient.GetDocument(subjectDoc.Controller)
+		controllerDoc, err := resolverClient.GetDocument(ctx, subjectDoc.Controller)
 		if err != nil {
 			return err
 		}
 
-		if allowed, err := IsAllowFor(resolverClient, issuer, issuerDoc, controllerDoc, includeAuth); allowed {
+		if allowed, err := IsAllowFor(ctx, resolverClient, issuer, issuerDoc, controllerDoc, includeAuth); allowed {
 			return nil
-		} else if IsResolverError(err) {
+		} else if IsResolverError(err) || IsContextError(err) {
 			return err
 		}
 	}
@@ -67,23 +70,23 @@ func checkAllowOnDocOrController(resolverClient ResolverClient, issuer *Issuer, 
 }
 
 // ValidateAllowedForControl Validate if issuer is allowed for control on the register document associated to the subject decentralised.
-func ValidateAllowedForControl(resolverClient ResolverClient, issuer *Issuer, subjectID string) error {
-	return checkAllowOnDocOrController(resolverClient, issuer, subjectID, false)
+func ValidateAllowedForControl(ctx context.Context, resolverClient ResolverClient, issuer *Issuer, subjectID string) error {
+	return checkAllowOnDocOrController(ctx, resolverClient, issuer, subjectID, false)
 }
 
 // ValidateAllowedForAuth Validate if issuer is allowed for authentication on the register document associated to the subject.
-func ValidateAllowedForAuth(resolverClient ResolverClient, issuer *Issuer, subjectID string) error {
-	return checkAllowOnDocOrController(resolverClient, issuer, subjectID, true)
+func ValidateAllowedForAuth(ctx context.Context, resolverClient ResolverClient, issuer *Issuer, subjectID string) error {
+	return checkAllowOnDocOrController(ctx, resolverClient, issuer, subjectID, true)
 }
 
 // VerifyAuthentication Verify if the authentication token is allowed for authentication.
-func VerifyAuthentication(resolverClient ResolverClient, token JwtToken) (*AuthenticationClaims, error) {
+func VerifyAuthentication(ctx context.Context, resolverClient ResolverClient, token JwtToken) (*AuthenticationClaims, error) {
 	unverifiedToken, err := DecodeAuthTokenNoVerify(token)
 	if err != nil {
 		return nil, err
 	}
 
-	issuerDoc, err := resolverClient.GetDocument(unverifiedToken.Issuer.Did)
+	issuerDoc, err := resolverClient.GetDocument(ctx, unverifiedToken.Issuer.Did)
 	if err != nil {
 		return nil, err
 	}
@@ -98,12 +101,12 @@ func VerifyAuthentication(resolverClient ResolverClient, token JwtToken) (*Authe
 		return nil, err
 	}
 
-	subjectDoc, err := resolverClient.GetDocument(unverifiedToken.Subject)
+	subjectDoc, err := resolverClient.GetDocument(ctx, unverifiedToken.Subject)
 	if err != nil {
 		return nil, err
 	}
 
-	if allowed, err := IsAllowFor(resolverClient, verifiedToken.Issuer, issuerDoc, subjectDoc, true); !allowed {
+	if allowed, err := IsAllowFor(ctx, resolverClient, verifiedToken.Issuer, issuerDoc, subjectDoc, true); !allowed {
 		return nil, err
 	}
 
