@@ -1,30 +1,35 @@
 .DEFAULT_GOAL := compile_task
 
 ifeq ($(OS),Windows_NT)
-    OS_FLAG=windows
-    ifeq ($(PROCESSOR_ARCHITEW6432),AMD64)
-        ARCH_FLAG=amd64
-    else
-        ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)
-            ARCH_FLAG=amd64
-        endif
-        ifeq ($(PROCESSOR_ARCHITECTURE),x86)
-            ARCH_FLAG=386
-        endif
-    endif
+	OS_FLAG=windows
+	ifeq ($(PROCESSOR_ARCHITEW6432),AMD64)
+		ARCH_FLAG=amd64
+	else
+		ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)
+			ARCH_FLAG=amd64
+		endif
+		ifeq ($(PROCESSOR_ARCHITECTURE),x86)
+			ARCH_FLAG=386
+		endif
+	endif
 	OS_EXT=dll
 else
 	UNAME_OS := $(shell uname -s)
 	ifeq ($(UNAME_OS),Darwin)
 		OS_FLAG=darwin
+		OS_EXT=dylib
 	endif
 	ifeq ($(UNAME_OS),Linux)
 		OS_FLAG=linux
+		OS_EXT=so
 	endif
 
 	UNAME_ARCH := $(shell uname -m)
 	ifeq ($(UNAME_ARCH),i386)
 		ARCH_FLAG=386
+	endif
+	ifeq ($(UNAME_ARCH),x86_64)
+		ARCH_FLAG=amd64
 	endif
 	ifeq ($(UNAME_ARCH),amd64)
 		ARCH_FLAG=amd64
@@ -32,10 +37,6 @@ else
 	ifeq ($(UNAME_ARCH),arm64)
 		ARCH_FLAG=arm64
 	endif
-	ifeq ($(UNAME_ARCH),x86_64)
-		ARCH_FLAG=amd64
-	endif
-	OS_EXT=so
 endif
 
 clean:
