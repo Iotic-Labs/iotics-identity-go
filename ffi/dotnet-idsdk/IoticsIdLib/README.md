@@ -8,7 +8,7 @@ Go to the ffi directory and run the `Makefile` or the `build.ps1` as per README.
 2. Run
     - `dotnet clean` to clean the project (sometimes it seems you need to delete the directories `bin` and `obj` manually)
     - `dotnet build` to build it
-    - `dotnet run` to run the Main method in `src\Main.cs`
+    - `dotnet run <resolver address>` to run the Main method in `src\Main.cs` (you can find the resolver address from `https://<myspace>.iotics.space/index.json`)
 
 In order to distribute the project to 3rd parties you should make the binary and header files `lib-iotics-id-sdk.*` and the content of the bin directory.
 

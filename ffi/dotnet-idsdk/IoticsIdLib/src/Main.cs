@@ -1,9 +1,9 @@
 using IOTICS;
 class Program {
  // Example of usage
-    public static void Main()
+    public static void Main(string[] args)
     {
-        string RESOLVER = "https://did.dev.iotics.com";
+        string RESOLVER = args[0];
         try
         {
             string seed = Identity.CreateDefaultSeed();
