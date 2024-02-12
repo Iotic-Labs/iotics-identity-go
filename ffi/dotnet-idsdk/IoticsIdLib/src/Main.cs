@@ -23,7 +23,7 @@ class Program {
             UserIdentity userId = identity.CreateUserIdentity(seed, "userKeyName", "#userName");
             Console.WriteLine("User identity: " + userId);
 
-            TwinIdentity twinId = identity.CreateTwinIdentity(seed, "userKeyName", "#userName");
+            TwinIdentity twinId = identity.CreateTwinIdentity(seed, "twinKeyName", "#twinName");
             Console.WriteLine("Twin identity: " + twinId);
 
             TwinIdentity twinIdWithCD = identity.CreateTwinIdentityWithControlDelegation(agentId, "twinKeyName", "#twinName");
