@@ -11,6 +11,24 @@ public interface SdkApi extends Library {
 
     StringResult SeedBip39ToMnemonic(String seed);
 
+    StringResult GetAgentIdentity(
+            String resolverAddress,
+            String keyName,
+            String name,
+            String seed);
+
+    StringResult GetUserIdentity(
+            String resolverAddress,
+            String keyName,
+            String name,
+            String seed);
+
+    StringResult GetTwinIdentity(
+            String resolverAddress,
+            String keyName,
+            String name,
+            String seed);
+
     StringResult RecreateAgentIdentity(
             String resolverAddress,
             String keyName,
@@ -18,6 +36,12 @@ public interface SdkApi extends Library {
             String seed);
 
     StringResult RecreateUserIdentity(
+            String resolverAddress,
+            String keyName,
+            String name,
+            String seed);
+
+    StringResult RecreateTwinIdentity(
             String resolverAddress,
             String keyName,
             String name,
@@ -35,6 +59,12 @@ public interface SdkApi extends Library {
             String name,
             String seed);
 
+    StringResult CreateTwinIdentity(
+            String resolverAddress,
+            String keyName,
+            String name,
+            String seed);
+
     StringResult CreateTwinDidWithControlDelegation(
             String resolverAddress,
             String agentDid,
@@ -44,7 +74,7 @@ public interface SdkApi extends Library {
             String twinKeyName,
             String twinName);
 
-    String UserDelegatesAuthenticationToAgent(
+    StringResult UserDelegatesAuthenticationToAgent(
             String resolverAddress,
 
             String agentDid,
@@ -63,7 +93,7 @@ public interface SdkApi extends Library {
             String resolverAddress,
             String token);
 
-    String TwinDelegatesControlToAgent(
+    StringResult TwinDelegatesControlToAgent(
             String resolverAddress,
 
             String agentDid,

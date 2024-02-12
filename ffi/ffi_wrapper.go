@@ -7,6 +7,7 @@ import "C"
 import (
 	"context"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"strings"
@@ -20,6 +21,14 @@ import (
 )
 
 type GetIDFunc = func(opts *api.GetIdentityOpts) (register.RegisteredIdentity, error)
+
+type DOC_TYPE int
+
+const ( // iota is reset to 0
+	DOC_TYPE_USER  DOC_TYPE = iota // == 0
+	DOC_TYPE_AGENT          = iota // == 1
+	DOC_TYPE_TWIN           = iota // == 2
+)
 
 //export CreateDefaultSeed
 func CreateDefaultSeed() (*C.char, *C.char) {
@@ -53,28 +62,112 @@ func SeedBip39ToMnemonic(cSeed *C.char) (*C.char, *C.char) {
 	return C.CString(res), nil
 }
 
+//export GetAgentIdentity
+func GetAgentIdentity(cResolverAddress *C.char, cKeyName *C.char, cName *C.char, cSeed *C.char,
+) (*C.char, *C.char) {
+	return getExistingIdentity(DOC_TYPE_AGENT, cResolverAddress, cKeyName, cName, cSeed, false)
+}
+
 //export CreateAgentIdentity
 func CreateAgentIdentity(cResolverAddress *C.char, cKeyName *C.char, cName *C.char, cSeed *C.char,
 ) (*C.char, *C.char) {
-	return createIdentity(false, cResolverAddress, cKeyName, cName, cSeed, false)
+	return createIdentity(DOC_TYPE_AGENT, cResolverAddress, cKeyName, cName, cSeed, false)
 }
 
 //export RecreateAgentIdentity
 func RecreateAgentIdentity(cResolverAddress *C.char, cKeyName *C.char, cName *C.char, cSeed *C.char,
 ) (*C.char, *C.char) {
-	return createIdentity(false, cResolverAddress, cKeyName, cName, cSeed, true)
+	return createIdentity(DOC_TYPE_AGENT, cResolverAddress, cKeyName, cName, cSeed, true)
+}
+
+//export GetAgentIdentity
+func GetUserIdentity(cResolverAddress *C.char, cKeyName *C.char, cName *C.char, cSeed *C.char,
+) (*C.char, *C.char) {
+	return getExistingIdentity(DOC_TYPE_USER, cResolverAddress, cKeyName, cName, cSeed, false)
 }
 
 //export CreateUserIdentity
 func CreateUserIdentity(cResolverAddress *C.char, cKeyName *C.char, cName *C.char, cSeed *C.char,
 ) (*C.char, *C.char) {
-	return createIdentity(true, cResolverAddress, cKeyName, cName, cSeed, false)
+	return createIdentity(DOC_TYPE_USER, cResolverAddress, cKeyName, cName, cSeed, false)
 }
 
 //export RecreateUserIdentity
 func RecreateUserIdentity(cResolverAddress *C.char, cKeyName *C.char, cName *C.char, cSeed *C.char,
 ) (*C.char, *C.char) {
-	return createIdentity(true, cResolverAddress, cKeyName, cName, cSeed, true)
+	return createIdentity(DOC_TYPE_USER, cResolverAddress, cKeyName, cName, cSeed, true)
+}
+
+//export GetAgentIdentity
+func GetTwinIdentity(cResolverAddress *C.char, cKeyName *C.char, cName *C.char, cSeed *C.char,
+) (*C.char, *C.char) {
+	return getExistingIdentity(DOC_TYPE_TWIN, cResolverAddress, cKeyName, cName, cSeed, false)
+}
+
+//export CreateTwinIdentity
+func CreateTwinIdentity(cResolverAddress *C.char, cKeyName *C.char, cName *C.char, cSeed *C.char,
+) (*C.char, *C.char) {
+	return createIdentity(DOC_TYPE_TWIN, cResolverAddress, cKeyName, cName, cSeed, false)
+}
+
+//export RecreateTwinIdentity
+func RecreateTwinIdentity(cResolverAddress *C.char, cKeyName *C.char, cName *C.char, cSeed *C.char,
+) (*C.char, *C.char) {
+	return createIdentity(DOC_TYPE_TWIN, cResolverAddress, cKeyName, cName, cSeed, true)
+}
+
+func getExistingIdentity(cResolverAddress *C.char, cDid *C.char, cKeyName *C.char, cName *C.char, cSeed *C.char,
+) (*C.char, *C.char) {
+
+	ctx := context.TODO()
+
+	resolverAddress := C.GoString(cResolverAddress)
+	keyName := C.GoString(cKeyName)
+	name := C.GoString(cName)
+	seed := C.GoString(cSeed)
+	did := C.GoString(cDid)
+
+	addr, err := url.Parse(resolverAddress)
+	if err != nil {
+		return nil, C.CString(fmt.Sprintf("FFI lib error: parsing resolver address failed: %+v", err))
+	}
+
+	resolver := register.NewDefaultRestResolverClient(addr)
+	var id register.RegisteredIdentity
+
+	id, _, err = getIdentity(api.GetAgentIdentity, did, keyName, name, seed)
+	if err != nil {
+		return C.CString(fmt.Sprintf("FFI lib error: failed to get agent registered identity: %+v", err))
+	}
+
+	if docType == DOC_TYPE_USER {
+		id, _, err = getIdentity(api.GetAgentIdentity, did, keyName, name, seed)
+	} else if docType == DOC_TYPE_AGENT {
+		id, _, err = getIdentity(api.GetUserIdentity, did, keyName, name, seed)
+	} else if docType == DOC_TYPE_TWIN {
+		id, _, err = getIdentity(api.GetTwinIdentity, did, keyName, name, seed)
+	} else {
+		return nil, C.CString(fmt.Sprintf("FFI lib error: unsupported identity type: %+v", err))
+	}
+
+	issuer := map[string]interface{}{
+		"did":  id.Issuer().Did,
+		"name": id.Issuer().Name,
+	}
+
+	data := map[string]interface{}{
+		"did":    id.Did,
+		"issuer": issuer,
+		"name":   id.Name,
+	}
+
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		fmt.Println(fmt.Sprintf("FFI lib error: unable to marshall document for %+v: %+v", did, err))
+		return
+	}
+	return C.CString(jsonData), nil
+
 }
 
 //export UserDelegatesAuthenticationToAgent
@@ -328,7 +421,7 @@ func FreeUpCString(pointer *C.char) {
 }
 
 func createIdentity(
-	isUser bool, // true for userId, false for agentId
+	docType DOC_TYPE, // true for userId, false for agentId
 	cResolverAddress *C.char,
 	cKeyName *C.char,
 	cName *C.char,
@@ -362,10 +455,14 @@ func createIdentity(
 
 	resolver := register.NewDefaultRestResolverClient(addr)
 	var id register.RegisteredIdentity
-	if isUser {
+	if docType == DOC_TYPE_USER {
 		id, err = api.CreateUserIdentity(ctx, resolver, opts)
-	} else {
+	} else if docType == DOC_TYPE_AGENT {
 		id, err = api.CreateAgentIdentity(ctx, resolver, opts)
+	} else if docType == DOC_TYPE_TWIN {
+		id, err = api.CreateTwinIdentity(ctx, resolver, opts)
+	} else {
+		return nil, C.CString(fmt.Sprintf("FFI lib error: unsupported identity type: %+v", err))
 	}
 
 	if err != nil {
@@ -373,6 +470,35 @@ func createIdentity(
 	}
 
 	return C.CString(id.Did()), nil
+}
+
+// export GetDocument
+func GetDocument(cResolverAddress *C.char,
+	cDid *C.char,
+) (*C.char, *C.char) {
+	resolverAddress := C.GoString(cResolverAddress)
+	addr, err := url.Parse(resolverAddress)
+	if err != nil {
+		return nil, C.CString(fmt.Sprintf("FFI lib error: parsing resolver address failed: %+v", err))
+	}
+	resolver := register.NewDefaultRestResolverClient(addr)
+
+	did := C.GoString(cDid)
+
+	ctx := context.TODO()
+
+	doc, err := resolver.GetDocument(ctx, did)
+
+	if err != nil {
+		return nil, C.CString(fmt.Sprintf("FFI lib error: unable to retrieve document for %+v: %+v", did, err))
+	}
+
+	jsonData, err := json.Marshal(doc)
+	if err != nil {
+		fmt.Println(fmt.Sprintf("FFI lib error: unable to marshall document for %+v: %+v", did, err))
+		return
+	}
+	return C.CString(jsonData), nil
 }
 
 func getIdentity(idFunc GetIDFunc, theDid string, theKeyName string, theName string, seed string) (register.RegisteredIdentity, []byte, error) {
