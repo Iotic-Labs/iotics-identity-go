@@ -28,3 +28,13 @@ An example working output for the run is
     Twin delegating to agent2: OK
     Token 1: eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9....ikyLncygipZ9SVw
     Token 2: eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9....gmk-cV_AX-oGJgQ
+
+Any non working output will terminate the application with a non 0 return code and an error line. Possible errors:
+
+- The resolver isn't reacheable
+
+    Error: FFI lib error: unable to create identity: Get "https://domain.resolver": dial tcp: lookup domain.resolver: no such host
+
+- Iotics Identity library not found (example for Windows OS)
+
+    Error: Exception when invoking method: Unable to load DLL 'lib-iotics-id-sdk' or one of its dependencies: The specified module could not be found. (0x8007007E)
