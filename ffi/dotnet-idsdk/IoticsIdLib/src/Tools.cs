@@ -48,7 +48,7 @@ class Tools {
         catch (Exception ex)
         {
             // Handle any unexpected exceptions
-            throw new InvalidOperationException($"Exception when invoking method: {ex.Message}");
+            throw new InvalidOperationException($"Exception when invoking method", ex);
         }
 
         // Handle the case where the Go function returns nil

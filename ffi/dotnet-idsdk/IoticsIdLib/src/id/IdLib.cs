@@ -16,12 +16,6 @@ internal partial class IdLib
     // Declare the P/Invoke function
     [LibraryImport("lib-iotics-id-sdk")]
     [UnmanagedCallConv(CallConvs = [typeof(System.Runtime.CompilerServices.CallConvCdecl)])]
-    public static partial IntPtr TestEmojy([MarshalAs(UnmanagedType.LPUTF8Str)] string emo);
-
-
-    // Declare the P/Invoke function
-    [LibraryImport("lib-iotics-id-sdk")]
-    [UnmanagedCallConv(CallConvs = [typeof(System.Runtime.CompilerServices.CallConvCdecl)])]
     public static partial Return CreateDefaultSeed();
 
     // Declare the P/Invoke function for MnemonicBip39ToSeed
@@ -70,7 +64,7 @@ internal partial class IdLib
         [MarshalAs(UnmanagedType.LPUTF8Str)] string cName,
         [MarshalAs(UnmanagedType.LPUTF8Str)] string cSeed);
 
-    // Declare the P/Invoke function for CreateAgentIdentity
+    // Declare the P/Invoke function for CreateUserIdentity
     [LibraryImport("lib-iotics-id-sdk")]
     [UnmanagedCallConv(CallConvs = new Type[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
     public static partial Return CreateUserIdentity(
@@ -79,7 +73,7 @@ internal partial class IdLib
         [MarshalAs(UnmanagedType.LPUTF8Str)] string cName,
         [MarshalAs(UnmanagedType.LPUTF8Str)] string cSeed);
 
-    // Declare the P/Invoke function for RecreateAgentIdentity
+    // Declare the P/Invoke function for RecreateUserIdentity
     [LibraryImport("lib-iotics-id-sdk")]
     [UnmanagedCallConv(CallConvs = new Type[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
     public static partial Return RecreateUserIdentity(

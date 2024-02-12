@@ -7,17 +7,18 @@ public class IoticsLibException(string message) : ApplicationException(message)
 {
 }
 
-public class DelegationException(string message) : IoticsLibException(message) {
-    
+public class DelegationException(string message) : IoticsLibException(message) 
+{    
 }
 
 /** 
 Factory class for identity. 
 It takes a resolver address as discovered by https://<your_space>.iotics.space/index.json
 
-This class only exposes a fraction of the methods of the identity library, only the most common for beginners and specifically those defined here using ffi and C-style bindings is here
- https://github.com/Iotic-Labs/iotics-identity-go/blob/v3/ffi/ffi_wrapper.go  as wrappers for FFI and C-style bindings.
-
+This class only exposes a subset of the methods of the IOTICS identity library, 
+specifically the functions defined in the golang ffi wrapper here
+ https://github.com/Iotic-Labs/iotics-identity-go/blob/v3/ffi/ffi_wrapper.go
+ 
 The full spec of the identity is here https://drive.google.com/file/d/1nlJxB08cpYStcunMyhXjOvHStWZEv4ch/view
 
 The full API is here https://github.com/Iotic-Labs/iotics-identity-go/tree/v3/pkg/api

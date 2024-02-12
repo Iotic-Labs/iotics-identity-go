@@ -13,8 +13,6 @@ public abstract class PartyIdentity(Identity factory, string seed, string keyNam
 
     public override string ToString()
     {
-        string className = GetType().Name;
-        // Customize the string representation based on your class properties
         return $"Key={KeyName}, Id={Id}, Did={Did}, Seed={"..." + Tools.GetLastNCharacters(Seed, 5)} Resolver={Factory.ResolverAddress}";
     }
 }
