@@ -108,9 +108,6 @@ class Tools {
         {
             return input[^n..];
         }
-        else
-        {
-            return input;
-        }
+        return input;
     }
 }

@@ -7,7 +7,7 @@ internal partial class IdLib
 {
     // Define the struct that matches the return type of most of the functions below
     [StructLayout(LayoutKind.Sequential)]
-    public struct Return
+    public struct StringAndError
     {
         public IntPtr r0;
         public IntPtr r1;
@@ -16,22 +16,22 @@ internal partial class IdLib
     // Declare the P/Invoke function
     [LibraryImport("lib-iotics-id-sdk")]
     [UnmanagedCallConv(CallConvs = [typeof(System.Runtime.CompilerServices.CallConvCdecl)])]
-    public static partial Return CreateDefaultSeed();
+    public static partial StringAndError CreateDefaultSeed();
 
     // Declare the P/Invoke function for MnemonicBip39ToSeed
     [LibraryImport("lib-iotics-id-sdk")]
     [UnmanagedCallConv(CallConvs = new Type[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
-    public static partial Return MnemonicBip39ToSeed([MarshalAs(UnmanagedType.LPUTF8Str)] string cMnemonic);
+    public static partial StringAndError MnemonicBip39ToSeed([MarshalAs(UnmanagedType.LPUTF8Str)] string cMnemonic);
 
     // Declare the P/Invoke function for SeedBip39ToMnemonic
     [LibraryImport("lib-iotics-id-sdk")]
     [UnmanagedCallConv(CallConvs = new Type[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
-    public static partial Return SeedBip39ToMnemonic([MarshalAs(UnmanagedType.LPUTF8Str)] string cMnemonic);
+    public static partial StringAndError SeedBip39ToMnemonic([MarshalAs(UnmanagedType.LPUTF8Str)] string cMnemonic);
 
     // Declare the P/Invoke function for CreateAgentIdentity
     [LibraryImport("lib-iotics-id-sdk")]
     [UnmanagedCallConv(CallConvs = new Type[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
-    public static partial Return CreateAgentIdentity(
+    public static partial StringAndError CreateAgentIdentity(
         [MarshalAs(UnmanagedType.LPUTF8Str)] string cResolverAddress,
         [MarshalAs(UnmanagedType.LPUTF8Str)] string cKeyName,
         [MarshalAs(UnmanagedType.LPUTF8Str)] string cName,
@@ -40,7 +40,7 @@ internal partial class IdLib
     // Declare the P/Invoke function for RecreateAgentIdentity
     [LibraryImport("lib-iotics-id-sdk")]
     [UnmanagedCallConv(CallConvs = new Type[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
-    public static partial Return RecreateAgentIdentity(
+    public static partial StringAndError RecreateAgentIdentity(
         [MarshalAs(UnmanagedType.LPUTF8Str)] string cResolverAddress,
         [MarshalAs(UnmanagedType.LPUTF8Str)] string cKeyName,
         [MarshalAs(UnmanagedType.LPUTF8Str)] string cName,
@@ -49,7 +49,7 @@ internal partial class IdLib
     // Declare the P/Invoke function for CreateTwinIdentity
     [LibraryImport("lib-iotics-id-sdk")]
     [UnmanagedCallConv(CallConvs = new Type[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
-    public static partial Return CreateTwinIdentity(
+    public static partial StringAndError CreateTwinIdentity(
         [MarshalAs(UnmanagedType.LPUTF8Str)] string cResolverAddress,
         [MarshalAs(UnmanagedType.LPUTF8Str)] string cKeyName,
         [MarshalAs(UnmanagedType.LPUTF8Str)] string cName,
@@ -58,7 +58,7 @@ internal partial class IdLib
     // Declare the P/Invoke function for RecreateTwinIdentity
     [LibraryImport("lib-iotics-id-sdk")]
     [UnmanagedCallConv(CallConvs = new Type[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
-    public static partial Return RecreateTwinIdentity(
+    public static partial StringAndError RecreateTwinIdentity(
         [MarshalAs(UnmanagedType.LPUTF8Str)] string cResolverAddress,
         [MarshalAs(UnmanagedType.LPUTF8Str)] string cKeyName,
         [MarshalAs(UnmanagedType.LPUTF8Str)] string cName,
@@ -67,7 +67,7 @@ internal partial class IdLib
     // Declare the P/Invoke function for CreateUserIdentity
     [LibraryImport("lib-iotics-id-sdk")]
     [UnmanagedCallConv(CallConvs = new Type[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
-    public static partial Return CreateUserIdentity(
+    public static partial StringAndError CreateUserIdentity(
         [MarshalAs(UnmanagedType.LPUTF8Str)] string cResolverAddress,
         [MarshalAs(UnmanagedType.LPUTF8Str)] string cKeyName,
         [MarshalAs(UnmanagedType.LPUTF8Str)] string cName,
@@ -76,7 +76,7 @@ internal partial class IdLib
     // Declare the P/Invoke function for RecreateUserIdentity
     [LibraryImport("lib-iotics-id-sdk")]
     [UnmanagedCallConv(CallConvs = new Type[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
-    public static partial Return RecreateUserIdentity(
+    public static partial StringAndError RecreateUserIdentity(
         [MarshalAs(UnmanagedType.LPUTF8Str)] string cResolverAddress,
         [MarshalAs(UnmanagedType.LPUTF8Str)] string cKeyName,
         [MarshalAs(UnmanagedType.LPUTF8Str)] string cName,
@@ -122,12 +122,12 @@ internal partial class IdLib
     // Declare the P/Invoke function for IsAllowedFor
     [LibraryImport("lib-iotics-id-sdk")]
     [UnmanagedCallConv(CallConvs = new Type[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
-    public static partial Return IsAllowedFor([MarshalAs(UnmanagedType.LPUTF8Str)] string cResolverAddress, [MarshalAs(UnmanagedType.LPUTF8Str)] string cToken);
+    public static partial StringAndError IsAllowedFor([MarshalAs(UnmanagedType.LPUTF8Str)] string cResolverAddress, [MarshalAs(UnmanagedType.LPUTF8Str)] string cToken);
 
     // Declare the P/Invoke function for CreateAgentAuthToken
     [LibraryImport("lib-iotics-id-sdk")]
     [UnmanagedCallConv(CallConvs = new Type[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
-    public static partial Return CreateAgentAuthToken(
+    public static partial StringAndError CreateAgentAuthToken(
         [MarshalAs(UnmanagedType.LPUTF8Str)] string cAgentDid,
         [MarshalAs(UnmanagedType.LPUTF8Str)] string cAgentKeyName,
         [MarshalAs(UnmanagedType.LPUTF8Str)] string cAgentName,
@@ -139,7 +139,7 @@ internal partial class IdLib
     // Declare the P/Invoke function for CreateTwinDidWithControlDelegation
     [LibraryImport("lib-iotics-id-sdk")]
     [UnmanagedCallConv(CallConvs = new Type[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
-    public static partial Return CreateTwinDidWithControlDelegation(
+    public static partial StringAndError CreateTwinDidWithControlDelegation(
         [MarshalAs(UnmanagedType.LPUTF8Str)] string cResolverAddress,
         [MarshalAs(UnmanagedType.LPUTF8Str)] string cAgentDid,
         [MarshalAs(UnmanagedType.LPUTF8Str)] string cAgentKeyName,

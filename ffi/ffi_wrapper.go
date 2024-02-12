@@ -386,8 +386,10 @@ func createIdentity(
 		id, err = api.CreateUserIdentity(ctx, resolver, opts)
 	} else if idDoc == idDocAgent {
 		id, err = api.CreateAgentIdentity(ctx, resolver, opts)
-	} else {
+	} else if idDoc == idDocTwin {
 		id, err = api.CreateTwinIdentity(ctx, resolver, opts)
+	} else {
+		return nil, C.CString(fmt.Sprintf("FFI lib error: unsupported identity type: %+v", idDoc))
 	}
 
 	if err != nil {
