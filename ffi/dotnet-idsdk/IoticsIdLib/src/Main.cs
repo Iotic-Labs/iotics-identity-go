@@ -1,7 +1,7 @@
 using IOTICS;
 class Program {
  // Example of usage
-    public static void Main(string[] args)
+    public static int Main(string[] args)
     {
         string RESOLVER = args[0];
         try
@@ -44,10 +44,13 @@ class Program {
             Console.WriteLine("Token 1: " + token);
             token = Identity.CreateAgentAuthToken(agentId, userId.Did, "foo", 10L);
             Console.WriteLine("Token 2: " + token);
+
+            return 0;
         }
         catch (Exception ex)
         {
             Console.WriteLine("Error: " + ex.Message);
+            return -1;
         }
     }
 
