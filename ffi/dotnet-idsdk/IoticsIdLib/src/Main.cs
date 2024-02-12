@@ -29,6 +29,7 @@ class Program {
             TwinIdentity twinIdWithCD = identity.CreateTwinIdentityWithControlDelegation(agentId, "twinKeyName", "#twinName");
             Console.WriteLine("Twin identity with CD: " + twinIdWithCD);
 
+            // convenience method wrapping UserIdentity#UserDelegatesAuthenticationToAgent
             userId.DelegateAuthentication(agentId, "#delegation1");
             // string userDelegResult = identity.UserDelegatesAuthenticationToAgent(agentId, userId, "#delegation1");            
             Console.WriteLine("User delegating to agent 1: OK");
@@ -36,8 +37,9 @@ class Program {
             AgentIdentity agentId2 = identity.CreateAgentIdentity(Identity.CreateDefaultSeed(), "agentKeyName2", "#agentName2");
             Console.WriteLine("Agent2 identity: " + agentId2);
 
-            // string twinDelegResult = twinId.DelegateControl(agentId2, "#delegation1");
+            // direct call to the Twin delegation functionality, also available as a wrapper call in the TwinIdentity
             identity.TwinDelegatesControlToAgent(agentId2, twinId, "#delegation1");
+            // string twinDelegResult = twinId.DelegateControl(agentId2, "#delegation1");
             Console.WriteLine("Twin delegating to agent2: OK");
 
             string token = Identity.CreateAgentAuthToken(agentId, userId.Did, "foo", 10L);
