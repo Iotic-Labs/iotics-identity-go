@@ -5,7 +5,7 @@ Wrapper class that loads the DLL and exposes the methods as C# code.
 */
 internal partial class IdLib
 {
-    // Define the struct that matches the return type of CreateDefaultSeed in Go
+    // Define the struct that matches the return type of most of the functions below
     [StructLayout(LayoutKind.Sequential)]
     public struct Return
     {
@@ -158,7 +158,7 @@ internal partial class IdLib
             return null;
 
         string? result = Marshal.PtrToStringAnsi(ptr);
-        FreeUpCString(ptr); // Assuming your Go library has a function to free the allocated memory
+        FreeUpCString(ptr);
         return result;
     }
 

@@ -3,10 +3,10 @@ namespace IOTICS;
 class Tools {
     
     
-    public static string InvokeGoFunction(Func<IdLib.Return> goFunction)
+    public static string InvokeGoFunction(Func<IdLib.StringAndError> goFunction)
     {
         string? error;
-        IdLib.Return result;
+        IdLib.StringAndError result;
 
         try
         {
