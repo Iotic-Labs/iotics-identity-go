@@ -7,7 +7,7 @@ FFI wrapper for iotics-identity-go
 With `make` installed you can compile for the current platform with
 `make compile`. The script will detect the OS and ARCH and build for your system.
 
-If you want to override the target os (the `GOOS` variable), define `$OS_FLAG` to the desired value.
+If you want to override the target OS (the `GOOS` variable), define `$OS_FLAG` to the desired value.
 For example if you want to compile for an iOS target run
 `env OS_FLAG=ios make compile`
 
