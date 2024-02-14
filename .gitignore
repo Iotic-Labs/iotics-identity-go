@@ -1,6 +1,4 @@
 ffi/lib
-ffi/java-idsdk/target
-ffi/java-idsdk/**/*.class
 dist/
 ffi/dotnet-idsdk/**/.vs
 ffi/dotnet-idsdk/**/obj
