@@ -21,6 +21,14 @@ import (
 
 type GetIDFunc = func(opts *api.GetIdentityOpts) (register.RegisteredIdentity, error)
 
+type idDocType int
+
+const ( // iota is reset to 0
+	idDocUser  idDocType = iota // 0
+	idDocAgent           = iota // 1
+	idDocTwin            = iota // 2
+)
+
 //export CreateDefaultSeed
 func CreateDefaultSeed() (*C.char, *C.char) {
 	res, err := api.CreateDefaultSeed()
@@ -56,25 +64,37 @@ func SeedBip39ToMnemonic(cSeed *C.char) (*C.char, *C.char) {
 //export CreateAgentIdentity
 func CreateAgentIdentity(cResolverAddress *C.char, cKeyName *C.char, cName *C.char, cSeed *C.char,
 ) (*C.char, *C.char) {
-	return createIdentity(false, cResolverAddress, cKeyName, cName, cSeed, false)
+	return createIdentity(idDocAgent, cResolverAddress, cKeyName, cName, cSeed, false)
 }
 
 //export RecreateAgentIdentity
 func RecreateAgentIdentity(cResolverAddress *C.char, cKeyName *C.char, cName *C.char, cSeed *C.char,
 ) (*C.char, *C.char) {
-	return createIdentity(false, cResolverAddress, cKeyName, cName, cSeed, true)
+	return createIdentity(idDocAgent, cResolverAddress, cKeyName, cName, cSeed, true)
 }
 
 //export CreateUserIdentity
 func CreateUserIdentity(cResolverAddress *C.char, cKeyName *C.char, cName *C.char, cSeed *C.char,
 ) (*C.char, *C.char) {
-	return createIdentity(true, cResolverAddress, cKeyName, cName, cSeed, false)
+	return createIdentity(idDocUser, cResolverAddress, cKeyName, cName, cSeed, false)
 }
 
 //export RecreateUserIdentity
 func RecreateUserIdentity(cResolverAddress *C.char, cKeyName *C.char, cName *C.char, cSeed *C.char,
 ) (*C.char, *C.char) {
-	return createIdentity(true, cResolverAddress, cKeyName, cName, cSeed, true)
+	return createIdentity(idDocUser, cResolverAddress, cKeyName, cName, cSeed, true)
+}
+
+//export CreateTwinIdentity
+func CreateTwinIdentity(cResolverAddress *C.char, cKeyName *C.char, cName *C.char, cSeed *C.char,
+) (*C.char, *C.char) {
+	return createIdentity(idDocTwin, cResolverAddress, cKeyName, cName, cSeed, false)
+}
+
+//export RecreateTwinIdentity
+func RecreateTwinIdentity(cResolverAddress *C.char, cKeyName *C.char, cName *C.char, cSeed *C.char,
+) (*C.char, *C.char) {
+	return createIdentity(idDocTwin, cResolverAddress, cKeyName, cName, cSeed, true)
 }
 
 //export UserDelegatesAuthenticationToAgent
@@ -328,7 +348,7 @@ func FreeUpCString(pointer *C.char) {
 }
 
 func createIdentity(
-	isUser bool, // true for userId, false for agentId
+	idDoc idDocType,
 	cResolverAddress *C.char,
 	cKeyName *C.char,
 	cName *C.char,
@@ -362,10 +382,14 @@ func createIdentity(
 
 	resolver := register.NewDefaultRestResolverClient(addr)
 	var id register.RegisteredIdentity
-	if isUser {
+	if idDoc == idDocUser {
 		id, err = api.CreateUserIdentity(ctx, resolver, opts)
-	} else {
+	} else if idDoc == idDocAgent {
 		id, err = api.CreateAgentIdentity(ctx, resolver, opts)
+	} else if idDoc == idDocTwin {
+		id, err = api.CreateTwinIdentity(ctx, resolver, opts)
+	} else {
+		return nil, C.CString(fmt.Sprintf("FFI lib error: unsupported identity type: %+v", idDoc))
 	}
 
 	if err != nil {
