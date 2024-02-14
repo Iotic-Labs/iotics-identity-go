@@ -95,7 +95,7 @@ public class Identity(string resolverAddress)
     /// <param name="cKeyName">a key name</param>
     /// <param name="cId">a unique ID in the identity document referring the public key matching this identity</param>
     /// <returns>the agent identity</returns>
-    internal AgentIdentity RecreateAgentIdentity(string seed, string cKeyName, string cId)
+    public AgentIdentity RecreateAgentIdentity(string seed, string cKeyName, string cId)
     {
         string did = Tools.InvokeGoFunction(() => IdLib.RecreateAgentIdentity(ResolverAddress, cKeyName, Tools.EnsureHashPrefix(cId), seed));
         return new AgentIdentity(this, seed, cKeyName, cId, did);
@@ -124,7 +124,7 @@ public class Identity(string resolverAddress)
     /// <param name="cKeyName">a key name</param>
     /// <param name="cId">a unique ID in the identity document referring the public key matching this identity</param>
     /// <returns>the twin identity</returns>
-    internal TwinIdentity RecreateTwinIdentity(string seed, string cKeyName, string cId)
+    public TwinIdentity RecreateTwinIdentity(string seed, string cKeyName, string cId)
     {
         string did = Tools.InvokeGoFunction(() => IdLib.RecreateTwinIdentity(ResolverAddress, cKeyName, Tools.EnsureHashPrefix(cId), seed));
         return new TwinIdentity(this, seed, cKeyName, cId, did);
@@ -158,7 +158,7 @@ public class Identity(string resolverAddress)
     /// <param name="cKeyName">a key name</param>
     /// <param name="cId">a unique ID in the identity document referring the public key matching this identity</param>
     /// <returns></returns>
-    internal UserIdentity RecreateUserIdentity(string seed, string cKeyName, string cId)
+    public UserIdentity RecreateUserIdentity(string seed, string cKeyName, string cId)
     {
         string did = Tools.InvokeGoFunction(() => IdLib.RecreateUserIdentity(ResolverAddress, cKeyName, Tools.EnsureHashPrefix(cId), seed));
         return new UserIdentity(this, seed, cKeyName, cId, did);
@@ -188,7 +188,7 @@ public class Identity(string resolverAddress)
     /// <param name="userIdentity">the identity of the delegating user</param>
     /// <param name="cDelegationName">the unique name of this delegation</param>
     /// <returns>throws DelegationException if an error occurs</returns>
-    internal void UserDelegatesAuthenticationToAgent(
+    public void UserDelegatesAuthenticationToAgent(
         AgentIdentity agentIdentity,
         UserIdentity userIdentity,
         string cDelegationName
@@ -213,7 +213,7 @@ public class Identity(string resolverAddress)
     /// <param name="twinIdentity">the identity of the delegating twin</param>
     /// <param name="cDelegationName">the unique name of this delegation</param>
     /// <returns>throws DelegationException if an error occurs</returns>
-    internal void TwinDelegatesControlToAgent(
+    public void TwinDelegatesControlToAgent(
         AgentIdentity agentIdentity,
         TwinIdentity twinIdentity,
         string cDelegationName

@@ -348,7 +348,7 @@ func FreeUpCString(pointer *C.char) {
 }
 
 func createIdentity(
-	idDoc idDocType, // true for userId, false for agentId
+	idDoc idDocType,
 	cResolverAddress *C.char,
 	cKeyName *C.char,
 	cName *C.char,
