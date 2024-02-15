@@ -1,40 +1,53 @@
-# Build
+# Dotnet Library for Iotics Identity Library
 
-Go to the ffi directory and run the `Makefile` or the `build.ps1` as per README.
+This document outlines the process for building, running, and distributing a .NET library that interfaces with the Iotics Identity Library. The library facilitates operations related to digital identities in the Iotics ecosystem.
 
-# Run the test Application
+## Prerequisites
+Before you begin, ensure you have the following prerequisites:
 
-1. Copy the libraries built in this top directory. For example, for Windows `copy .\lib\*.* .\dotnet-idsdk\IoticsIdLib\` to make the libraries available to the project.  
-2. Run
-    - `dotnet clean` to clean the project (sometimes it seems you need to delete the directories `bin` and `obj` manually)
-    - `dotnet build` to build it
-    - `dotnet run <resolver address>` to run the Main method in `src\Main.cs` (you can find the resolver address from `https://<myspace>.iotics.space/index.json`)
+* .NET SDK (version specifying if needed, e.g., .NET 5.0)
+* Appropriate permissions to access https://<myspace>.iotics.space/index.json to retrieve the resolver addresses
+* A copy of the Identity Library available in `./dotnet-idsdk/IoticsIdLib`. You can build it following instructions in `./ffi/README.md` or download it from https://github.com/Iotic-Labs/iotics-identity-go/tags
 
-In order to distribute the project to 3rd parties you should make the binary and header files `lib-iotics-id-sdk.*` and the content of the bin directory.
+## Build the library and test application
 
-## Run output
+* `dotnet clean`
+    * cleans the project; sometimes it seems you need to delete the directories `bin` and `obj` manually
+* `dotnet build`
+    * builds the library and test application in `./bin` 
+* `dotnet run <resolver address>` to run the Main method in `src/Main.cs`
+    * retrieve the resolver address from `https://<myspace>.iotics.space/index.json`
+
+## Distribution
+To distribute this project to third parties, include:
+
+* Binary and header files named lib-iotics-id-sdk.*
+* The contents of the bin directory after building the project
+
+## Example Run output
+
+The `src/Main.cs` shows an example of how to use the library to perform high level basic functions with the Identity Library.
 
 An example working output for the run is 
 
     A new seed: ...69561
     Use these mnemonics instead of remembering the seed: resist rough main ...
     Recovered seed: ...69561
-    Agent identity: Key=agentKeyName, Id=#agentName, Did=did:iotics:iotU1N..., Seed=...69561 Resolver=https://did.dev.iotics.com
-    User identity: Key=userKeyName, Id=#userName, Did=did:iotics:iotDRfBoB..., Seed=...69561 Resolver=https://did.dev.iotics.com
-    Twin identity: Key=userKeyName, Id=#userName, Did=did:iotics:iotWTs39C..., Seed=...69561 Resolver=https://did.dev.iotics.com
-    Twin identity with CD: Key=twinKeyName, Id=#twinName, Did=did:iotics:iotB8Jq..., Seed=...69561 Resolver=https://did.dev.iotics.com
-    User delegating to agent 1: OK
-    Agent2 identity: Key=agentKeyName2, Id=#agentName2, Did=did:iotics:iotGbUU..., Seed=...a2772 Resolver=https://did.dev.iotics.com
-    Twin delegating to agent2: OK
-    Token 1: eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9....ikyLncygipZ9SVw
+    ...
     Token 2: eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9....gmk-cV_AX-oGJgQ
 
-Any non working output will terminate the application with a non 0 return code and an error line. Possible errors:
+Any execution errors will terminate the application with a non-zero return code, accompanied by an error message.
 
-- The resolver isn't reacheable
+### Troubleshooting 
+
+#### Resolver Not Reachable:
 
     Error: FFI lib error: unable to create identity: Get "https://domain.resolver": dial tcp: lookup domain.resolver: no such host
 
-- Iotics Identity library not found (example for Windows OS)
+Ensure you have the correct resolver address and that your internet connection is stable.
+
+#### Iotics Identity Library Not Found (Windows):
 
     Error: Exception when invoking method: Unable to load DLL 'lib-iotics-id-sdk' or one of its dependencies: The specified module could not be found. (0x8007007E)
+
+Verify that the lib-iotics-id-sdk.* files are correctly placed in the project directory as instructed in the setup section.
