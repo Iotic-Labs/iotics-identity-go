@@ -105,7 +105,7 @@ func (document RegisterDocument) PublicKeyByID(id string) *RegisterPublicKey {
 }
 
 // ValidateUpdateDocument checks if the document provided is a valid update to the existing document
-func (document RegisterDocument) ValidateUpdateDocument(newDocument RegisterDocument) error {
+func (document RegisterDocument) ValidateUpdateDocument(newDocument *RegisterDocument) error {
 	// Check Public Keys have not been removed
 	for _, key := range document.PublicKeys {
 		if !key.ExistsInSlice(newDocument.PublicKeys) {
