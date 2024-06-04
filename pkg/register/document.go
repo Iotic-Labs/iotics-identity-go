@@ -69,6 +69,25 @@ type RegisterDocument struct {
 	Metadata               Metadata                  `json:"metadata,omitempty"`
 }
 
+func (key RegisterPublicKey) ExistsInSlice(cmp []RegisterPublicKey) bool {
+	for _, newKey := range cmp {
+		if newKey.ID == key.ID && newKey.PublicKeyBase58 == key.PublicKeyBase58 && newKey.Type == key.Type {
+			return true
+		}
+	}
+	return false
+}
+
+func (key RegisterDelegationProof) ExistsInSlice(cmp []RegisterDelegationProof) bool {
+	for _, newKey := range cmp {
+		if newKey.ID == key.ID && newKey.Controller == key.Controller && newKey.Proof == key.Proof && newKey.ProofType == key.ProofType {
+			return true
+		}
+	}
+	return false
+
+}
+
 // PublicKeyByID get public key by ID (note: excluding authentication keys).
 func (document RegisterDocument) PublicKeyByID(id string) *RegisterPublicKey {
 	for _, v := range document.PublicKeys {
@@ -79,6 +98,39 @@ func (document RegisterDocument) PublicKeyByID(id string) *RegisterPublicKey {
 				PublicKeyBase58: v.PublicKeyBase58,
 				Revoked:         v.Revoked,
 			}
+		}
+	}
+
+	return nil
+}
+
+// ValidateUpdateDocument checks if the document provided is a valid update to the existing document
+func (document RegisterDocument) ValidateUpdateDocument(newDocument RegisterDocument) error {
+	// Check Public Keys have not been removed
+	for _, key := range document.PublicKeys {
+		if !key.ExistsInSlice(newDocument.PublicKeys) {
+			return errors.New("public key " + key.ID + " cannot be removed, only revoked")
+		}
+	}
+
+	// Check Authentication Keys have not been removed
+	for _, key := range document.AuthenticationKeys {
+		if !key.ExistsInSlice(newDocument.AuthenticationKeys) {
+			return errors.New("authentication key " + key.ID + " cannot be removed, only revoked")
+		}
+	}
+
+	// Check delegate Control has not been removed
+	for _, key := range document.DelegateControl {
+		if !key.ExistsInSlice(newDocument.DelegateControl) {
+			return errors.New("delegation of control " + key.ID + " cannot be removed, only revoked")
+		}
+	}
+
+	// Check delegate authentication has not been removed
+	for _, key := range document.DelegateAuthentication {
+		if !key.ExistsInSlice(newDocument.DelegateAuthentication) {
+			return errors.New("authentication delegation" + key.ID + " cannot be removed, only revoked")
 		}
 	}
 
