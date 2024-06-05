@@ -545,9 +545,6 @@ func ValidateDocumentProof(document *register.RegisterDocument) error {
 		publicKeyBytes := base58.DecodeAlphabet(v.PublicKeyBase58, base58.BTCAlphabet)
 		did, _ := identity.MakeIdentifier(publicKeyBytes)
 		if did == document.ID {
-			if v.Revoked {
-				return fmt.Errorf("subject public key is revoked")
-			}
 			docProof := &proof.Proof{
 				IssuerDid:  document.ID,
 				IssuerName: v.ID,

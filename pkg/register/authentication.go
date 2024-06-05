@@ -22,11 +22,16 @@ func IsAllowFor(ctx context.Context, resolverClient ResolverClient, issuer *Issu
 		}
 	}
 
+	owner, err := GetOwnerRegisterPublicKey(issuerDoc)
+	if err != nil {
+		return false, err
+	}
+
 	delegationProof, err := GetIssuerRegisterDelegationProofByController(issuer.String(), subjectDoc, includeAuth)
 	if err != nil {
 		return false, err
 	}
-	if !delegationProof.Revoked {
+	if !delegationProof.Revoked && !owner.Revoked {
 		err := ValidateDelegation(ctx, resolverClient, subjectDoc.ID, delegationProof)
 		return err == nil, err
 	}
@@ -90,10 +95,15 @@ func VerifyAuthentication(ctx context.Context, resolverClient ResolverClient, to
 	if err != nil {
 		return nil, err
 	}
-
+	if issuerDoc.Revoked {
+		return nil, fmt.Errorf("issuer document revoked")
+	}
 	issuerKey, err := GetIssuerRegisterKey(unverifiedToken.Issuer.Name, issuerDoc, true)
 	if err != nil {
 		return nil, err
+	}
+	if issuerKey.Revoked {
+		return nil, fmt.Errorf("issuer key revoked")
 	}
 
 	verifiedToken, err := DecodeAuthToken(token, issuerKey.PublicKeyBase58, unverifiedToken.Audience)
@@ -104,6 +114,16 @@ func VerifyAuthentication(ctx context.Context, resolverClient ResolverClient, to
 	subjectDoc, err := resolverClient.GetDocument(ctx, unverifiedToken.Subject)
 	if err != nil {
 		return nil, err
+	}
+	if subjectDoc.Revoked {
+		return nil, fmt.Errorf("subject document revoked")
+	}
+	ownerKey, err := GetOwnerRegisterPublicKey(subjectDoc)
+	if err != nil {
+		return nil, err
+	}
+	if ownerKey.Revoked {
+		return nil, fmt.Errorf("subject key revoked")
 	}
 
 	if allowed, err := IsAllowFor(ctx, resolverClient, verifiedToken.Issuer, issuerDoc, subjectDoc, true); !allowed {

@@ -49,6 +49,9 @@ func (r RegisterDelegationProof) Clone() (*RegisterDelegationProof, error) {
 
 // ValidateDelegation Validate register delegation proof against the delegation controller register document.
 func ValidateDelegation(ctx context.Context, resolverClient ResolverClient, registeredID string, registeredProof *RegisterDelegationProof) error {
+	if registeredProof.Revoked {
+		return fmt.Errorf("registering delegation proof revoked")
+	}
 	controllerIssuer, err := NewIssuerFromString(registeredProof.Controller)
 	if err != nil {
 		return err
@@ -59,15 +62,18 @@ func ValidateDelegation(ctx context.Context, resolverClient ResolverClient, regi
 		return err
 	}
 
+	if controllerDoc.Revoked {
+		return fmt.Errorf("controller document is revoked")
+	}
 	var controllerPublicKey *RegisterPublicKey
 	for _, v := range controllerDoc.PublicKeys {
-		if v.ID == controllerIssuer.Name {
+		if v.ID == controllerIssuer.Name && !v.Revoked {
 			controllerPublicKey = &v // nolint:gosec
 			break
 		}
 	}
 	if controllerPublicKey == nil {
-		return fmt.Errorf("controller public key %s not found", controllerIssuer.Name)
+		return fmt.Errorf("controller public key %s not found, or revoked", controllerIssuer.Name)
 	}
 	switch registeredProof.ProofType {
 	case GenericProof:
