@@ -380,21 +380,6 @@ func iAddTheNewOwnerToTheDocument(t gobdd.StepTest, ctx gobdd.Context) {
 	advancedapi.AddPublicKeyToDocument(context.TODO(), resolver, nil, name, publicKeyBase58, registeredTwin.(register.RegisteredIdentity))
 }
 
-func iRemoveTheOtherOwnerFromTheDocument(t gobdd.StepTest, ctx gobdd.Context) {
-	nameToRemove, _ := ctx.GetString(ctxOtherTwinIdentityName)
-	publicKeyBase58ToRemove, _ := ctx.GetString(ctxOtherTwinIdentityPubKey)
-	registeredTwin, _ := ctx.Get(ctxRegisteredTwin)
-	initialOwner := registeredTwin.(register.RegisteredIdentity)
-
-	doc, err := advancedapi.GetRegisterDocument(context.TODO(), resolver, initialOwner.Did())
-	assert.NilError(t, err)
-	otherIssuer, err := advancedapi.GetIssuerByPublicKey(doc, publicKeyBase58ToRemove)
-	assert.NilError(t, err)
-
-	advancedapi.RemovePublicKeyFromDocument(context.TODO(), resolver, nil, nameToRemove, initialOwner)
-	ctx.Set(ctxOtherTwinIdentityIssuer, otherIssuer)
-}
-
 func iRevokeTheOtherOwnerKey(t gobdd.StepTest, ctx gobdd.Context) {
 	nameToRevoke, _ := ctx.GetString(ctxOtherTwinIdentityName)
 	publicKeyBase58ToRevoke, _ := ctx.GetString(ctxOtherTwinIdentityPubKey)
@@ -415,13 +400,6 @@ func iAddTheNewAuthenticationKeyToTheDocument(t gobdd.StepTest, ctx gobdd.Contex
 	publicKeyBase58, _ := ctx.GetString(ctxOtherTwinIdentityPubKey)
 	twin := ctxRegisteredTwin.GetRegisteredIdentity(t, ctx)
 	err := advancedapi.AddAuthenticationKeyToDocument(context.TODO(), resolver, nil, name, publicKeyBase58, twin)
-	assert.NilError(t, err)
-}
-
-func iRemoveTheAuthenticationKeyFromTheDocument(t gobdd.StepTest, ctx gobdd.Context) {
-	nameToRemove, _ := ctx.GetString(ctxOtherTwinIdentityName)
-	initialOwner := ctxRegisteredTwin.GetRegisteredIdentity(t, ctx)
-	err := advancedapi.RemovePublicKeyFromDocument(context.TODO(), resolver, nil, nameToRemove, initialOwner)
 	assert.NilError(t, err)
 }
 
@@ -498,12 +476,6 @@ func iAddTheGenericControlDelegationProofToTheDocument(t gobdd.StepTest, ctx gob
 
 	advancedapi.AddGenericControlDelegationToDocument(context.TODO(), resolver, nil, delegationProofName, otherIdentity.Issuer().String(), pr.Signature, initialIdentity)
 	ctx.Set(ctxDelegationName, delegationProofName)
-}
-
-func iRemoveTheControlDelegationProofFromTheDocument(t gobdd.StepTest, ctx gobdd.Context) {
-	delegationName, _ := ctx.GetString(ctxDelegationName)
-	initialIdentity := ctxRegisteredTwin.GetRegisteredIdentity(t, ctx)
-	advancedapi.RemoveControlDelegationFromDocument(context.TODO(), resolver, nil, delegationName, initialIdentity)
 }
 
 func iRevokeTheControlDelegationProof(t gobdd.StepTest, ctx gobdd.Context) {
@@ -584,12 +556,6 @@ func iAddTheGenericAuthenticationDelegationProofToTheDocument(t gobdd.StepTest, 
 	ctx.Set(ctxDelegationName, delegationProofName)
 }
 
-func iRemoveTheAuthenticationDelegationProofFromTheDocument(t gobdd.StepTest, ctx gobdd.Context) {
-	delegationName, _ := ctx.GetString(ctxDelegationName)
-	initialIdentity := ctxRegisteredTwin.GetRegisteredIdentity(t, ctx)
-	advancedapi.RemoveAuthenticationDelegationFromDocument(context.TODO(), resolver, nil, delegationName, initialIdentity)
-}
-
 func iRevokeTheAuthenticationDelegationProof(t gobdd.StepTest, ctx gobdd.Context) {
 	delegationName, _ := ctx.GetString(ctxDelegationName)
 	initialIdentity := ctxRegisteredTwin.GetRegisteredIdentity(t, ctx)
@@ -612,14 +578,6 @@ func theDelegatedIdentityOwnerUsedForTheProofIsRevoked(t gobdd.StepTest, ctx gob
 	otherRegisteredTwin, _ := ctx.Get(ctxOtherRegisteredTwin)
 	otherIdentity := otherRegisteredTwin.(register.RegisteredIdentity)
 	advancedapi.RevokePublicKeyFromDocument(context.TODO(), resolver, nil, extraOwnerName, otherIdentity)
-}
-
-func theDelegatedIdentityOwnerUsedForTheProofIsRemoved(t gobdd.StepTest, ctx gobdd.Context) {
-	extraOwnerName, _ := ctx.GetString(ctxOtherTwinIdentityExtraOwnerName)
-	assert.Assert(t, extraOwnerName != "")
-	otherRegisteredTwin, _ := ctx.Get(ctxOtherRegisteredTwin)
-	otherIdentity := otherRegisteredTwin.(register.RegisteredIdentity)
-	advancedapi.RemovePublicKeyFromDocument(context.TODO(), resolver, nil, extraOwnerName, otherIdentity)
 }
 
 func iCreateTheIdentityOverridingTheDocumentWithANewName(t gobdd.StepTest, ctx gobdd.Context, identityType string) {
@@ -1209,26 +1167,21 @@ func TestScenarios(t *testing.T) {
 	suite.AddStep(`^I check if the registered identity is allowed for control and authentication on the associated document$`,
 		iCheckIfTheRegisteredIdentityIsAllowedForControlAndAuthenticationOnTheAssociatedDocument)
 	suite.AddStep(`^I add the new owner to the document$`, iAddTheNewOwnerToTheDocument)
-	suite.AddStep(`^I remove the other owner from the document$`, iRemoveTheOtherOwnerFromTheDocument)
 	suite.AddStep(`^I revoke the other owner key$`, iRevokeTheOtherOwnerKey)
 	suite.AddStep(`^I add the new authentication key to the document$`, iAddTheNewAuthenticationKeyToTheDocument)
-	suite.AddStep(`^I remove the authentication key from the document$`, iRemoveTheAuthenticationKeyFromTheDocument)
 	suite.AddStep(`^I revoke the authentication key from the document$`, iRevokeTheAuthenticationKeyFromTheDocument)
 	suite.AddStep(`^one identity delegates control to another with delegation name "([^"]+)"$`, iDADelegatesControlToIDB)
 	suite.AddStep(`^one identity delegates control to another with extra owner with delegation name "([^"]+)"$`, iDADelegatesControlToIDBWithExtraOwner)
 	suite.AddStep(`^I add the control delegation proof "([^"]+)" to the document$`, iAddTheControlDelegationProofToTheDocument)
 	suite.AddStep(`^I add the generic control delegation proof "([^"]+)" to the document$`, iAddTheGenericControlDelegationProofToTheDocument)
-	suite.AddStep(`^I remove the control delegation proof from the document$`, iRemoveTheControlDelegationProofFromTheDocument)
 	suite.AddStep(`^I revoke the control delegation proof$`, iRevokeTheControlDelegationProof)
 	suite.AddStep(`^one identity delegates authentication to another with delegation name "([^"]+)"$`, iDADelegatesAuthenticationToIDB)
 	suite.AddStep(`^one identity delegates authentication to another with extra owner with delegation name "([^"]+)"$`, iDADelegatesAuthenticationToIDBWithExtraOwner)
 	suite.AddStep(`^I add the authentication delegation proof "([^"]+)" to the document$`, iAddTheAuthenticationDelegationProofToTheDocument)
 	suite.AddStep(`^I add the generic authentication delegation proof "([^"]+)" to the document$`, iAddTheGenericAuthenticationDelegationProofToTheDocument)
-	suite.AddStep(`^I remove the authentication delegation proof from the document$`, iRemoveTheAuthenticationDelegationProofFromTheDocument)
 	suite.AddStep(`^I revoke the authentication delegation proof$`, iRevokeTheAuthenticationDelegationProof)
 	suite.AddStep(`^I set the controller on my document$`, iSetTheControllerOnMyDocument)
 	suite.AddStep(`^the delegated identity owner used for the proof is revoked$`, theDelegatedIdentityOwnerUsedForTheProofIsRevoked)
-	suite.AddStep(`^the delegated identity owner used for the proof is removed$`, theDelegatedIdentityOwnerUsedForTheProofIsRemoved)
 	suite.AddStep(`^I create the "(agent|twin|user)" overriding the document with a new name$`, iCreateTheIdentityOverridingTheDocumentWithANewName)
 	suite.AddStep(`^I get the "(agent|twin|user)" identity$`, iGetTheIdentity)
 	suite.AddStep(`^User delegates authentication to agent$`, userDelegatesAuthenticationToAgent)

@@ -211,31 +211,6 @@ func AddPublicKeyToDocument(
 	return RegisterUpdatedDocument(ctx, resolverClient, updatedDoc, identity.KeyPair(), identity.Issuer())
 }
 
-func removeKeyFromDocument(
-	ctx context.Context, resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, name string,
-	identity register.RegisteredIdentity,
-) error {
-	var err error
-
-	if originalDoc == nil {
-		originalDoc, err = GetRegisterDocument(ctx, resolverClient, identity.Did())
-		if err != nil {
-			return err
-		}
-	}
-
-	opts := []register.RegisterDocumentOpts{
-		register.AddFromExistingDocument(originalDoc),
-		register.RemoveKey(name),
-	}
-	updatedDoc, errs := register.NewRegisterDocument(opts)
-	if len(errs) != 0 {
-		return fmt.Errorf("error while creating new RegisterDocument: %v", errs)
-	}
-
-	return RegisterUpdatedDocument(ctx, resolverClient, updatedDoc, identity.KeyPair(), identity.Issuer())
-}
-
 func revokeKeyFromDocument(
 	ctx context.Context, resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, name string,
 	identity register.RegisteredIdentity,
@@ -259,14 +234,6 @@ func revokeKeyFromDocument(
 	}
 
 	return RegisterUpdatedDocument(ctx, resolverClient, updatedDoc, identity.KeyPair(), identity.Issuer())
-}
-
-// RemovePublicKeyFromDocument Remove a register public key from a register document.
-func RemovePublicKeyFromDocument(
-	ctx context.Context, resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, name string,
-	identity register.RegisteredIdentity,
-) error {
-	return removeKeyFromDocument(ctx, resolverClient, originalDoc, name, identity)
 }
 
 // RevokePublicKeyFromDocument Set register public key revoke field.
@@ -303,14 +270,6 @@ func AddAuthenticationKeyToDocument(
 	return RegisterUpdatedDocument(ctx, resolverClient, updatedDoc, identity.KeyPair(), identity.Issuer())
 }
 
-// RemoveAuthenticationKeyFromDocument Remove a register authentication public key from a register document.
-func RemoveAuthenticationKeyFromDocument(
-	ctx context.Context, resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, name string,
-	identity register.RegisteredIdentity,
-) error {
-	return removeKeyFromDocument(ctx, resolverClient, originalDoc, name, identity)
-}
-
 // RevokeAuthenticationKeyFromDocument Set register authentication public key revoke field.
 func RevokeAuthenticationKeyFromDocument(
 	ctx context.Context, resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, name string,
@@ -335,14 +294,6 @@ func AddGenericAuthenticationDelegationToDocument(
 ) error {
 	return addDelegationToDocument(ctx, resolverClient, originalDoc, identity,
 		register.AddAuthenticationDelegation(name, controller, proof, register.GenericProof, false))
-}
-
-// RemoveAuthenticationDelegationFromDocument Remove register authentication delegation proof from a register document.
-func RemoveAuthenticationDelegationFromDocument(
-	ctx context.Context, resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, name string,
-	identity register.RegisteredIdentity,
-) error {
-	return removeKeyFromDocument(ctx, resolverClient, originalDoc, name, identity)
 }
 
 // RevokeAuthenticationDelegationFromDocument Set register authentication delegation proof revoke field.
@@ -394,14 +345,6 @@ func AddGenericControlDelegationToDocument(
 ) error {
 	return addDelegationToDocument(ctx, resolverClient, originalDoc, identity,
 		register.AddControlDelegation(name, controller, proof, register.GenericProof, false))
-}
-
-// RemoveControlDelegationFromDocument Remove register control delegation proof from a register document.
-func RemoveControlDelegationFromDocument(
-	ctx context.Context, resolverClient register.ResolverClient, originalDoc *register.RegisterDocument, name string,
-	identity register.RegisteredIdentity,
-) error {
-	return removeKeyFromDocument(ctx, resolverClient, originalDoc, name, identity)
 }
 
 // RevokeControlDelegationFromDocument Set register control delegation proof revoke field.
@@ -557,6 +500,9 @@ func createProof(
 ) (*register.Issuer, *proof.Proof, error) {
 	for _, v := range subjectDoc.PublicKeys {
 		if v.PublicKeyBase58 == subjectKeyPair.PublicKeyBase58 {
+			if v.Revoked {
+				return nil, nil, fmt.Errorf("subject public key is revoked")
+			}
 			issuer, err := register.NewIssuer(subjectDoc.ID, v.ID)
 			if err != nil {
 				return nil, nil, err
@@ -599,6 +545,9 @@ func ValidateDocumentProof(document *register.RegisterDocument) error {
 		publicKeyBytes := base58.DecodeAlphabet(v.PublicKeyBase58, base58.BTCAlphabet)
 		did, _ := identity.MakeIdentifier(publicKeyBytes)
 		if did == document.ID {
+			if v.Revoked {
+				return fmt.Errorf("subject public key is revoked")
+			}
 			docProof := &proof.Proof{
 				IssuerDid:  document.ID,
 				IssuerName: v.ID,

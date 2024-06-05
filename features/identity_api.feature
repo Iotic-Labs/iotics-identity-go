@@ -148,8 +148,3 @@ Feature: Identity API
     Given a new owner key name an registered identity register
     When I add a new owner
     Then the new owner key has been added to the document
-
-  Scenario: Remove owner from a register document
-    Given an owner key name an registered identity register
-    When I remove a owner
-    Then the key has been removed from the document
