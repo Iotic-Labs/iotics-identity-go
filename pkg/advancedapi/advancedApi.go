@@ -500,9 +500,6 @@ func createProof(
 ) (*register.Issuer, *proof.Proof, error) {
 	for _, v := range subjectDoc.PublicKeys {
 		if v.PublicKeyBase58 == subjectKeyPair.PublicKeyBase58 {
-			if v.Revoked {
-				return nil, nil, fmt.Errorf("subject public key is revoked")
-			}
 			issuer, err := register.NewIssuer(subjectDoc.ID, v.ID)
 			if err != nil {
 				return nil, nil, err
@@ -545,9 +542,6 @@ func ValidateDocumentProof(document *register.RegisterDocument) error {
 		publicKeyBytes := base58.DecodeAlphabet(v.PublicKeyBase58, base58.BTCAlphabet)
 		did, _ := identity.MakeIdentifier(publicKeyBytes)
 		if did == document.ID {
-			if v.Revoked {
-				return fmt.Errorf("subject public key is revoked")
-			}
 			docProof := &proof.Proof{
 				IssuerDid:  document.ID,
 				IssuerName: v.ID,

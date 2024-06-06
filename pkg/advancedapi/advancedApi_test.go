@@ -54,7 +54,7 @@ func Test_can_get_generic_delegation_proof(t *testing.T) {
 	assert.DeepEqual(t, proof.Content, []byte(""))
 }
 
-func Test_cannot_get_delegation_proof(t *testing.T) {
+func Test_can_get_delegation_proof_with_revoked_key(t *testing.T) {
 	ctx := context.TODO()
 	subjectDoc, subjectIssuer := test.HelperGetRegisterDocumentFromSecret(test.ValidKeyPairPlop, "#name", identity.User)
 	delegatingIssuer, err := register.NewIssuer("did:iotics:iotXarXAbViugciWyuFmwRTbNoB6y8Wievfn", "#user-0")
@@ -81,7 +81,7 @@ func Test_cannot_get_delegation_proof(t *testing.T) {
 	assert.NilError(t, err)
 
 	_, _, err = advancedapi.CreateDelegationProof(delegatingIssuer, subjectDoc, test.ValidKeyPairPlop)
-	assert.ErrorContains(t, err, "key is revoked")
+	assert.NilError(t, err)
 }
 
 func Test_can_get_document_if_exists(t *testing.T) {
@@ -540,7 +540,7 @@ func Test_can_validate_document_proof(t *testing.T) {
 	assert.NilError(t, err)
 }
 
-func Test_cannot_validate_document_proof(t *testing.T) {
+func Test_can_validate_document_proof_with_revoked_key(t *testing.T) {
 	ctx := context.TODO()
 	resolver := test.NewInMemoryResolver()
 	twinID, _, err := advancedapi.CreateNewIdentityAndRegister(ctx, resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
@@ -561,7 +561,7 @@ func Test_cannot_validate_document_proof(t *testing.T) {
 	assert.NilError(t, err)
 
 	err = advancedapi.ValidateDocumentProof(doc)
-	assert.ErrorContains(t, err, "key is revoked")
+	assert.NilError(t, err)
 }
 
 func Test_can_create_seed(t *testing.T) {
