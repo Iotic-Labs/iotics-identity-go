@@ -69,6 +69,30 @@ type RegisterDocument struct {
 	Metadata               Metadata                  `json:"metadata,omitempty"`
 }
 
+func (key RegisterPublicKey) ValidInSlice(cmp []RegisterPublicKey) error {
+	for _, newKey := range cmp {
+		if newKey.ID == key.ID && newKey.PublicKeyBase58 == key.PublicKeyBase58 && newKey.Type == key.Type {
+			if key.Revoked && !newKey.Revoked {
+				return errors.New("cannot un-revoke key " + key.ID)
+			}
+			return nil
+		}
+	}
+	return errors.New("key " + key.ID + " cannot be removed, only revoked")
+}
+
+func (proof RegisterDelegationProof) ValidInSlice(cmp []RegisterDelegationProof) error {
+	for _, newProof := range cmp {
+		if newProof.ID == proof.ID && newProof.Controller == proof.Controller && newProof.Proof == proof.Proof && newProof.ProofType == proof.ProofType {
+			if proof.Revoked && !newProof.Revoked {
+				return errors.New("cannot un-revoke key " + proof.ID)
+			}
+			return nil
+		}
+	}
+	return errors.New("proof " + proof.ID + " cannot be removed, only revoked")
+}
+
 // PublicKeyByID get public key by ID (note: excluding authentication keys).
 func (document RegisterDocument) PublicKeyByID(id string) *RegisterPublicKey {
 	for _, v := range document.PublicKeys {
@@ -79,6 +103,39 @@ func (document RegisterDocument) PublicKeyByID(id string) *RegisterPublicKey {
 				PublicKeyBase58: v.PublicKeyBase58,
 				Revoked:         v.Revoked,
 			}
+		}
+	}
+
+	return nil
+}
+
+// ValidateUpdateDocument checks if the document provided is a valid update to the existing document
+func (document RegisterDocument) ValidateUpdateDocument(newDocument *RegisterDocument) error {
+	// Check Public Keys have not been removed
+	for _, key := range document.PublicKeys {
+		if err := key.ValidInSlice(newDocument.PublicKeys); err != nil {
+			return err
+		}
+	}
+
+	// Check Authentication Keys have not been removed
+	for _, key := range document.AuthenticationKeys {
+		if err := key.ValidInSlice(newDocument.AuthenticationKeys); err != nil {
+			return err
+		}
+	}
+
+	// Check delegate Control has not been removed
+	for _, key := range document.DelegateControl {
+		if err := key.ValidInSlice(newDocument.DelegateControl); err != nil {
+			return err
+		}
+	}
+
+	// Check delegate authentication has not been removed
+	for _, key := range document.DelegateAuthentication {
+		if err := key.ValidInSlice(newDocument.DelegateAuthentication); err != nil {
+			return err
 		}
 	}
 

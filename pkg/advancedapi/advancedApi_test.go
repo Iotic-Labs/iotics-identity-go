@@ -54,7 +54,7 @@ func Test_can_get_generic_delegation_proof(t *testing.T) {
 	assert.DeepEqual(t, proof.Content, []byte(""))
 }
 
-func Test_cannot_get_delegation_proof(t *testing.T) {
+func Test_can_get_delegation_proof_with_revoked_key(t *testing.T) {
 	ctx := context.TODO()
 	subjectDoc, subjectIssuer := test.HelperGetRegisterDocumentFromSecret(test.ValidKeyPairPlop, "#name", identity.User)
 	delegatingIssuer, err := register.NewIssuer("did:iotics:iotXarXAbViugciWyuFmwRTbNoB6y8Wievfn", "#user-0")
@@ -66,7 +66,7 @@ func Test_cannot_get_delegation_proof(t *testing.T) {
 	err = advancedapi.RegisterUpdatedDocument(ctx, resolver, subjectDoc, test.ValidKeyPairPlop, subjectIssuer)
 	assert.NilError(t, err)
 
-	// Create and add second key to document so original key can be removed
+	// Create and add second key to document so original key can be revoked
 	secondKey, err := crypto.GetPrivateKeyFromExponent("baddbaddbaddbaddbaddbaddbaddbaddbaddbaddbaddbaddbaddbaddbaddbadd")
 	assert.NilError(t, err)
 	_, secondKeyPublicBase58, err := crypto.GetPublicKeysFromPrivateKey(secondKey)
@@ -74,14 +74,14 @@ func Test_cannot_get_delegation_proof(t *testing.T) {
 	err = advancedapi.AddPublicKeyToDocument(ctx, resolver, subjectDoc, "#second", secondKeyPublicBase58, subjectIdentity)
 	assert.NilError(t, err)
 
-	err = advancedapi.RemovePublicKeyFromDocument(ctx, resolver, nil, "#name", subjectIdentity)
+	err = advancedapi.RevokePublicKeyFromDocument(ctx, resolver, nil, "#name", subjectIdentity)
 	assert.NilError(t, err)
 
 	subjectDoc, err = resolver.GetDocument(ctx, subjectDoc.ID)
 	assert.NilError(t, err)
 
 	_, _, err = advancedapi.CreateDelegationProof(delegatingIssuer, subjectDoc, test.ValidKeyPairPlop)
-	assert.ErrorContains(t, err, "unable to find public key in document matching key pair secrets")
+	assert.NilError(t, err)
 }
 
 func Test_can_get_document_if_exists(t *testing.T) {
@@ -313,48 +313,6 @@ func Test_can_add_control_delegation_proof(t *testing.T) {
 	assert.Check(t, doc.DelegateControl[0].Revoked == false)
 }
 
-func Test_can_remove_control_delegation(t *testing.T) {
-	ctx := context.TODO()
-	resolver := test.NewInMemoryResolver()
-	twinID, twinDoc, err := advancedapi.CreateNewIdentityAndRegister(ctx, resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
-	assert.NilError(t, err)
-
-	err = advancedapi.AddControlDelegationToDocument(ctx, resolver, twinDoc, "#newDeleg", test.OtherDocIssuer.String(), test.OtherProof, twinID)
-	assert.NilError(t, err)
-
-	doc, err := resolver.GetDocument(ctx, twinID.Did())
-	assert.NilError(t, err)
-	assert.Check(t, len(doc.DelegateControl) == 1)
-
-	err = advancedapi.RemoveControlDelegationFromDocument(ctx, resolver, doc, "#newDeleg", twinID)
-	assert.NilError(t, err)
-
-	doc, err = resolver.GetDocument(ctx, twinID.Did())
-	assert.NilError(t, err)
-	assert.Check(t, len(doc.DelegateControl) == 0)
-}
-
-func Test_can_remove_auth_delegation(t *testing.T) {
-	ctx := context.TODO()
-	resolver := test.NewInMemoryResolver()
-	twinID, twinDoc, err := advancedapi.CreateNewIdentityAndRegister(ctx, resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
-	assert.NilError(t, err)
-
-	err = advancedapi.AddAuthenticationDelegationToDocument(ctx, resolver, twinDoc, "#newDeleg", test.OtherDocIssuer.String(), test.OtherProof, twinID)
-	assert.NilError(t, err)
-
-	doc, err := resolver.GetDocument(ctx, twinID.Did())
-	assert.NilError(t, err)
-	assert.Check(t, len(doc.DelegateAuthentication) == 1)
-
-	err = advancedapi.RemoveAuthenticationDelegationFromDocument(ctx, resolver, doc, "#newDeleg", twinID)
-	assert.NilError(t, err)
-
-	doc, err = resolver.GetDocument(ctx, twinID.Did())
-	assert.NilError(t, err)
-	assert.Check(t, len(doc.DelegateAuthentication) == 0)
-}
-
 func Test_can_revoke_control_delegation(t *testing.T) {
 	ctx := context.TODO()
 	resolver := test.NewInMemoryResolver()
@@ -498,24 +456,6 @@ func Test_can_set_document_revoked(t *testing.T) {
 	assert.Check(t, doc.Revoked == true)
 }
 
-func Test_can_remove_public_key(t *testing.T) {
-	ctx := context.TODO()
-	resolver := test.NewInMemoryResolver()
-	twinID, _, err := advancedapi.CreateNewIdentityAndRegister(ctx, resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
-	assert.NilError(t, err)
-
-	err = advancedapi.AddPublicKeyToDocument(ctx, resolver, nil, "#NewPub", test.ValidKeyPairPlop2.PublicKeyBase58, twinID)
-	assert.NilError(t, err)
-
-	err = advancedapi.RemovePublicKeyFromDocument(ctx, resolver, nil, "#NewPub", twinID)
-	assert.NilError(t, err)
-
-	doc, err := resolver.GetDocument(ctx, twinID.Did())
-	assert.NilError(t, err)
-
-	assert.Check(t, len(doc.PublicKeys) == 1)
-}
-
 func Test_can_revoke_public_key(t *testing.T) {
 	ctx := context.TODO()
 	resolver := test.NewInMemoryResolver()
@@ -530,24 +470,6 @@ func Test_can_revoke_public_key(t *testing.T) {
 
 	assert.Check(t, len(doc.PublicKeys) == 1)
 	assert.Check(t, doc.PublicKeys[0].Revoked == true)
-}
-
-func Test_can_remove_auth_key(t *testing.T) {
-	ctx := context.TODO()
-	resolver := test.NewInMemoryResolver()
-	twinID, _, err := advancedapi.CreateNewIdentityAndRegister(ctx, resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
-	assert.NilError(t, err)
-
-	err = advancedapi.AddAuthenticationKeyToDocument(ctx, resolver, nil, "#NewAuth", test.ValidKeyPairPlop2.PublicKeyBase58, twinID)
-	assert.NilError(t, err)
-
-	err = advancedapi.RemoveAuthenticationKeyFromDocument(ctx, resolver, nil, "#NewAuth", twinID)
-	assert.NilError(t, err)
-
-	doc, err := resolver.GetDocument(ctx, twinID.Did())
-	assert.NilError(t, err)
-
-	assert.Check(t, len(doc.AuthenticationKeys) == 0)
 }
 
 func Test_can_revoke_auth_key(t *testing.T) {
@@ -618,7 +540,7 @@ func Test_can_validate_document_proof(t *testing.T) {
 	assert.NilError(t, err)
 }
 
-func Test_cannot_validate_document_proof(t *testing.T) {
+func Test_can_validate_document_proof_with_revoked_key(t *testing.T) {
 	ctx := context.TODO()
 	resolver := test.NewInMemoryResolver()
 	twinID, _, err := advancedapi.CreateNewIdentityAndRegister(ctx, resolver, identity.Twin, test.ValidKeyPairPlop, "#ExistingId", false)
@@ -632,14 +554,14 @@ func Test_cannot_validate_document_proof(t *testing.T) {
 	err = advancedapi.AddPublicKeyToDocument(ctx, resolver, nil, "#second", secondKeyPublicBase58, twinID)
 	assert.NilError(t, err)
 
-	err = advancedapi.RemovePublicKeyFromDocument(ctx, resolver, nil, "#ExistingId", twinID)
+	err = advancedapi.RevokePublicKeyFromDocument(ctx, resolver, nil, "#ExistingId", twinID)
 	assert.NilError(t, err)
 
 	doc, err := resolver.GetDocument(ctx, twinID.Did())
 	assert.NilError(t, err)
 
 	err = advancedapi.ValidateDocumentProof(doc)
-	assert.ErrorContains(t, err, "unable to find public key matching document ID")
+	assert.NilError(t, err)
 }
 
 func Test_can_create_seed(t *testing.T) {

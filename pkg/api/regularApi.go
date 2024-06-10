@@ -183,9 +183,9 @@ func AddNewOwner(
 	)
 }
 
-// RemoveOwnership Remove owner from a register document.
-func RemoveOwnership(
+// RevokeOwnership revokes owner key from a register document.
+func RevokeOwnership(
 	ctx context.Context, resolverClient register.ResolverClient, removeOwnerName string, identity register.RegisteredIdentity,
 ) error {
-	return advancedapi.RemovePublicKeyFromDocument(ctx, resolverClient, nil, removeOwnerName, identity)
+	return advancedapi.RevokePublicKeyFromDocument(ctx, resolverClient, nil, removeOwnerName, identity)
 }

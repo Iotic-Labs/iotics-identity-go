@@ -309,18 +309,7 @@ func SetDocumentCreator(creator string) RegisterDocumentOpts {
 	}
 }
 
-// RemoveKey returns a function which will remove a key or delegation from the RegisterDocument if it exists
-func RemoveKey(name string) RegisterDocumentOpts {
-	return func(builder *RegisterDocumentBuilder) error {
-		delete(builder.PublicKeys, name)
-		delete(builder.AuthenticationKeys, name)
-		delete(builder.DelegateControl, name)
-		delete(builder.DelegateAuthentication, name)
-		return nil
-	}
-}
-
-// RevokeKey returns a function which will remove a key or delegation from the RegisterDocument if it exists
+// RevokeKey returns a function which will revoke a key or delegation from the RegisterDocument if it exists
 func RevokeKey(name string) RegisterDocumentOpts {
 	return func(builder *RegisterDocumentBuilder) error {
 		item, ok := builder.PublicKeys[name]

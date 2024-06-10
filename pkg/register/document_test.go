@@ -131,3 +131,143 @@ func Test_validate_no_keys(t *testing.T) {
 	assert.Check(t, len(errs) == 1)
 	assert.ErrorContains(t, errs[0], "must have controller or one public key")
 }
+
+func TestValidateUpdateDocumentPublicKeys(t *testing.T) {
+	doc, _, _ := test.HelperGetRegisterDocument()
+
+	// Add dummy Delegation, this does not need to be valid, as the check to ensure a key
+	// is not removed, does not validate the key, as that is handled elsewhere
+	doc.DelegateControl = append(doc.DelegateControl, register.RegisterDelegationProof{
+		ID:         "existing",
+		Controller: "none",
+		Proof:      "abbc",
+		ProofType:  "bbca",
+		Revoked:    false,
+	})
+	doc.DelegateAuthentication = append(doc.DelegateAuthentication, register.RegisterDelegationProof{
+		ID:         "existing",
+		Controller: "none",
+		Proof:      "abbc",
+		ProofType:  "bbca",
+		Revoked:    false,
+	})
+
+	// Setup a second key and another delegation proof
+	newKey := register.RegisterPublicKey{
+		ID:              "fake-key",
+		Type:            "fake-key",
+		PublicKeyBase58: "123abc",
+		Revoked:         false,
+	}
+	proof := register.RegisterDelegationProof{
+		ID:         "1",
+		Controller: "2",
+		Proof:      "3",
+		ProofType:  "4",
+		Revoked:    false,
+	}
+
+	// Test cases
+	tests := []struct {
+		name      string
+		newDoc    *register.RegisterDocument
+		shouldErr bool
+	}{
+		{
+			"Should be able to add new key with existing public key",
+			&register.RegisterDocument{
+				PublicKeys:             append(doc.PublicKeys, newKey),
+				AuthenticationKeys:     doc.AuthenticationKeys,
+				DelegateControl:        doc.DelegateControl,
+				DelegateAuthentication: doc.DelegateAuthentication,
+			},
+			false,
+		},
+		{
+			"Should not be able to add new key without existing public key",
+			&register.RegisterDocument{
+				PublicKeys:             []register.RegisterPublicKey{newKey},
+				AuthenticationKeys:     doc.AuthenticationKeys,
+				DelegateControl:        doc.DelegateControl,
+				DelegateAuthentication: doc.DelegateAuthentication,
+			},
+			true,
+		},
+		{
+			"Should be able to add new key with existing auth key",
+			&register.RegisterDocument{
+				PublicKeys:             doc.PublicKeys,
+				AuthenticationKeys:     append(doc.AuthenticationKeys, newKey),
+				DelegateControl:        doc.DelegateControl,
+				DelegateAuthentication: doc.DelegateAuthentication,
+			},
+			false,
+		},
+		{
+			"Should not be able to add new key without existing auth key",
+			&register.RegisterDocument{
+				PublicKeys:             doc.PublicKeys,
+				AuthenticationKeys:     []register.RegisterPublicKey{newKey},
+				DelegateControl:        doc.DelegateControl,
+				DelegateAuthentication: doc.DelegateAuthentication,
+			},
+			true,
+		},
+		{
+			"Should be able to add new key with existing delegate control",
+			&register.RegisterDocument{
+				PublicKeys:             doc.PublicKeys,
+				AuthenticationKeys:     doc.AuthenticationKeys,
+				DelegateControl:        append(doc.DelegateControl, proof),
+				DelegateAuthentication: doc.DelegateAuthentication,
+			},
+			false,
+		},
+		{
+			"Should not be able to add new key without existing delegate control",
+			&register.RegisterDocument{
+				PublicKeys:             doc.PublicKeys,
+				AuthenticationKeys:     doc.AuthenticationKeys,
+				DelegateControl:        []register.RegisterDelegationProof{proof},
+				DelegateAuthentication: doc.DelegateAuthentication,
+			},
+			true,
+		},
+		{
+			"Should be able to add new key with existing delegate auth",
+			&register.RegisterDocument{
+				PublicKeys:             doc.PublicKeys,
+				AuthenticationKeys:     doc.AuthenticationKeys,
+				DelegateControl:        doc.DelegateControl,
+				DelegateAuthentication: append(doc.DelegateAuthentication, proof),
+			},
+			false,
+		},
+		{
+			"Should not be able to add new key without existing delegate auth",
+			&register.RegisterDocument{
+				PublicKeys:             doc.PublicKeys,
+				AuthenticationKeys:     doc.AuthenticationKeys,
+				DelegateControl:        doc.DelegateControl,
+				DelegateAuthentication: []register.RegisterDelegationProof{proof},
+			},
+			true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := doc.ValidateUpdateDocument(tt.newDoc)
+			if err != nil && !tt.shouldErr {
+				// Error occurred when it shouldn't have
+				t.Errorf("ValidateUpdateDocument() error occurred = %v", err)
+			} else if err != nil && tt.shouldErr {
+				// It errors, and it should, check the error
+				assert.ErrorContains(t, err, "cannot be removed, only revoked")
+			} else if err == nil && tt.shouldErr {
+				// There is no error, but there should be
+				t.Error("ValidateUpdateDocument() expected error")
+			}
+		})
+	}
+}
